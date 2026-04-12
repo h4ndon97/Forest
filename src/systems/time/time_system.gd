@@ -1,0 +1,170 @@
+extends Node
+
+## 시간 시스템 Autoload.
+## 자식 컴포넌트(StateMachine, Clock, Resource, Atmosphere)를 생성하고 조율한다.
+## 입력을 처리하고 EventBus를 통해 다른 시스템에 시그널을 발신한다.
+
+const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
+const TimeClock = preload("res://src/systems/time/time_clock.gd")
+const TimeResource = preload("res://src/systems/time/time_resource.gd")
+const TimeAtmosphere = preload("res://src/systems/time/time_atmosphere.gd")
+
+const CONFIG_PATH := "res://data/time/time_config.tres"
+const HUD_PATH := "res://src/ui/hud/TimeHud.tscn"
+
+var _config: TimeConfigData
+var _state_machine: Node
+var _clock: Node
+var _resource: Node
+var _atmosphere: CanvasModulate
+var _manipulation_start_hour: float = 0.0
+var _did_manipulate: bool = false
+
+
+func _ready() -> void:
+	_config = load(CONFIG_PATH) as TimeConfigData
+
+	_state_machine = _create_child("StateMachine", TimeStateMachine)
+	_clock = _create_child("Clock", TimeClock)
+	_resource = _create_child("Resource", TimeResource)
+
+	_atmosphere = CanvasModulate.new()
+	_atmosphere.name = "Atmosphere"
+	_atmosphere.set_script(TimeAtmosphere)
+	add_child(_atmosphere)
+
+	_clock.setup(_config)
+	_resource.setup(_config)
+
+	_state_machine.state_changed.connect(_on_state_changed)
+	_clock.day_night_boundary_crossed.connect(_on_day_night_crossed)
+	_resource.resource_changed.connect(_on_resource_changed)
+	_resource.resource_depleted.connect(_on_resource_depleted)
+
+	EventBus.enemy_killed.connect(_on_enemy_killed)
+	EventBus.time_set_requested.connect(_on_time_set_requested)
+
+	_atmosphere.update_atmosphere(_clock.current_hour, _config)
+	EventBus.current_hour_changed.emit(_clock.current_hour)
+	EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
+	EventBus.time_resource_changed.emit(_resource.current, _resource.max_value)
+
+	_load_hud.call_deferred()
+
+
+func _process(delta: float) -> void:
+	var state: int = _state_machine.current_state
+
+	if state == TimeStateMachine.TimeState.MANIPULATING:
+		var hours_elapsed: float = _clock.advance_manipulation(delta)
+		if _clock.reached_manipulation_limit():
+			_state_machine.on_manipulation_limit_reached()
+			return
+		_resource.consume(hours_elapsed)
+		if _resource.is_depleted():
+			_state_machine.on_resource_depleted()
+		EventBus.current_hour_changed.emit(_clock.current_hour)
+		EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
+
+	elif state == TimeStateMachine.TimeState.FLOWING:
+		var hours_elapsed: float = _clock.advance_flow(delta)
+		_resource.recover(hours_elapsed)
+		EventBus.current_hour_changed.emit(_clock.current_hour)
+		EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
+
+	_atmosphere.update_atmosphere(_clock.current_hour, _config)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("time_manipulate"):
+		_on_manipulate_pressed()
+	elif event.is_action_released("time_manipulate"):
+		_on_manipulate_released()
+
+
+func get_current_hour() -> float:
+	return _clock.current_hour
+
+
+func get_time_state() -> int:
+	return _state_machine.current_state
+
+
+func is_day() -> bool:
+	return _clock.is_day()
+
+
+func get_sun_angle() -> float:
+	return _clock.get_sun_angle()
+
+
+# --- 내부 ---
+
+func _on_manipulate_pressed() -> void:
+	_manipulation_start_hour = _clock.current_hour
+	_did_manipulate = not _resource.is_depleted()
+	_state_machine.request_manipulate(_did_manipulate)
+
+
+func _on_manipulate_released() -> void:
+	var from_hour := _manipulation_start_hour
+	_state_machine.release_manipulate()
+	if _did_manipulate and _clock.current_hour != from_hour:
+		EventBus.time_manipulated.emit(from_hour, _clock.current_hour)
+	_did_manipulate = false
+
+
+func _on_state_changed(old_state: int, new_state: int) -> void:
+	EventBus.time_state_changed.emit(old_state, new_state)
+
+	if new_state == TimeStateMachine.TimeState.FLOWING:
+		EventBus.time_flow_started.emit(_clock.current_hour)
+	elif old_state == TimeStateMachine.TimeState.FLOWING:
+		EventBus.time_flow_stopped.emit(_clock.current_hour)
+
+
+func _on_resource_changed(current: float, max_val: float) -> void:
+	EventBus.time_resource_changed.emit(current, max_val)
+
+
+func _on_day_night_crossed(is_day_now: bool) -> void:
+	_state_machine.unblock_manipulation()
+	EventBus.day_night_changed.emit(is_day_now)
+
+
+func _on_resource_depleted() -> void:
+	EventBus.time_resource_depleted.emit()
+
+
+func _on_time_set_requested(hour: float) -> void:
+	_clock.set_hour(hour)
+
+	# 시간 상태를 STOPPED으로 초기화
+	if _state_machine.current_state != TimeStateMachine.TimeState.STOPPED:
+		_state_machine.transition_to(TimeStateMachine.TimeState.STOPPED)
+
+	_atmosphere.update_atmosphere(hour, _config)
+	EventBus.current_hour_changed.emit(hour)
+	EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
+	EventBus.day_night_changed.emit(_clock.is_day())
+
+
+func _on_enemy_killed(_enemy_id: int, _enemy_name: String) -> void:
+	_resource.recover_flat(_config.kill_recover_amount)
+
+
+func _create_child(child_name: String, script: GDScript) -> Node:
+	var node := Node.new()
+	node.name = child_name
+	node.set_script(script)
+	add_child(node)
+	return node
+
+
+func _load_hud() -> void:
+	if not ResourceLoader.exists(HUD_PATH):
+		return
+	var hud_scene: PackedScene = load(HUD_PATH)
+	if hud_scene:
+		var hud := hud_scene.instantiate()
+		get_tree().root.add_child(hud)

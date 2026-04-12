@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LanternConfigData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/lantern/lantern_config_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+max_range = 200.0
+light_energy = 1.0
+light_texture_scale = 1.5
+light_color = Color(1, 0.9, 0.7, 1)
+offset = Vector2(8, -20)

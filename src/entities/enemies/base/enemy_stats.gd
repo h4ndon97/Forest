@@ -1,0 +1,66 @@
+extends Node
+
+## 적 스탯 관리 컴포넌트.
+## 그림자 강도 배율에 따라 실시간으로 HP/공격력/속도를 조정한다.
+
+signal health_changed(current_hp: float, max_hp: float)
+signal died()
+
+var _stats_data: EnemyStatsData
+var _intensity_multiplier: float = 1.0
+var _max_hp: float = 100.0
+var _current_hp: float = 100.0
+
+
+func setup(stats_data: EnemyStatsData, initial_intensity: float) -> void:
+	_stats_data = stats_data
+	update_intensity(initial_intensity)
+	_current_hp = _max_hp
+
+
+func update_intensity(global_intensity: float) -> void:
+	var config := EnemySystem.get_config()
+	var old_multiplier := _intensity_multiplier
+	_intensity_multiplier = EnemyIntensity.remap_intensity(global_intensity, _stats_data, config)
+
+	# HP 비율 유지하며 최대 HP 갱신
+	var hp_ratio := _current_hp / _max_hp if _max_hp > 0.0 else 1.0
+	_max_hp = EnemyIntensity.apply_multiplier(_stats_data.base_hp, _intensity_multiplier)
+	_current_hp = _max_hp * hp_ratio
+
+	health_changed.emit(_current_hp, _max_hp)
+
+
+func take_damage(amount: float) -> void:
+	_current_hp = maxf(_current_hp - amount, 0.0)
+	health_changed.emit(_current_hp, _max_hp)
+	if _current_hp <= 0.0:
+		died.emit()
+
+
+func is_dead() -> bool:
+	return _current_hp <= 0.0
+
+
+func get_attack() -> float:
+	return EnemyIntensity.apply_multiplier(_stats_data.base_attack, _intensity_multiplier)
+
+
+func get_speed() -> float:
+	return EnemyIntensity.apply_multiplier(_stats_data.base_speed, _intensity_multiplier)
+
+
+func get_patrol_speed() -> float:
+	return EnemyIntensity.apply_multiplier(_stats_data.patrol_speed, _intensity_multiplier)
+
+
+func get_current_hp() -> float:
+	return _current_hp
+
+
+func get_max_hp() -> float:
+	return _max_hp
+
+
+func get_multiplier() -> float:
+	return _intensity_multiplier
