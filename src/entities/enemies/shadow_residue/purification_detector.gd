@@ -32,14 +32,16 @@ func _ready() -> void:
 		if _player.has_node("Lantern"):
 			_lantern_on = _player.get_node("Lantern").is_on()
 
+	# 생성 시점에 이미 조건이 충족되어 있을 수 있으므로 지연 체크
+	_try_purify.call_deferred()
+
 
 func _physics_process(_delta: float) -> void:
 	if _purified or not _player or not is_instance_valid(_player):
 		return
 	var dist := global_position.distance_to(_player.global_position)
-	var was_in_range := _player_in_range
 	_player_in_range = dist <= _detection_radius
-	if _player_in_range and not was_in_range:
+	if _player_in_range:
 		_try_purify()
 
 

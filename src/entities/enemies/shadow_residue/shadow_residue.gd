@@ -18,7 +18,7 @@ const MARKER_SIZE := Vector2(16, 4)
 const MARKER_COLOR_DAY := Color(0.15, 0.0, 0.2, 0.6)   # 낮에 처치 — 보라빛
 const MARKER_COLOR_NIGHT := Color(0.0, 0.1, 0.2, 0.6)   # 밤에 처치 — 푸른빛
 const PULSE_SPEED := 2.0
-const DETECTOR_RADIUS := 24.0
+const DETECTOR_RADIUS := 40.0
 
 
 func setup(stats_data: EnemyStatsData, killed_during_day: bool = true) -> void:
