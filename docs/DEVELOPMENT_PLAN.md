@@ -198,7 +198,7 @@ Phase 6  출시
 - [x] 잠금 프레임워크 + 빛 잠금 — 2-4c
 - [x] 인접 맵 시간 전파 (50%) + 정화 프레임워크 — 2-4d
 - [x] 독립 스테이지 시간 흐름 + 자동 재개/정지 — 2-4d+
-- [ ] 테스트 스테이지 2~3개 추가 — 2-4e
+- [x] 테스트 스테이지 3개 추가 — 2-4e
 - **의존성**: Phase 1 완료
 - **구현 파일** (2-4a):
   - `src/systems/stage/stage_system.gd` — Autoload 오케스트레이터
@@ -222,6 +222,18 @@ Phase 6  출시
   - `src/entities/enemies/shadow_residue/purification_detector.gd` — 정화 조건 감지 (등불 + 반대 시간대)
 - **수정 파일** (2-4d/2-4d+):
   - `src/systems/event_bus/event_bus.gd` — 시간 전파 시그널 추가 (flow_rate_changed, time_flow_paused/resumed, time_hour_sync_requested, time_flow_resume_requested)
+- **구현 파일** (2-4e):
+  - `data/stages/test_stage_3.tres` — 새벽 6시, NONE, 적 3
+  - `data/stages/test_stage_4.tres` — 황혼 18시, PURIFY(test_stage_2), 적 5
+  - `data/stages/test_stage_5.tres` — 심야 3시, LIGHT, 적 1
+  - `src/world/stages/test_stage_3.gd` + `TestStage3.tscn` — 수직 플랫폼 레이아웃
+  - `src/world/stages/test_stage_4.gd` + `TestStage4.tscn` — 좁은 복도 + 단차 레이아웃
+  - `src/world/stages/test_stage_5.gd` + `TestStage5.tscn` — 넓은 아레나 레이아웃
+- **수정 파일** (2-4e):
+  - `data/stages/test_stage.tres` — adjacent에 test_stage_3 추가
+  - `data/stages/test_stage_2.tres` — adjacent에 test_stage_4 추가
+  - `src/world/stages/TestStage.tscn` — 좌측 포탈(→test_stage_3) 추가
+  - `src/world/stages/TestStage2.tscn` — 우측 포탈(→test_stage_4) 추가
   - `src/systems/time/time_system.gd` — 가변 속도 FLOWING, pause/resume, 자동 재개 핸들러
   - `src/systems/time/time_clock.gd` — advance_flow에 rate 파라미터, compute_full_flow_hours 추가
   - `src/systems/stage/stage_system.gd` — 독립 흐름 자동 재개/정지 분기, 전환 중 flow pause/resume

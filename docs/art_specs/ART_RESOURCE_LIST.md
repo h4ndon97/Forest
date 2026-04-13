@@ -206,3 +206,35 @@ Aseprite에서 태그별로 내보내기:
 - 또는 `stage_portal.gd`에 fallback 로직 추가 후 파일 존재 시 자동 반영
 
 **우선순위**: 낮음 (placeholder로 기능 테스트 가능. 아트 방향성 확정 후 적용)
+
+---
+
+## Phase 2-4e. 테스트 스테이지 3~5 추가
+
+| # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
+|---|---|---|---|---|---|
+| 26 | TestStage3 배경 | 640x360 | `assets/backgrounds/` | `bg_test_stage_3.png` | 새벽 분위기. 어두운 갈색 → 연한 주황 그라데이션. 현재 갈색 ColorRect placeholder |
+| 27 | TestStage4 배경 | 640x360 | `assets/backgrounds/` | `bg_test_stage_4.png` | 황혼 분위기. 어두운 붉은/주황색. 현재 붉은 갈색 ColorRect placeholder |
+| 28 | TestStage5 배경 | 640x360 | `assets/backgrounds/` | `bg_test_stage_5.png` | 심야 분위기. 매우 어두운 남색/보라. 현재 짙은 보라색 ColorRect placeholder |
+
+### 배경 제작 가이드
+
+**공통 규칙**:
+- 640x360, 단일 이미지 (애니메이션 없음)
+- 각 스테이지의 시간대를 반영한 색감
+- 파일을 `assets/backgrounds/`에 넣으면 코드 수정 없이 자동 반영
+
+**스테이지별 컨셉**:
+
+| 스테이지 | 시간대 | 색감 방향 | placeholder 색상 |
+|---|---|---|---|
+| TestStage3 | 새벽 06시 | 어두운 갈색 → 새벽 주황빛 | `#2E261F` |
+| TestStage4 | 황혼 18시 | 석양 붉은빛 + 어둠 | `#331F1A` |
+| TestStage5 | 심야 03시 | 깊은 남색/보라 | `#140F1F` |
+
+**기존 에셋 재사용**:
+- 바닥 타일 (`tile_ground_test.png`), 플랫폼 타일 (`tile_platform_test.png`)은 TestStage/TestStage2와 공유
+- 적 스프라이트, 포탈 이펙트도 기존 에셋 동일 사용
+- 새로 필요한 것은 **배경 3장**뿐
+
+**우선순위**: 낮음 (placeholder로 기능 테스트 가능. 구역별 아트 방향성 확정 후 일괄 적용)

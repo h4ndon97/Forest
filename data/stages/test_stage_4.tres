@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "test_stage_4"
+display_name = "테스트 스테이지 4"
+scene_path = "res://src/world/stages/TestStage4.tscn"
+initial_hour = 18.0
+adjacent_stages = Array[String](["test_stage_2"])
+lock_type = 2
+lock_requirement = "test_stage_2"
+total_enemies = 5
+total_residues = 5

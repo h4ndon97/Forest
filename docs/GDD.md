@@ -272,6 +272,14 @@
 | 완전 클리어 | 잔류까지 제거 | 안전 구역 확보 |
 
 - 구역 보스 해금: 해당 구역 모든 스테이지 **완전 클리어**
+- **잔류 정화 조건**: 처치한 시간대의 반대 시간대에 등불 접촉 (낮 처치 → 밤 정화, 밤 처치 → 낮 정화)
+
+### 구현 상태 (Phase 2-4 완료)
+- StageSystem Autoload 완성 (Registry, ClearTracker, Transition, LockValidator, TimePropagation)
+- 잠금: NONE, LIGHT, PURIFY 구현 (ENVIRONMENT/ABILITY는 Phase 3)
+- 시간 전파: BFS 감쇠(홉당 50%), 독립 스테이지 흐름, 자동 재개/정지
+- 정화: PurificationDetector — 등불 접촉(40px) + 반대 시간대 → 자동 정화
+- 테스트 스테이지 5개: `test_stage_5 ↔ test_stage_3 ↔ test_stage ↔ test_stage_2 ↔ test_stage_4`
 
 ### 8.4 메트로배니아 진행
 - 선형 진행: 이전 구역 보스 처치 → 다음 구역 해금
