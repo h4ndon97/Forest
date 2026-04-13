@@ -28,8 +28,11 @@
 - 자원이 없어도 시간 흐름은 항상 가능
 - 자원 부족 = 원하는 시각을 못 맞춘 채 전투해야 하는 페널티
 
-### 구현 상태 (Phase 1-3 완료)
+### 구현 상태 (Phase 1-3 + 2-4d+ 완료)
 - **구현 완료**: 시간 상태 머신(STOPPED/MANIPULATING/FLOWING), 시간 조작/흐름, 자원 소모/회복, 낮밤 경계, CanvasModulate, HUD
+- **가변 속도 흐름 (Phase 2-4d+)**: TimeSystem이 `flow_rate_changed` 시그널로 흐름 속도를 동적으로 조정. 시간 전파 시 인접 스테이지 rate(50% 등)로 감속 흐름 지원. 시간 자원 소모/회복은 항상 100% 속도 (rate 무관).
+- **일시정지/재개**: `time_flow_paused`/`time_flow_resumed` 시그널로 스테이지 전환 중 흐름 일시정지 지원
+- **자동 재개**: `time_flow_resume_requested(hour, rate)` 시그널로 독립 흐름 중인 스테이지 진입 시 해당 rate로 FLOWING 자동 전환
 - **수치 외부화**: `data/time/time_config.tres`에서 모든 수치 조정 가능
 - **초기 수치**: 조작 속도 3.0시간/초, 자원 최대 100, 소모 10/시간, 회복 5/시간
 

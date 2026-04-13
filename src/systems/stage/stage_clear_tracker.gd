@@ -2,6 +2,7 @@ extends Node
 
 ## 스테이지별 클리어 진행 상태를 추적한다.
 ## 적 처치 수, 잔류 정화 수를 카운트하고 클리어 레벨을 판정한다.
+## 잔류 위치/시간대를 기록하여 스테이지 재진입 시 복원한다.
 
 var _clear_states: Dictionary = {}           # stage_id -> ClearState (int)
 var _enemies_killed: Dictionary = {}         # stage_id -> int
@@ -9,6 +10,7 @@ var _killed_enemy_names: Dictionary = {}     # stage_id -> Array[String]
 var _residues_purified: Dictionary = {}      # stage_id -> int
 var _total_enemies: Dictionary = {}          # stage_id -> int
 var _total_residues: Dictionary = {}         # stage_id -> int
+var _residue_records: Dictionary = {}        # stage_id -> Array[{position, killed_during_day}]
 
 
 ## 스테이지의 클리어 추적을 초기화한다. 재진입 시 기존 상태를 유지한다.
@@ -21,6 +23,7 @@ func init_stage(stage_id: String, total_enemies: int, total_residues: int) -> vo
 	_residues_purified[stage_id] = 0
 	_total_enemies[stage_id] = total_enemies
 	_total_residues[stage_id] = total_residues
+	_residue_records[stage_id] = []
 
 
 ## 적 처치를 기록하고 클리어 상태 전환을 판정한다.
@@ -50,11 +53,25 @@ func get_killed_enemies(stage_id: String) -> Array:
 	return _killed_enemy_names.get(stage_id, [])
 
 
-## 잔류 정화를 기록하고 클리어 상태 전환을 판정한다.
+## 잔류 데이터를 기록한다 (위치 + 처치 시간대).
+func record_residue(stage_id: String, pos: Vector2, killed_during_day: bool) -> void:
+	if not _residue_records.has(stage_id):
+		_residue_records[stage_id] = []
+	_residue_records[stage_id].append({
+		"position": pos,
+		"killed_during_day": killed_during_day,
+	})
+
+
+## 정화된 잔류를 기록에서 제거하고 클리어 상태 전환을 판정한다.
 ## 상태가 변경되면 새 ClearState를 반환, 변경 없으면 -1.
-func on_residue_purified(stage_id: String) -> int:
+func on_residue_purified(stage_id: String, pos: Vector2) -> int:
 	if not _clear_states.has(stage_id):
 		return -1
+
+	# 잔류 기록에서 해당 위치 제거 (가장 가까운 기록)
+	_remove_residue_near(stage_id, pos)
+
 	var current_state: int = _clear_states[stage_id]
 	if current_state != StageData.ClearState.HALF_CLEARED:
 		return -1
@@ -67,6 +84,11 @@ func on_residue_purified(stage_id: String) -> int:
 		return StageData.ClearState.FULLY_CLEARED
 
 	return -1
+
+
+## 미정화 잔류 기록을 반환한다 (스테이지 재진입 시 복원용).
+func get_residues(stage_id: String) -> Array:
+	return _residue_records.get(stage_id, [])
 
 
 ## 스테이지의 현재 클리어 상태를 반환한다.
@@ -83,3 +105,18 @@ func get_progress(stage_id: String) -> Dictionary:
 		"total_residues": _total_residues.get(stage_id, 0),
 		"clear_state": _clear_states.get(stage_id, StageData.ClearState.UNCLEARED),
 	}
+
+
+## 위치 기준으로 가장 가까운 잔류 기록을 제거한다.
+func _remove_residue_near(stage_id: String, pos: Vector2) -> void:
+	var records: Array = _residue_records.get(stage_id, [])
+	if records.is_empty():
+		return
+	var closest_idx := 0
+	var closest_dist := pos.distance_squared_to(records[0]["position"])
+	for i in range(1, records.size()):
+		var dist := pos.distance_squared_to(records[i]["position"])
+		if dist < closest_dist:
+			closest_dist = dist
+			closest_idx = i
+	records.remove_at(closest_idx)

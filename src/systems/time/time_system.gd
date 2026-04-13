@@ -19,6 +19,8 @@ var _resource: Node
 var _atmosphere: CanvasModulate
 var _manipulation_start_hour: float = 0.0
 var _did_manipulate: bool = false
+var _flow_rate: float = 1.0
+var _flow_paused: bool = false
 
 
 func _ready() -> void:
@@ -43,6 +45,11 @@ func _ready() -> void:
 
 	EventBus.enemy_killed.connect(_on_enemy_killed)
 	EventBus.time_set_requested.connect(_on_time_set_requested)
+	EventBus.flow_rate_changed.connect(_on_flow_rate_changed)
+	EventBus.time_flow_paused.connect(_on_flow_paused)
+	EventBus.time_flow_resumed.connect(_on_flow_resumed)
+	EventBus.time_hour_sync_requested.connect(_on_hour_sync_requested)
+	EventBus.time_flow_resume_requested.connect(_on_flow_resume_requested)
 
 	_atmosphere.update_atmosphere(_clock.current_hour, _config)
 	EventBus.current_hour_changed.emit(_clock.current_hour)
@@ -67,8 +74,11 @@ func _process(delta: float) -> void:
 		EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
 
 	elif state == TimeStateMachine.TimeState.FLOWING:
-		var hours_elapsed: float = _clock.advance_flow(delta)
-		_resource.recover(hours_elapsed)
+		if _flow_paused:
+			return
+		var hours_elapsed: float = _clock.advance_flow(delta, _flow_rate)
+		var full_hours: float = _clock.compute_full_flow_hours(delta)
+		_resource.recover(full_hours)
 		EventBus.current_hour_changed.emit(_clock.current_hour)
 		EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
 
@@ -120,6 +130,8 @@ func _on_state_changed(old_state: int, new_state: int) -> void:
 	if new_state == TimeStateMachine.TimeState.FLOWING:
 		EventBus.time_flow_started.emit(_clock.current_hour)
 	elif old_state == TimeStateMachine.TimeState.FLOWING:
+		_flow_rate = 1.0
+		_flow_paused = false
 		EventBus.time_flow_stopped.emit(_clock.current_hour)
 
 
@@ -147,6 +159,43 @@ func _on_time_set_requested(hour: float) -> void:
 	EventBus.current_hour_changed.emit(hour)
 	EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
 	EventBus.day_night_changed.emit(_clock.is_day())
+
+
+func _on_flow_rate_changed(rate: float) -> void:
+	_flow_rate = rate
+
+
+func _on_flow_paused() -> void:
+	_flow_paused = true
+
+
+func _on_flow_resumed() -> void:
+	_flow_paused = false
+
+
+## 스테이지 진입 시 자동 재개: 시각과 rate를 설정하고 FLOWING으로 전환한다.
+func _on_flow_resume_requested(hour: float, rate: float) -> void:
+	_flow_rate = rate
+	var was_day: bool = _clock.is_day()
+	_clock.set_hour(hour)
+	_atmosphere.update_atmosphere(hour, _config)
+	if _state_machine.current_state != TimeStateMachine.TimeState.FLOWING:
+		_state_machine.transition_to(TimeStateMachine.TimeState.FLOWING)
+	EventBus.current_hour_changed.emit(hour)
+	EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
+	if _clock.is_day() != was_day:
+		EventBus.day_night_changed.emit(_clock.is_day())
+
+
+## 시간 상태 변경 없이 시각만 동기화한다 (flow 유지 전환용).
+func _on_hour_sync_requested(hour: float) -> void:
+	var was_day: bool = _clock.is_day()
+	_clock.set_hour(hour)
+	_atmosphere.update_atmosphere(hour, _config)
+	EventBus.current_hour_changed.emit(hour)
+	EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
+	if _clock.is_day() != was_day:
+		EventBus.day_night_changed.emit(_clock.is_day())
 
 
 func _on_enemy_killed(_enemy_id: int, _enemy_name: String) -> void:

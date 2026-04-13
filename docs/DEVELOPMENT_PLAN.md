@@ -196,7 +196,8 @@ Phase 6  출시
 - [x] 3단계 클리어 (미클리어/절반/완전) — 2-4a
 - [x] 스테이지 전환 (인접 포탈, 씬 로딩) — 2-4b
 - [x] 잠금 프레임워크 + 빛 잠금 — 2-4c
-- [ ] 인접 맵 시간 전파 (50%) + 정화 프레임워크 — 2-4d
+- [x] 인접 맵 시간 전파 (50%) + 정화 프레임워크 — 2-4d
+- [x] 독립 스테이지 시간 흐름 + 자동 재개/정지 — 2-4d+
 - [ ] 테스트 스테이지 2~3개 추가 — 2-4e
 - **의존성**: Phase 1 완료
 - **구현 파일** (2-4a):
@@ -212,6 +213,18 @@ Phase 6  출시
   - `src/world/stages/test_stage_2.gd` — 두 번째 테스트 스테이지
   - `src/world/stages/TestStage2.tscn` — 두 번째 테스트 스테이지 씬
   - `data/stages/test_stage_2.tres` — 두 번째 스테이지 데이터
+- **구현 파일** (2-4c):
+  - `src/systems/stage/stage_lock_validator.gd` — 잠금 유형별 검증 (LIGHT, PURIFY, ENVIRONMENT, ABILITY)
+- **구현 파일** (2-4d):
+  - `src/systems/stage/time_propagation.gd` — 독립 스테이지 시간 전파 (_process 기반, BFS 감쇠, 자동 재개/정지)
+  - `data/stages/propagation_config_data.gd` — PropagationConfigData Resource 클래스
+  - `data/stages/propagation_config.tres` — 전파 설정 (rate 0.5, threshold 0.05, max_depth 6)
+  - `src/entities/enemies/shadow_residue/purification_detector.gd` — 정화 조건 감지 (등불 + 반대 시간대)
+- **수정 파일** (2-4d/2-4d+):
+  - `src/systems/event_bus/event_bus.gd` — 시간 전파 시그널 추가 (flow_rate_changed, time_flow_paused/resumed, time_hour_sync_requested, time_flow_resume_requested)
+  - `src/systems/time/time_system.gd` — 가변 속도 FLOWING, pause/resume, 자동 재개 핸들러
+  - `src/systems/time/time_clock.gd` — advance_flow에 rate 파라미터, compute_full_flow_hours 추가
+  - `src/systems/stage/stage_system.gd` — 독립 흐름 자동 재개/정지 분기, 전환 중 flow pause/resume
 
 #### 2-5. 환경 오브젝트
 - [ ] 거울/수정 (빛 분산)

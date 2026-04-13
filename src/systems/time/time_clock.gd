@@ -31,14 +31,20 @@ func advance_manipulation(delta: float) -> float:
 	return hours_elapsed
 
 
-func advance_flow(delta: float) -> float:
+func advance_flow(delta: float, rate: float = 1.0) -> float:
 	var hours_per_second: float = _config.flow_speed / 60.0
-	var hours_elapsed: float = hours_per_second * delta
+	var hours_elapsed: float = hours_per_second * delta * rate
 	var old_hour := current_hour
 	current_hour += hours_elapsed
 	_wrap_hour()
 	_check_boundary_crossing(old_hour)
 	return hours_elapsed
+
+
+## rate 무관 전체 속도 기준 시간 경과를 계산한다 (자원 소모/회복용).
+func compute_full_flow_hours(delta: float) -> float:
+	var hours_per_second: float = _config.flow_speed / 60.0
+	return hours_per_second * delta
 
 
 func is_day() -> bool:

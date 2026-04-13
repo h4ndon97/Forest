@@ -21,7 +21,7 @@ signal shadow_scale_changed(object_id: int, scale: float)
 # === 적 시스템 ===
 signal enemy_spawned(enemy_id: int)
 signal enemy_killed(enemy_id: int, enemy_name: String)
-signal residue_left(position: Vector2)
+signal residue_left(position: Vector2, killed_during_day: bool)
 signal residue_purified(position: Vector2)
 
 # === 땅거미 시스템 ===
@@ -37,6 +37,13 @@ signal stage_transition_requested(target_stage_id: String, entry_direction: Stri
 signal stage_transition_started(from_stage: String, to_stage: String)
 signal stage_transition_completed(stage_id: String)
 signal stage_access_denied(stage_id: String, lock_type: int, reason: String)
+
+# === 시간 전파 ===
+signal flow_rate_changed(rate: float)
+signal time_flow_paused()
+signal time_flow_resumed()
+signal time_hour_sync_requested(hour: float)
+signal time_flow_resume_requested(hour: float, rate: float)
 
 # === 전투 시스템 ===
 signal combo_hit_landed(hit_number: int)

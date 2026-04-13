@@ -5,10 +5,12 @@ extends Node
 ## 시스템 간 직접 참조 없이 EventBus 시그널로 상태를 추적한다.
 
 var _lantern_on: bool = false
+var _clear_states: Dictionary = {}   # stage_id -> ClearState (int)
 
 
 func _ready() -> void:
 	EventBus.lantern_toggled.connect(_on_lantern_toggled)
+	EventBus.stage_clear_updated.connect(_on_clear_updated)
 
 
 ## 스테이지 잠금 검증. 접근 가능 여부와 사유를 반환한다.
@@ -20,7 +22,7 @@ func validate(data: StageData) -> Dictionary:
 		StageData.LockType.LIGHT:
 			return _validate_light(data)
 		StageData.LockType.PURIFY:
-			return _locked_not_implemented(data, "정화 능력이 필요합니다")
+			return _validate_purify(data)
 		StageData.LockType.ENVIRONMENT:
 			return _locked_not_implemented(data, "환경 도구가 필요합니다")
 		StageData.LockType.ABILITY:
@@ -46,6 +48,23 @@ func _validate_light(data: StageData) -> Dictionary:
 	}
 
 
+func _validate_purify(data: StageData) -> Dictionary:
+	## lock_requirement에 스테이지 ID가 지정된 경우 해당 스테이지의 완전 클리어를 요구.
+	## 비어 있으면 대상 스테이지 자체의 완전 클리어를 요구.
+	var required_stage: String = data.lock_requirement
+	if required_stage.is_empty():
+		required_stage = data.stage_id
+
+	var state: int = _clear_states.get(required_stage, StageData.ClearState.UNCLEARED)
+	if state == StageData.ClearState.FULLY_CLEARED:
+		return {"accessible": true, "lock_type": data.lock_type, "reason": ""}
+	return {
+		"accessible": false,
+		"lock_type": data.lock_type,
+		"reason": "그림자 잔류를 정화해야 진입할 수 있습니다",
+	}
+
+
 func _locked_not_implemented(data: StageData, reason: String) -> Dictionary:
 	return {
 		"accessible": false,
@@ -56,3 +75,7 @@ func _locked_not_implemented(data: StageData, reason: String) -> Dictionary:
 
 func _on_lantern_toggled(is_on: bool, _lantern_position: Vector2) -> void:
 	_lantern_on = is_on
+
+
+func _on_clear_updated(stage_id: String, clear_level: int) -> void:
+	_clear_states[stage_id] = clear_level

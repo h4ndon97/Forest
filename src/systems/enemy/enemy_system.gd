@@ -46,12 +46,15 @@ func register_enemy(enemy: Node) -> int:
 
 
 ## 적 사망 처리. 시그널 발신 + 레지스트리 제거.
-func on_enemy_died(enemy_id: int, death_position: Vector2) -> void:
+## 처치 시점의 낮/밤 상태를 반환한다 (잔류 정화 조건에 사용).
+func on_enemy_died(enemy_id: int, death_position: Vector2) -> bool:
 	var enemy: Node = _registry.get_enemy(enemy_id)
 	var enemy_name: String = enemy.name if enemy else ""
+	var killed_during_day: bool = not _is_night
 	EventBus.enemy_killed.emit(enemy_id, enemy_name)
-	EventBus.residue_left.emit(death_position)
+	EventBus.residue_left.emit(death_position, killed_during_day)
 	_registry.unregister(enemy_id)
+	return killed_during_day
 
 
 ## 현재 전역 강도를 반환한다.

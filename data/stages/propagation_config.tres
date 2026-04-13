@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PropagationConfigData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/propagation_config_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+propagation_rate = 0.5
+minimum_threshold = 0.05
+max_depth = 6
+flow_speed = 1.0

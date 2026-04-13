@@ -45,18 +45,21 @@
 - 스토리 진행과 연결 — 깊은 구역일수록 그림자 왕가의 흔적 등 반영
 - 세부 연출 → 월드 디자인/스토리 세션에서 구체화
 
-### 구현 상태 (Phase 2-4c 완료)
-- **구현 완료**: StageSystem Autoload, StageRegistry, StageClearTracker, StageTransition, StagePortal, StageLockValidator
+### 구현 상태 (Phase 2-4d 완료)
+- **구현 완료**: StageSystem Autoload, StageRegistry, StageClearTracker, StageTransition, StagePortal, StageLockValidator, TimePropagation
 - **StageData Resource**: stage_id, display_name, scene_path, initial_hour, adjacent_stages, lock_type, lock_requirement, total_enemies, total_residues
 - **ClearState enum**: UNCLEARED → HALF_CLEARED(적 전멸) → FULLY_CLEARED(잔류 정화)
 - **LockType enum**: NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY
 - **잠금 프레임워크**: StageLockValidator 컴포넌트가 유형별 검증 수행. 거부 시 stage_access_denied 시그널 발신.
 - **빛 잠금(LIGHT)**: EventBus.lantern_toggled로 등불 상태 추적 → 등불 ON 시 통과, OFF 시 거부
-- **미구현 잠금**: PURIFY/ENVIRONMENT/ABILITY는 프레임워크만 준비 (항상 거부 → Phase 3에서 구현)
+- **정화 잠금(PURIFY)**: stage_clear_updated 추적 → 대상 스테이지 FULLY_CLEARED 시 통과. lock_requirement로 특정 스테이지 지정 가능.
+- **미구현 잠금**: ENVIRONMENT/ABILITY는 프레임워크만 준비 (항상 거부 → Phase 3에서 구현)
 - **스테이지 전환**: StagePortal(Area2D, 윗방향키 입력) → EventBus → StageTransition(페이드 + Player 보존/재삽입)
 - **적 처치 유지**: 처치된 적 이름을 ClearTracker에 기록, 재진입 시 stage_enemies_sync_requested로 제거
 - **스테이지별 독립 시간**: StageData.initial_hour로 초기 시각 설정, 전환 시 저장/복원, 시간 상태 STOPPED 초기화
-- **시스템 간 통신**: stage_entered/enemy_killed/residue_purified/stage_transition_requested/started/completed/stage_enemies_sync_requested/time_set_requested/stage_access_denied
+- **시간 전파 (독립 스테이지 흐름)**: TimePropagation이 flow 시작 시 1회 BFS로 rate map 구축, `_process(delta)`에서 현재 스테이지 외 모든 흐름 중 스테이지를 독립 진행. 현재 스테이지 stop 시 해당 스테이지만 흐름 중단(다른 스테이지 유지). 흐르는 스테이지 진입 시 자동 재개(auto-resume). 원점 100% 유지, 홉당 50% 감쇠, 하한선 5% 미만 중단. 설정 외부화: `propagation_config.tres`
+- **정화 프레임워크**: 적 처치 시 낮/밤 시간대 기록 → ShadowResidue에 PurificationDetector(Node2D) 부착 → 등불 접촉 + 반대 시간대 조건 충족 시 자동 정화
+- **시스템 간 통신**: stage_entered/enemy_killed/residue_purified/stage_transition_requested/started/completed/stage_enemies_sync_requested/time_set_requested/time_hour_sync_requested/stage_access_denied/flow_rate_changed/time_flow_paused/time_flow_resumed/time_flow_resume_requested
 - **데이터**: `test_stage.tres` (적 4, 잔류 4, 12시 낮, 잠금 없음), `test_stage_2.tres` (적 2, 잔류 2, 20시 밤, 빛 잠금)
 - **Player 보존**: 씬 전환 시 Player를 트리에서 분리 후 새 씬에 재삽입 (중복 방지 포함)
 
@@ -72,12 +75,26 @@
 - **인접 포탈**: 맵 좌우 끝 연결. 걸어서 자연스럽게 다음 맵으로 이동
 - **월드맵 포탈**: 거점 맵에만 존재. 발견한 거점 간 장거리 이동
 
-### 시간 전파
-- 시간이 흐르는 맵의 인접 맵은 **50% 속도**로 영향받음
-- 거점에서 멀어질수록 귀환 거리 증가 → 탐색 깊이의 전략적 판단
+### 시간 전파 — 독립 스테이지 흐름 (확정, Phase 2-4d+ 구현 완료)
+- 시간이 **흐르는**(FLOWING) 맵의 인접 맵은 **50% 속도**로 영향받음
+- **재귀적 전파**: 인접의 인접은 25%, 그 다음은 12.5%... 하한선(5%) 미만이면 중단
+- **원점(origin) 고정**: flow를 시작한 스테이지가 원점. 모든 rate는 원점으로부터의 홉 수로 결정
+  - 원점은 항상 100% 유지. 플레이어가 이동해도 원점 변경 없음
+  - 플레이어가 인접 스테이지로 이동하면 해당 스테이지의 rate(50%)로 시간 체감
+  - stop 후 flow 재시작 시에만 원점이 현재 스테이지로 갱신
+- **독립 스테이지 흐름**: 각 스테이지는 독립적으로 시간이 흐름
+  - 현재 스테이지의 flow를 멈춰도 다른 스테이지는 계속 흐름
+  - `_process(delta)`에서 현재 스테이지 외의 모든 흐름 중 스테이지를 직접 진행
+  - `_flowing_stages` Dictionary로 독립 흐름 상태 추적
+- **자동 재개**: 독립 흐름 중인 스테이지에 진입하면 해당 rate로 flow 자동 재개
+  - `time_flow_resume_requested` 시그널로 TimeSystem에 전달
+- **스테이지 전환 중 flow 유지**: 전환 애니메이션 동안만 일시정지, 전환 완료 후 자동 재개
+- 시간 조작(MANIPULATING)은 전파되지 않음 — 현재 스테이지에만 적용
+- 시간 자원 소모/회복은 항상 100% 속도 (rate 무관)
+- 수치 외부화: `data/stages/propagation_config.tres`
 
 ### 미결 사항
-- [ ] 인접 맵 시간 전파 상세 (50% 속도의 구체적 의미 — 땅거미 감지에도 영향?)
+- (시간 전파 관련 미결 사항 해소됨)
 
 ---
 
@@ -91,11 +108,13 @@
 | **절반 클리어** | 적 전부 처치, 그림자 잔류 남음 | 땅거미 도착 시 부활 위험 |
 | **완전 클리어** | 그림자 잔류까지 제거 | 안전 구역 확보 |
 
-### 그림자 잔류 정화
-- 정화 능력: 게임 중반 해금
+### 그림자 잔류 정화 (프레임워크 Phase 2-4d 구현 완료)
+- 정화 능력: 게임 중반 해금 (실제 해금은 Phase 3)
 - **정화 조건**: 처치한 시간대의 반대 시간대에 정화
   - 낮에 처치한 잔류 → 밤에 정화
   - 밤에 처치한 잔류 → 낮에 정화
+- **정화 방식**: 등불 접촉 (플레이어가 잔류 범위 내 + 등불 ON + 반대 시간대 → 자동 정화)
+- 잔류 시각 구분: 낮 처치 = 보라빛, 밤 처치 = 푸른빛 마커
 - 메트로배니아 재방문 동기: 같은 맵을 낮/밤 두 번 다른 방식으로 플레이
 
 ### 클리어 보상

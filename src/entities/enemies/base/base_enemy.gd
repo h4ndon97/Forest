@@ -96,12 +96,12 @@ func _on_died() -> void:
 	set_physics_process(false)
 	hitbox.set_deferred("monitoring", false)
 	hurtbox.set_deferred("monitoring", false)
-	EnemySystem.on_enemy_died(enemy_id, global_position)
-	_spawn_residue()
+	var killed_during_day: bool = EnemySystem.on_enemy_died(enemy_id, global_position)
+	_spawn_residue(killed_during_day)
 	queue_free()
 
 
-func _spawn_residue() -> void:
+func _spawn_residue(killed_during_day: bool) -> void:
 	if not stats_data.leaves_residue:
 		return
 	if not ResourceLoader.exists(RESIDUE_PATH):
@@ -110,7 +110,7 @@ func _spawn_residue() -> void:
 	var residue := scene.instantiate()
 	residue.global_position = global_position
 	if residue.has_method("setup"):
-		residue.setup(stats_data)
+		residue.setup(stats_data, killed_during_day)
 	get_parent().add_child(residue)
 
 
