@@ -45,9 +45,9 @@
 - 스토리 진행과 연결 — 깊은 구역일수록 그림자 왕가의 흔적 등 반영
 - 세부 연출 → 월드 디자인/스토리 세션에서 구체화
 
-### 구현 상태 (Phase 2-4e 완료)
-- **구현 완료**: StageSystem Autoload, StageRegistry, StageClearTracker, StageTransition, StagePortal, StageLockValidator, TimePropagation
-- **StageData Resource**: stage_id, display_name, scene_path, initial_hour, adjacent_stages, lock_type, lock_requirement, total_enemies, total_residues
+### 구현 상태 (Phase 2-8b 완료)
+- **구현 완료**: StageSystem Autoload, StageRegistry, StageClearTracker, StageTransition, StagePortal, StageLockValidator, TimePropagation, SaveManager, WorldMapUI(독립 Autoload), WorldMapPortal, WorldMapGraphBuilder
+- **StageData Resource**: stage_id, display_name, scene_path, initial_hour, adjacent_stages, lock_type, lock_requirement, total_enemies, total_residues, is_checkpoint
 - **ClearState enum**: UNCLEARED → HALF_CLEARED(적 전멸) → FULLY_CLEARED(잔류 정화)
 - **LockType enum**: NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY
 - **잠금 프레임워크**: StageLockValidator 컴포넌트가 유형별 검증 수행. 거부 시 stage_access_denied 시그널 발신.
@@ -59,15 +59,19 @@
 - **스테이지별 독립 시간**: StageData.initial_hour로 초기 시각 설정, 전환 시 저장/복원, 시간 상태 STOPPED 초기화
 - **시간 전파 (독립 스테이지 흐름)**: TimePropagation이 flow 시작 시 1회 BFS로 rate map 구축, `_process(delta)`에서 현재 스테이지 외 모든 흐름 중 스테이지를 독립 진행. 현재 스테이지 stop 시 해당 스테이지만 흐름 중단(다른 스테이지 유지). 흐르는 스테이지 진입 시 자동 재개(auto-resume). 원점 100% 유지, 홉당 50% 감쇠, 하한선 5% 미만 중단. 설정 외부화: `propagation_config.tres`
 - **정화 프레임워크**: 적 처치 시 낮/밤 시간대 기록 → ShadowResidue에 PurificationDetector(Node2D) 부착 → 등불 접촉 + 반대 시간대 조건 충족 시 자동 정화
-- **시스템 간 통신**: stage_entered/enemy_killed/residue_purified/stage_transition_requested/started/completed/stage_enemies_sync_requested/time_set_requested/time_hour_sync_requested/stage_access_denied/flow_rate_changed/time_flow_paused/time_flow_resumed/time_flow_resume_requested
-- **데이터**: 테스트 스테이지 5개 구성
+- **거점 시스템 (Phase 2-8a)**: 거점 진입 시 완전 회복(HP+시간자원) + 자동 세이브. 사망 시 거점 귀환. JSON 세이브/로드(save_manager.gd). 거점 내 시간 조작 잠금.
+- **월드맵 포탈 + UI (Phase 2-8b)**: WorldMapPortal(Area2D, interact 키) → world_map_opened → WorldMapUI(독립 Autoload CanvasLayer). 거점 발견 추적(discovered_checkpoints). 노드그래프로 전체 토폴로지 표시(BFS 정렬, WorldMapGraphBuilder 헬퍼). 스테이지별 클리어 상태/시간대/잠금 표시. 발견한 거점 간 패스트트래블(좌우 선택 + 윗방향키). pause 미사용 — 플레이어 입력 차단(EventBus) + _process 폴링으로 UI 입력 처리. 세이브/로드 포함.
+- **시스템 간 통신**: stage_entered/enemy_killed/residue_purified/stage_transition_requested/started/completed/stage_enemies_sync_requested/time_set_requested/time_hour_sync_requested/stage_access_denied/flow_rate_changed/time_flow_paused/time_flow_resumed/time_flow_resume_requested/checkpoint_entered/exited/full_recovery_requested/world_map_opened/closed
+- **데이터**: 테스트 스테이지 5개 + 거점 2개 구성
   - `test_stage.tres` (적 4, 잔류 4, 12시 낮, 잠금 없음)
   - `test_stage_2.tres` (적 2, 잔류 2, 20시 밤, 빛 잠금)
   - `test_stage_3.tres` (적 3, 잔류 3, 6시 새벽, 잠금 없음)
   - `test_stage_4.tres` (적 5, 잔류 5, 18시 황혼, 정화 잠금 — test_stage_2 완전클리어 필요)
   - `test_stage_5.tres` (적 1, 잔류 1, 3시 심야, 빛 잠금)
-- **테스트 토폴로지**: `test_stage_5 ↔ test_stage_3 ↔ test_stage ↔ test_stage_2 ↔ test_stage_4` (최대 4홉)
-- **검증 커버리지**: NONE/LIGHT/PURIFY 잠금 3종, 시간대 5종(3/6/12/18/20시), 적 수 1~5 연속 분포, 4홉 시간 전파 체인
+  - `test_checkpoint.tres` (거점, 12시, 잠금 없음)
+  - `test_checkpoint_2.tres` (거점, 12시, 잠금 없음)
+- **테스트 토폴로지**: `test_checkpoint ↔ test_stage_5 ↔ test_stage_3 ↔ test_stage ↔ test_stage_2 ↔ test_stage_4 ↔ test_checkpoint_2` (최대 6홉)
+- **검증 커버리지**: NONE/LIGHT/PURIFY 잠금 3종, 시간대 5종(3/6/12/18/20시), 적 수 0~5, 거점 2개 패스트트래블, 세이브/로드
 - **Player 보존**: 씬 전환 시 Player를 트리에서 분리 후 새 씬에 재삽입 (중복 방지 포함)
 
 ### 미결 사항

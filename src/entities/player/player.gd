@@ -20,6 +20,7 @@ const StateMachine = preload("res://src/entities/player/player_state_machine.gd"
 @onready var dash_cooldown_timer: Timer = $DashCooldownTimer
 
 var _is_dead: bool = false
+var _input_blocked: bool = false
 var _death_tween: Tween
 
 
@@ -47,6 +48,8 @@ func _ready() -> void:
 	EventBus.player_died.connect(_on_died)
 	EventBus.player_respawned.connect(_on_respawned)
 	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
+	EventBus.world_map_opened.connect(func(): _input_blocked = true)
+	EventBus.world_map_closed.connect(func(): _input_blocked = false)
 
 
 func _physics_process(delta: float) -> void:
@@ -59,6 +62,19 @@ func _physics_process(delta: float) -> void:
 			velocity.y = 0.0
 		velocity.x = move_toward(velocity.x, 0.0, stats.friction * delta)
 		move_and_slide()
+		return
+
+	# 입력 차단 중 (월드맵 등) — 중력/마찰/애니메이션만 유지
+	if _input_blocked:
+		var gravity := ProjectSettings.get_setting("physics/2d/default_gravity", 980.0) as float
+		if not is_on_floor():
+			velocity.y += gravity * stats.fall_gravity_scale * delta
+		else:
+			velocity.y = 0.0
+		velocity.x = move_toward(velocity.x, 0.0, stats.friction * delta)
+		move_and_slide()
+		animation_controller.update(state_machine.current_state, movement.facing_direction)
+		lantern.update_position()
 		return
 
 	# 1. 입력 읽기

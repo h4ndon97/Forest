@@ -263,8 +263,24 @@ Phase 6  출시
 
 #### 2-8. 거점 시스템
 - [x] 거점 씬 (회복, 세이브) — 2-8a
-- [ ] 월드맵 포탈 (거점 간 이동) + 월드맵 UI — 2-8b
+- [x] 월드맵 포탈 (거점 간 이동) + 월드맵 UI — 2-8b
 - **의존성**: 2-4
+- **구현 파일** (2-8b):
+  - `src/ui/menus/world_map/world_map_ui.gd` — 월드맵 UI (독립 Autoload CanvasLayer, _process 폴링 입력)
+  - `src/ui/menus/world_map/world_map_graph_builder.gd` — 노드/연결선 생성 + BFS 토폴로지 정렬 헬퍼
+  - `src/entities/objects/portal/world_map_portal.gd` — 월드맵 포탈 (Area2D, interact 키)
+  - `src/entities/objects/portal/WorldMapPortal.tscn` — 월드맵 포탈 씬
+  - `src/world/checkpoints/test_checkpoint_2.gd` — 테스트 거점 2 스크립트
+  - `src/world/checkpoints/TestCheckpoint2.tscn` — 테스트 거점 2 씬
+  - `data/stages/test_checkpoint_2.tres` — 거점 2 StageData (is_checkpoint=true)
+- **수정 파일** (2-8b):
+  - `src/systems/event_bus/event_bus.gd` — +2 시그널 (world_map_opened/closed)
+  - `src/systems/stage/stage_system.gd` — +거점 발견 추적(discovered_checkpoints) + 세이브/로드 + public API (get_discovered_checkpoints, get_stage_hour)
+  - `src/entities/player/player.gd` — +_input_blocked (월드맵 열림 시 입력 차단, 중력/애니메이션 유지)
+  - `data/stages/test_stage_4.tres` — +test_checkpoint_2 인접
+  - `src/world/stages/TestStage4.tscn` — +PortalRight (→test_checkpoint_2)
+  - `src/world/checkpoints/TestCheckpoint.tscn` — +WorldMapPortal 배치
+  - `project.godot` — +WorldMapUI Autoload + interact 입력 액션
 - **구현 파일** (2-8a):
   - `src/systems/stage/save_manager.gd` — JSON 세이브/로드 (StageSystem 자식 노드)
   - `src/world/checkpoints/test_checkpoint.gd` — 거점 씬 스크립트

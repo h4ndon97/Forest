@@ -27,6 +27,7 @@ ShadowSystem="*res://src/systems/shadow/shadow_system.gd"
 EnemySystem="*res://src/systems/enemy/enemy_system.gd"
 CombatSystem="*res://src/systems/combat/combat_system.gd"
 StageSystem="*res://src/systems/stage/stage_system.gd"
+WorldMapUI="*res://src/ui/menus/world_map/world_map_ui.gd"
 
 [display]
 

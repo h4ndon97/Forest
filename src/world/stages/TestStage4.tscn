@@ -79,6 +79,11 @@ position = Vector2(32, 180)
 target_stage_id = "test_stage_2"
 direction = "left"
 
+[node name="PortalRight" parent="." instance=ExtResource("portal")]
+position = Vector2(608, 180)
+target_stage_id = "test_checkpoint_2"
+direction = "right"
+
 [node name="Enemies" type="Node2D" parent="."]
 
 [node name="TreeEnemy" parent="Enemies" instance=ExtResource("enemy_base")]

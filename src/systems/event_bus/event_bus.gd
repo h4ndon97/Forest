@@ -67,6 +67,10 @@ signal checkpoint_entered(checkpoint_id: String)
 signal checkpoint_exited(checkpoint_id: String)
 signal full_recovery_requested()
 
+# === 월드맵 ===
+signal world_map_opened()
+signal world_map_closed()
+
 # === 시간 자원 ===
 signal time_resource_changed(current: float, max_val: float)
 signal time_resource_depleted()
