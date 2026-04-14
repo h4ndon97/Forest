@@ -41,6 +41,12 @@ func recover_flat(amount: float) -> void:
 	_apply_recovery(amount)
 
 
+func full_recover() -> void:
+	current = max_value
+	_was_depleted = false
+	resource_changed.emit(current, max_value)
+
+
 func is_depleted() -> bool:
 	return current <= 0.0
 

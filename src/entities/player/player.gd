@@ -46,6 +46,7 @@ func _ready() -> void:
 	state_machine.state_changed.connect(_on_state_changed)
 	EventBus.player_died.connect(_on_died)
 	EventBus.player_respawned.connect(_on_respawned)
+	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
 
 
 func _physics_process(delta: float) -> void:
@@ -127,6 +128,15 @@ func _on_died() -> void:
 		_death_tween.kill()
 	_death_tween = create_tween()
 	_death_tween.tween_property(animated_sprite, "modulate", Color(0.3, 0.1, 0.1, 0.4), 0.5)
+
+
+func _on_checkpoint_entered(_checkpoint_id: String) -> void:
+	if _is_dead:
+		_is_dead = false
+		velocity = Vector2.ZERO
+		if _death_tween:
+			_death_tween.kill()
+		animated_sprite.modulate = Color.WHITE
 
 
 func _on_respawned(pos: Vector2) -> void:

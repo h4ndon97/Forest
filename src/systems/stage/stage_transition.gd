@@ -64,6 +64,11 @@ func is_transitioning() -> bool:
 	return _is_transitioning
 
 
+## 페이드 사각형을 즉시 검정으로 설정한다 (세이브 로드 시 초기 씬 노출 방지).
+func set_fade_black() -> void:
+	_fade_rect.color = Color(0, 0, 0, 1)
+
+
 # --- 내부 ---
 
 func _create_fade_rect() -> void:
@@ -99,6 +104,8 @@ func _reinsert_player(player: CharacterBody2D) -> void:
 		player.global_position = Vector2(SPAWN_MARGIN, SPAWN_Y_FLOOR)
 	elif _pending_entry_direction == "right":
 		player.global_position = Vector2(viewport_width - SPAWN_MARGIN, SPAWN_Y_FLOOR)
+	elif _pending_entry_direction == "checkpoint":
+		player.global_position = Vector2(viewport_width / 2.0, SPAWN_Y_FLOOR)
 
 	player.velocity = Vector2.ZERO
 

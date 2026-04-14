@@ -2,7 +2,7 @@ extends Node2D
 
 ## 플레이어 등불 컴포넌트.
 ## PointLight2D로 분위기 조명을 제공하고,
-## ShadowSystem에 등불 소스를 등록하여 밤 그림자를 생성한다.
+## EventBus.lantern_toggled 시그널로 등불 상태를 방송한다.
 
 const CONFIG_PATH := "res://data/lantern/lantern_config.tres"
 
@@ -20,13 +20,6 @@ func _ready() -> void:
 func toggle() -> void:
 	_is_on = not _is_on
 	_light.enabled = _is_on
-
-	if _is_on:
-		ShadowSystem.register_lantern(_config.max_range)
-		ShadowSystem.update_lantern_position(global_position)
-	else:
-		ShadowSystem.unregister_lantern()
-
 	EventBus.lantern_toggled.emit(_is_on, global_position)
 
 

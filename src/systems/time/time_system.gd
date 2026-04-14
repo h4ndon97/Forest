@@ -21,6 +21,7 @@ var _manipulation_start_hour: float = 0.0
 var _did_manipulate: bool = false
 var _flow_rate: float = 1.0
 var _flow_paused: bool = false
+var _input_blocked: bool = false
 
 
 func _ready() -> void:
@@ -50,6 +51,9 @@ func _ready() -> void:
 	EventBus.time_flow_resumed.connect(_on_flow_resumed)
 	EventBus.time_hour_sync_requested.connect(_on_hour_sync_requested)
 	EventBus.time_flow_resume_requested.connect(_on_flow_resume_requested)
+	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
+	EventBus.checkpoint_exited.connect(_on_checkpoint_exited)
+	EventBus.full_recovery_requested.connect(_on_full_recovery_requested)
 
 	_atmosphere.update_atmosphere(_clock.current_hour, _config)
 	EventBus.current_hour_changed.emit(_clock.current_hour)
@@ -86,6 +90,8 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _input_blocked:
+		return
 	if event.is_action_pressed("time_manipulate"):
 		_on_manipulate_pressed()
 	elif event.is_action_released("time_manipulate"):
@@ -106,6 +112,10 @@ func is_day() -> bool:
 
 func get_sun_angle() -> float:
 	return _clock.get_sun_angle()
+
+
+func get_resource_data() -> Dictionary:
+	return {"current": _resource.current, "max_value": _resource.max_value}
 
 
 # --- 내부 ---
@@ -196,6 +206,18 @@ func _on_hour_sync_requested(hour: float) -> void:
 	EventBus.sun_state_updated.emit(_clock.get_sun_angle(), _clock.is_day())
 	if _clock.is_day() != was_day:
 		EventBus.day_night_changed.emit(_clock.is_day())
+
+
+func _on_checkpoint_entered(_checkpoint_id: String) -> void:
+	_input_blocked = true
+
+
+func _on_checkpoint_exited(_checkpoint_id: String) -> void:
+	_input_blocked = false
+
+
+func _on_full_recovery_requested() -> void:
+	_resource.full_recover()
 
 
 func _on_enemy_killed(_enemy_id: int, _enemy_name: String) -> void:

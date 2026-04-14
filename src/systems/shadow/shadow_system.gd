@@ -5,6 +5,7 @@ extends Node
 ## 밤에는 등불 소스 기반 per-object 그림자 계산을 지원한다.
 
 const CONFIG_PATH := "res://data/shadow/shadow_config.tres"
+const LANTERN_CONFIG_PATH := "res://data/lantern/lantern_config.tres"
 
 var _config: ShadowConfigData
 var _is_day: bool = true
@@ -23,8 +24,12 @@ func _ready() -> void:
 	_config = load(CONFIG_PATH) as ShadowConfigData
 	_shadow_direction = _config.default_direction
 
+	var lantern_config: LanternConfigData = load(LANTERN_CONFIG_PATH) as LanternConfigData
+	_lantern_max_range = lantern_config.max_range
+
 	EventBus.sun_state_updated.connect(_on_sun_state_updated)
 	EventBus.day_night_changed.connect(_on_day_night_changed)
+	EventBus.lantern_toggled.connect(_on_lantern_toggled)
 
 
 func get_shadow_direction() -> Vector2:
@@ -51,16 +56,12 @@ func is_day_mode() -> bool:
 	return _is_day
 
 
-## 등불 소스를 등록한다. 등불이 켜질 때 호출.
-func register_lantern(max_range: float) -> void:
-	_lantern_active = true
-	_lantern_max_range = max_range
-
-
-## 등불 소스를 해제한다. 등불이 꺼질 때 호출.
-func unregister_lantern() -> void:
-	_lantern_active = false
-	if not _is_day:
+## 등불 토글 시그널 수신. 등불 ON/OFF에 따라 내부 상태를 갱신한다.
+func _on_lantern_toggled(is_on: bool, lantern_position: Vector2) -> void:
+	_lantern_active = is_on
+	if is_on:
+		_lantern_position = lantern_position
+	elif not _is_day:
 		_update_night_no_lantern()
 
 

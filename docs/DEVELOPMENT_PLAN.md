@@ -146,7 +146,7 @@ Phase 6  출시
 - [x] 등불 거리 기반 그림자 크기 (밤 반전 로직)
 - **의존성**: 1-4
 - **구현 파일**:
-  - `src/entities/player/player_lantern.gd` — 등불 컴포넌트 (PointLight2D 관리, 토글, ShadowSystem 등록)
+  - `src/entities/player/player_lantern.gd` — 등불 컴포넌트 (PointLight2D 관리, 토글, EventBus.lantern_toggled 시그널 방송)
   - `data/lantern/lantern_config_data.gd` — Resource 클래스 (LanternConfigData)
   - `data/lantern/lantern_config.tres` — 수치 데이터 인스턴스
 - **수정 파일**: shadow_system.gd (등불 관리 API + per-object 계산), shadow_caster.gd (밤 모드 분기 + 폴링), player.gd/player_input.gd/Player.tscn (Lantern 연동), enemy_system.gd/enemy_registry.gd (per-enemy 강도)
@@ -262,9 +262,31 @@ Phase 6  출시
 - **의존성**: 2-6
 
 #### 2-8. 거점 시스템
-- [ ] 거점 씬 (회복, 세이브) — 2-8a
+- [x] 거점 씬 (회복, 세이브) — 2-8a
 - [ ] 월드맵 포탈 (거점 간 이동) + 월드맵 UI — 2-8b
 - **의존성**: 2-4
+- **구현 파일** (2-8a):
+  - `src/systems/stage/save_manager.gd` — JSON 세이브/로드 (StageSystem 자식 노드)
+  - `src/world/checkpoints/test_checkpoint.gd` — 거점 씬 스크립트
+  - `src/world/checkpoints/TestCheckpoint.tscn` — 거점 씬 (Floor, Walls, Portal, BG)
+  - `data/stages/test_checkpoint.tres` — 거점 StageData (is_checkpoint=true)
+- **수정 파일** (2-8a):
+  - `src/systems/event_bus/event_bus.gd` — +3 시그널 (checkpoint_entered/exited, full_recovery_requested)
+  - `data/stages/stage_data.gd` — +is_checkpoint 필드
+  - `src/systems/time/time_resource.gd` — +full_recover()
+  - `src/entities/player/player_health.gd` — +full_recovery_requested 핸들러
+  - `src/entities/player/player.gd` — +checkpoint_entered 핸들러 (사망 상태 리셋)
+  - `src/systems/time/time_system.gd` — +시간 잠금 + get_resource_data()
+  - `src/systems/stage/stage_system.gd` — +거점 추적 + 세이브 통합
+  - `src/systems/stage/stage_clear_tracker.gd` — +직렬화 + 잔류 복원
+  - `src/systems/stage/stage_transition.gd` — +"checkpoint" 방향 (중앙 스폰)
+  - `src/systems/combat/combat_system.gd` — +사망→거점 귀환 분기
+  - `data/stages/test_stage_5.tres` — +test_checkpoint 인접
+  - `src/world/stages/TestStage5.tscn` — +PortalLeft (→test_checkpoint)
+  - `src/ui/hud/combat_hud.gd` — +사망 오버레이 거점 해제 + HP 회복 tween 연출
+  - `src/ui/hud/time_hud.gd` — +시간자원 회복 tween 연출
+  - `project.godot` — +debug_delete_save 입력 (Backspace)
+- **알려진 제한** (2-8a): 세이브 로드 시 초기 씬이 1~2프레임 노출됨 — 타이틀/로딩 화면 추가 시 해결 예정
 
 ### Phase 2 완료 기준
 ```
@@ -536,7 +558,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-12, Phase 2 진행 중)
+## 구현 현황 요약 (최종 업데이트: 2026-04-14, Phase 2 진행 중)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -550,6 +572,7 @@ Phase 6 (출시)
 | 1-7 | 등불 (기본) | ✅ 완료 | PlayerLantern 컴포넌트 + PointLight2D + 밤 per-object 그림자 + per-enemy 강도 |
 | **2-4a** | **스테이지 시스템 기반** | **✅ 완료** | **StageSystem Autoload + StageData + 3단계 클리어 상태** |
 | **2-4b** | **스테이지 전환** | **✅ 완료** | **StagePortal(윗방향키) + 페이드 전환 + Player 보존 + 적 유지 + 스테이지별 독립 시간** |
+| **2-8a** | **거점 씬 (회복, 세이브)** | **✅ 완료** | **거점 진입→완전 회복(tween 연출) + 시간 잠금 + 사망→거점 귀환 + JSON 세이브/로드 + Backspace 세이브 삭제** |
 
 ### Phase 2 세부 작업 순서
 
@@ -558,11 +581,11 @@ Phase 6 (출시)
   │
   ├── 2-4b 스테이지 전환 (인접 포탈, 씬 로딩) ✅
   │     │
-  │     ├── 2-4c 잠금 프레임워크 + 빛 잠금
-  │     ├── 2-4d 시간 전파 + 정화 프레임워크
-  │     └── 2-4e 테스트 스테이지 2~3개 추가
+  │     ├── 2-4c 잠금 프레임워크 + 빛 잠금 ✅
+  │     ├── 2-4d 시간 전파 + 정화 프레임워크 ✅
+  │     └── 2-4e 테스트 스테이지 3개 추가 ✅
   │           │
-  │           ├── 2-8a 거점 씬 (회복, 세이브)
+  │           ├── 2-8a 거점 씬 (회복, 세이브) ✅
   │           │     │
   │           │     └── 2-8b 월드맵 포탈 + 월드맵 UI
   │           │

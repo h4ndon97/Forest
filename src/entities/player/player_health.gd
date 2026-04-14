@@ -25,6 +25,7 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	_create_knockback_timer()
 
 	EventBus.player_respawned.connect(_on_respawned)
+	EventBus.full_recovery_requested.connect(_on_full_recovery)
 	EventBus.health_changed.emit(current_hp, max_hp)
 
 
@@ -115,7 +116,15 @@ func _apply_knockback(enemy: Node2D) -> void:
 	_knockback_timer.start()
 
 
+func _on_full_recovery() -> void:
+	_reset_health_state()
+
+
 func _on_respawned(_position: Vector2) -> void:
+	_reset_health_state()
+
+
+func _reset_health_state() -> void:
 	current_hp = max_hp
 	_is_invincible = false
 	_is_knocked_back = false

@@ -9,16 +9,18 @@ const ClearTrackerScript = preload("res://src/systems/stage/stage_clear_tracker.
 const TransitionScript = preload("res://src/systems/stage/stage_transition.gd")
 const LockValidatorScript = preload("res://src/systems/stage/stage_lock_validator.gd")
 const TimePropagationScript = preload("res://src/systems/stage/time_propagation.gd")
+const SaveManagerScript = preload("res://src/systems/stage/save_manager.gd")
 const STAGE_DATA_DIR := "res://data/stages/"
 const PROPAGATION_CONFIG_PATH := "res://data/stages/propagation_config.tres"
-const RESIDUE_SCENE_PATH := "res://src/entities/enemies/shadow_residue/ShadowResidue.tscn"
 
 var _registry: Node
 var _clear_tracker: Node
 var _transition: CanvasLayer
 var _lock_validator: Node
 var _time_propagation: Node
+var _save_manager: Node
 var _current_stage_id: String = ""
+var _last_checkpoint_id: String = ""
 var _stage_hours: Dictionary = {}    # stage_id -> float (저장된 시각)
 var _tracked_hour: float = 12.0      # 현재 시간 시스템의 최신 시각
 var _is_flowing: bool = false        # 현재 시간 흐름 상태
@@ -34,6 +36,7 @@ func _ready() -> void:
 	_clear_tracker.name = "ClearTracker"
 	_clear_tracker.set_script(ClearTrackerScript)
 	add_child(_clear_tracker)
+	_clear_tracker.setup_residue_scene("res://src/entities/enemies/shadow_residue/ShadowResidue.tscn")
 
 	_transition = CanvasLayer.new()
 	_transition.name = "Transition"
@@ -50,11 +53,29 @@ func _ready() -> void:
 	_time_propagation.set_script(TimePropagationScript)
 	add_child(_time_propagation)
 
+	_save_manager = Node.new()
+	_save_manager.name = "SaveManager"
+	_save_manager.set_script(SaveManagerScript)
+	add_child(_save_manager)
+
 	_load_stage_data()
 	_connect_signals()
 
 	var prop_config: PropagationConfigData = load(PROPAGATION_CONFIG_PATH) as PropagationConfigData
 	_time_propagation.setup(_registry, _stage_hours, prop_config)
+
+	# 세이브 존재 시 첫 프레임 렌더 전에 즉시 검정 화면 적용
+	if _save_manager.has_save():
+		_transition.set_fade_black()
+
+	_try_load_save.call_deferred()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("debug_delete_save"):
+		_save_manager.delete_save()
+		_last_checkpoint_id = ""
+		push_warning("StageSystem: 세이브 삭제됨 (재시작 시 반영)")
 
 
 ## 현재 스테이지 ID를 반환한다.
@@ -91,6 +112,11 @@ func get_all_stage_ids() -> Array:
 	return _registry.get_all_stage_ids()
 
 
+## 마지막 방문 거점 ID를 반환한다.
+func get_last_checkpoint_id() -> String:
+	return _last_checkpoint_id
+
+
 ## 스테이지 전환을 실행한다.
 func transition_to_stage(target_stage_id: String, entry_direction: String) -> void:
 	if _transition.is_transitioning():
@@ -110,8 +136,11 @@ func transition_to_stage(target_stage_id: String, entry_direction: String) -> vo
 		)
 		return
 
-	# 현재 스테이지 시간 저장
+	# 현재 스테이지 시간 저장 + 거점 이탈 시그널
 	if not _current_stage_id.is_empty():
+		var current_data: StageData = _registry.get_stage(_current_stage_id)
+		if current_data and current_data.is_checkpoint:
+			EventBus.checkpoint_exited.emit(_current_stage_id)
 		_stage_hours[_current_stage_id] = _tracked_hour
 
 	var was_flowing := _is_flowing
@@ -128,7 +157,46 @@ func transition_to_stage(target_stage_id: String, entry_direction: String) -> vo
 		EventBus.time_flow_resumed.emit()
 
 
+## 세이브 데이터로부터 상태를 복원한다.
+func load_save_data(data: Dictionary) -> void:
+	_last_checkpoint_id = data.get("last_checkpoint_id", "")
+	var saved_hours: Dictionary = data.get("stage_hours", {})
+	for stage_id in saved_hours:
+		_stage_hours[stage_id] = float(saved_hours[stage_id])
+	var tracker_data: Dictionary = data.get("clear_tracker", {})
+	if not tracker_data.is_empty():
+		_clear_tracker.load_save_data(tracker_data)
+
+
 # --- 내부 ---
+
+## 세이브 파일이 있으면 상태를 복원하고 거점으로 전환한다.
+func _try_load_save() -> void:
+	if not _save_manager.has_save():
+		return
+	var data: Dictionary = _save_manager.load_game()
+	if data.is_empty():
+		return
+	load_save_data(data)
+
+	# 초기 씬 로드 완료 후 거점으로 전환 (검정 화면은 _ready에서 이미 적용됨)
+	if not _last_checkpoint_id.is_empty():
+		await get_tree().process_frame
+		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint")
+
+
+## 세이브용 전체 데이터를 수집한다.
+func _collect_save_data() -> Dictionary:
+	var data := {
+		"last_checkpoint_id": _last_checkpoint_id,
+		"stage_hours": _stage_hours.duplicate(),
+		"clear_tracker": _clear_tracker.get_save_data(),
+	}
+	# TimeSystem public API로 시간 자원 데이터 수집
+	if TimeSystem and TimeSystem.has_method("get_resource_data"):
+		data["time_resource"] = TimeSystem.get_resource_data()
+	return data
+
 
 func _load_stage_data() -> void:
 	var dir := DirAccess.open(STAGE_DATA_DIR)
@@ -153,21 +221,9 @@ func _connect_signals() -> void:
 	EventBus.residue_left.connect(_on_residue_left)
 	EventBus.residue_purified.connect(_on_residue_purified)
 	EventBus.stage_transition_requested.connect(_on_transition_requested)
-	EventBus.current_hour_changed.connect(_on_hour_changed)
-	EventBus.time_flow_started.connect(_on_flow_started)
-	EventBus.time_flow_stopped.connect(_on_flow_stopped)
-
-
-func _on_hour_changed(hour: float) -> void:
-	_tracked_hour = hour
-
-
-func _on_flow_started(_hour: float) -> void:
-	_is_flowing = true
-
-
-func _on_flow_stopped(_hour: float) -> void:
-	_is_flowing = false
+	EventBus.current_hour_changed.connect(func(hour: float): _tracked_hour = hour)
+	EventBus.time_flow_started.connect(func(_hour: float): _is_flowing = true)
+	EventBus.time_flow_stopped.connect(func(_hour: float): _is_flowing = false)
 
 
 func _on_transition_requested(target_stage_id: String, entry_direction: String) -> void:
@@ -206,7 +262,14 @@ func _on_stage_entered(stage_id: String) -> void:
 	# 저장된 잔류 마커 복원
 	var residues: Array = _clear_tracker.get_residues(stage_id)
 	if not residues.is_empty():
-		_respawn_residues.call_deferred(residues)
+		_clear_tracker.respawn_residues_in_scene.call_deferred(residues)
+
+	# 거점 감지: 완전 회복 + 세이브 트리거
+	if data.is_checkpoint:
+		_last_checkpoint_id = stage_id
+		EventBus.checkpoint_entered.emit(stage_id)
+		EventBus.full_recovery_requested.emit()
+		_save_manager.save_game(_collect_save_data())
 
 
 func _on_enemy_killed(_enemy_id: int, enemy_name: String) -> void:
@@ -229,19 +292,3 @@ func _on_residue_purified(position: Vector2) -> void:
 	var new_state: int = _clear_tracker.on_residue_purified(_current_stage_id, position)
 	if new_state >= 0:
 		EventBus.stage_clear_updated.emit(_current_stage_id, new_state)
-
-
-## 저장된 잔류 마커를 현재 씬에 복원한다.
-func _respawn_residues(residues: Array) -> void:
-	var scene_root := get_tree().current_scene
-	if not scene_root:
-		return
-	if not ResourceLoader.exists(RESIDUE_SCENE_PATH):
-		return
-	var residue_scene := load(RESIDUE_SCENE_PATH) as PackedScene
-	for record in residues:
-		var residue := residue_scene.instantiate()
-		residue.global_position = record["position"]
-		if residue.has_method("setup_from_saved"):
-			residue.setup_from_saved(record["killed_during_day"])
-		scene_root.add_child(residue)

@@ -15,6 +15,9 @@ var _combo_indicators: Array[ColorRect] = []
 var _death_overlay: ColorRect
 var _death_label: Label
 var _death_tween: Tween
+var _clear_tween: Tween
+var _recovery_tween: Tween
+var _prev_hp_bar_value: float = 100.0
 
 
 func _ready() -> void:
@@ -24,6 +27,8 @@ func _ready() -> void:
 	EventBus.combo_resetted.connect(_on_combo_resetted)
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.player_respawned.connect(_on_player_respawned)
+	EventBus.checkpoint_entered.connect(_on_checkpoint_respawned)
+	EventBus.full_recovery_requested.connect(_on_full_recovery)
 
 	_setup_combo_indicators()
 	_create_death_overlay()
@@ -60,9 +65,21 @@ func _create_death_overlay() -> void:
 # === HP ===
 
 func _on_health_changed(current_hp: float, max_hp: float) -> void:
+	hp_label.text = "%d / %d" % [int(current_hp), int(max_hp)]
+	if _recovery_tween and _recovery_tween.is_running():
+		return
+	_prev_hp_bar_value = hp_bar.value
 	if max_hp > 0.0:
 		hp_bar.value = current_hp / max_hp * 100.0
-	hp_label.text = "%d / %d" % [int(current_hp), int(max_hp)]
+
+
+func _on_full_recovery() -> void:
+	if _recovery_tween:
+		_recovery_tween.kill()
+	var start_value: float = _prev_hp_bar_value
+	hp_bar.value = start_value
+	_recovery_tween = create_tween()
+	_recovery_tween.tween_property(hp_bar, "value", 100.0, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 
 
 # === 콤보 ===
@@ -113,16 +130,28 @@ func _on_player_died() -> void:
 
 
 func _on_player_respawned(_position: Vector2) -> void:
+	_clear_death_overlay()
+
+
+func _on_checkpoint_respawned(_checkpoint_id: String) -> void:
+	if not _death_overlay.visible:
+		return
+	_clear_death_overlay()
+
+
+func _clear_death_overlay() -> void:
 	if _death_tween:
 		_death_tween.kill()
+	if _clear_tween:
+		_clear_tween.kill()
 
-	var tween := create_tween().set_parallel(true)
-	tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0), 0.3)
-	tween.tween_property(
+	_clear_tween = create_tween().set_parallel(true)
+	_clear_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0), 0.3)
+	_clear_tween.tween_property(
 		_death_label, "theme_override_colors/font_color",
 		Color(0.8, 0.2, 0.2, 0), 0.2
 	)
-	tween.chain().tween_callback(func():
+	_clear_tween.chain().tween_callback(func():
 		_death_overlay.visible = false
 		_death_label.text = ""
 	)

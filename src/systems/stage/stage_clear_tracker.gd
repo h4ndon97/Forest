@@ -11,6 +11,7 @@ var _residues_purified: Dictionary = {}      # stage_id -> int
 var _total_enemies: Dictionary = {}          # stage_id -> int
 var _total_residues: Dictionary = {}         # stage_id -> int
 var _residue_records: Dictionary = {}        # stage_id -> Array[{position, killed_during_day}]
+var _residue_scene_path: String = ""
 
 
 ## 스테이지의 클리어 추적을 초기화한다. 재진입 시 기존 상태를 유지한다.
@@ -105,6 +106,74 @@ func get_progress(stage_id: String) -> Dictionary:
 		"total_residues": _total_residues.get(stage_id, 0),
 		"clear_state": _clear_states.get(stage_id, StageData.ClearState.UNCLEARED),
 	}
+
+
+## 세이브용 직렬화 데이터를 반환한다.
+func get_save_data() -> Dictionary:
+	var serialized_residues := {}
+	for stage_id in _residue_records:
+		var records: Array = _residue_records[stage_id]
+		var arr := []
+		for record in records:
+			var pos: Vector2 = record["position"]
+			arr.append({
+				"x": pos.x,
+				"y": pos.y,
+				"killed_during_day": record["killed_during_day"],
+			})
+		serialized_residues[stage_id] = arr
+	return {
+		"clear_states": _clear_states.duplicate(),
+		"enemies_killed": _enemies_killed.duplicate(),
+		"killed_enemy_names": _killed_enemy_names.duplicate(true),
+		"residues_purified": _residues_purified.duplicate(),
+		"total_enemies": _total_enemies.duplicate(),
+		"total_residues": _total_residues.duplicate(),
+		"residue_records": serialized_residues,
+	}
+
+
+## 세이브 데이터로부터 상태를 복원한다.
+func load_save_data(data: Dictionary) -> void:
+	_clear_states = data.get("clear_states", {})
+	_enemies_killed = data.get("enemies_killed", {})
+	_killed_enemy_names = data.get("killed_enemy_names", {})
+	_residues_purified = data.get("residues_purified", {})
+	_total_enemies = data.get("total_enemies", {})
+	_total_residues = data.get("total_residues", {})
+
+	# residue_records: {x, y} → Vector2 역직렬화
+	_residue_records = {}
+	var raw_residues: Dictionary = data.get("residue_records", {})
+	for stage_id in raw_residues:
+		var arr := []
+		for record in raw_residues[stage_id]:
+			arr.append({
+				"position": Vector2(record["x"], record["y"]),
+				"killed_during_day": record["killed_during_day"],
+			})
+		_residue_records[stage_id] = arr
+
+
+## 잔류 복원용 씬 경로를 설정한다.
+func setup_residue_scene(path: String) -> void:
+	_residue_scene_path = path
+
+
+## 저장된 잔류 마커를 현재 씬에 복원한다.
+func respawn_residues_in_scene(residues: Array) -> void:
+	var scene_root := get_tree().current_scene
+	if not scene_root:
+		return
+	if _residue_scene_path.is_empty() or not ResourceLoader.exists(_residue_scene_path):
+		return
+	var residue_scene := load(_residue_scene_path) as PackedScene
+	for record in residues:
+		var residue := residue_scene.instantiate()
+		residue.global_position = record["position"]
+		if residue.has_method("setup_from_saved"):
+			residue.setup_from_saved(record["killed_during_day"])
+		scene_root.add_child(residue)
 
 
 ## 위치 기준으로 가장 가까운 잔류 기록을 제거한다.

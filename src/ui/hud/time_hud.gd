@@ -23,10 +23,15 @@ const STATE_COLORS := {
 @onready var resource_label: Label = $MarginContainer/VBoxContainer/ResourceLabel
 
 
+var _recovery_tween: Tween
+var _prev_gauge_value: float = 100.0
+
+
 func _ready() -> void:
 	EventBus.current_hour_changed.connect(_on_hour_changed)
 	EventBus.time_resource_changed.connect(_on_resource_changed)
 	EventBus.time_state_changed.connect(_on_state_changed)
+	EventBus.full_recovery_requested.connect(_on_full_recovery)
 
 
 func _on_hour_changed(hour: float) -> void:
@@ -36,9 +41,21 @@ func _on_hour_changed(hour: float) -> void:
 
 
 func _on_resource_changed(current: float, max_val: float) -> void:
+	resource_label.text = "%d / %d" % [int(current), int(max_val)]
+	if _recovery_tween and _recovery_tween.is_running():
+		return
+	_prev_gauge_value = resource_gauge.value
 	if max_val > 0.0:
 		resource_gauge.value = current / max_val * 100.0
-	resource_label.text = "%d / %d" % [int(current), int(max_val)]
+
+
+func _on_full_recovery() -> void:
+	if _recovery_tween:
+		_recovery_tween.kill()
+	var start_value: float = _prev_gauge_value
+	resource_gauge.value = start_value
+	_recovery_tween = create_tween()
+	_recovery_tween.tween_property(resource_gauge, "value", 100.0, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 
 
 func _on_state_changed(old_state: int, new_state: int) -> void:

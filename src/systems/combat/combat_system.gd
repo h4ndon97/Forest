@@ -10,6 +10,7 @@ const HUD_PATH := "res://src/ui/hud/CombatHud.tscn"
 
 var _config: CombatConfigData
 var _spawn_point: Vector2 = Vector2.ZERO
+var _last_checkpoint_id: String = ""
 var _respawn_timer: Timer
 
 
@@ -25,6 +26,7 @@ func _ready() -> void:
 
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.spawn_point_set.connect(_on_spawn_point_set)
+	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
 
 	_load_hud.call_deferred()
 
@@ -54,12 +56,19 @@ func _on_spawn_point_set(position: Vector2) -> void:
 	_spawn_point = position
 
 
+func _on_checkpoint_entered(checkpoint_id: String) -> void:
+	_last_checkpoint_id = checkpoint_id
+
+
 func _on_player_died() -> void:
 	_respawn_timer.start()
 
 
 func _on_respawn_timeout() -> void:
-	EventBus.player_respawned.emit(_spawn_point)
+	if not _last_checkpoint_id.is_empty():
+		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint")
+	else:
+		EventBus.player_respawned.emit(_spawn_point)
 
 
 func _load_hud() -> void:

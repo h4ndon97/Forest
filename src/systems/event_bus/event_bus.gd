@@ -62,6 +62,11 @@ signal skill_unlocked(skill_id: String)
 # === 등불 시스템 ===
 signal lantern_toggled(is_on: bool, lantern_position: Vector2)
 
+# === 거점 시스템 ===
+signal checkpoint_entered(checkpoint_id: String)
+signal checkpoint_exited(checkpoint_id: String)
+signal full_recovery_requested()
+
 # === 시간 자원 ===
 signal time_resource_changed(current: float, max_val: float)
 signal time_resource_depleted()

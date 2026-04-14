@@ -32,3 +32,7 @@ enum LockType { NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY }
 @export var total_enemies: int = 0
 ## 스테이지 내 총 잔류 수 (보통 total_enemies와 동일)
 @export var total_residues: int = 0
+
+@export_group("거점 설정")
+## 이 스테이지가 거점(체크포인트)인지 여부
+@export var is_checkpoint: bool = false
