@@ -9,6 +9,7 @@ const DuskSpiderEntityScript = preload("res://src/systems/dusk_spider/dusk_spide
 const CONFIG_PATH := "res://data/dusk_spider/dusk_spider_config.tres"
 const COMBAT_SCENE_PATH := "res://src/entities/enemies/dusk_spider/DuskSpiderCombat.tscn"
 const SPAWN_OFFSET_X := 120.0
+const HUD_PATH := "res://src/ui/hud/DuskSpiderHud.tscn"
 
 var _config: Resource
 var _navigator: Node
@@ -16,12 +17,14 @@ var _spiders: Array = []  # Array[DuskSpiderEntity]
 var _next_id: int = 0
 var _player_stage_id: String = ""
 var _is_flowing: bool = false
+var _last_closest_distance: int = -1
 
 
 func _ready() -> void:
 	_config = load(CONFIG_PATH)
 	_navigator = _create_child("Navigator", NavigatorScript)
 	_connect_signals()
+	_load_hud.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -39,8 +42,9 @@ func _process(delta: float) -> void:
 			# 맵 간 이동 완료 시 다음 구간 설정
 			if spider.move_progress == 0.0 and not spider.next_stage_id.is_empty():
 				_update_spider_next_step(spider)
-			# 접근 경고
-			_emit_approach_warning(spider)
+
+	# 프레임당 1회 — 가장 가까운 거리만 발신 (변화 시에만)
+	_emit_closest_distance()
 
 
 ## 활성 땅거미 수를 반환한다 (IDLE + TRACKING).
@@ -99,6 +103,10 @@ func _on_time_flow_stopped(_current_hour: float) -> void:
 	_is_flowing = false
 	for spider in _spiders:
 		spider.stop_tracking()
+	# 경고 해제
+	if _last_closest_distance != -1:
+		_last_closest_distance = -1
+		EventBus.dusk_spider_approached.emit(-1)
 
 
 func _on_stage_entered(stage_id: String) -> void:
@@ -174,10 +182,22 @@ func _update_spider_next_step(spider: RefCounted) -> void:
 	spider.next_stage_id = next
 
 
-func _emit_approach_warning(spider: RefCounted) -> void:
-	var distance: int = spider.get_remaining_distance(_navigator)
-	if distance >= 0:
-		EventBus.dusk_spider_approached.emit(distance)
+func _emit_closest_distance() -> void:
+	var closest: int = _compute_closest_distance()
+	if closest != _last_closest_distance:
+		_last_closest_distance = closest
+		EventBus.dusk_spider_approached.emit(closest)
+
+
+func _compute_closest_distance() -> int:
+	var min_dist: int = -1
+	for spider in _spiders:
+		if spider.state != DuskSpiderEntityScript.State.TRACKING:
+			continue
+		var dist: int = spider.get_remaining_distance(_navigator)
+		if dist >= 0 and (min_dist < 0 or dist < min_dist):
+			min_dist = dist
+	return min_dist
 
 
 func _spawn_combat_entity(spider: RefCounted) -> void:
@@ -213,6 +233,13 @@ func _cleanup_defeated() -> void:
 		if spider.state != DuskSpiderEntityScript.State.DEFEATED:
 			alive.append(spider)
 	_spiders = alive
+
+
+func _load_hud() -> void:
+	if not ResourceLoader.exists(HUD_PATH):
+		return
+	var hud := load(HUD_PATH) as PackedScene
+	get_tree().root.add_child(hud.instantiate())
 
 
 func _create_child(child_name: String, script: GDScript) -> Node:

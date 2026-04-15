@@ -185,8 +185,8 @@
 | 전투 공격력 | combat_attack | 45 |
 | 처치 포인트 | defeat_points | 50 |
 
-### 구현 상태 (Phase 2-3b 완료)
-- **DuskSpiderSystem**: Autoload. 시간 흐름 감지 → 스폰 → 이동 추적 → 도착 처리 → 전투 엔티티 스폰
+### 구현 상태 (Phase 2-3c 완료)
+- **DuskSpiderSystem**: Autoload. 시간 흐름 감지 → 스폰 → 이동 추적 → 도착 처리 → 전투 엔티티 스폰 → HUD 로딩
 - **DuskSpiderNavigator**: BFS 경로탐색. StageSystem의 인접 그래프 기반 최단 경로 계산
 - **DuskSpiderEntity**: RefCounted 데이터 객체. 상태 머신 (IDLE → TRACKING → ARRIVED → DEFEATED)
 - **DuskSpiderConfigData**: Resource 클래스. 모든 수치 외부화 (`data/dusk_spider/dusk_spider_config.tres`)
@@ -195,11 +195,11 @@
   - 잔류를 남기지 않음 (`leaves_residue = false`). 처치 시 논리 엔티티 자동 정리
   - 스탯: `data/enemies/dusk_spider_stats.tres` (HP 200, ATK 45)
 - **도착 시 처리**: EnemyStats.reinforce() + EventBus.residue_revival_requested + 전투 엔티티 스폰
-- **시스템 간 통신**: EventBus.dusk_spider_spawned / dusk_spider_defeated / enemy_reinforce_requested
-- **디버그 R키 제거**: residue_reviver.gd에서 수동 트리거 삭제 완료
-
-### 미구현 (후속 Phase)
-- [ ] HUD 접근 경고 표시 (Phase 2-3c)
+- **시스템 간 통신**: EventBus.dusk_spider_spawned / dusk_spider_approached / dusk_spider_arrived / dusk_spider_defeated / enemy_reinforce_requested
+- **접근 시그널 통합**: 프레임당 1회, 가장 가까운 거리만 발신 (변화 시에만 emit)
+- **DuskSpiderHud**: CanvasLayer HUD (우상단). 2맵 이내 접근 시 보라색 맥동 경고, 1맵 시 긴급, 도착 시 플래시+스케일 연출
+  - fallback 비주얼: ColorRect 12x12 보라색. `fx_spider_warning.png` 존재 시 TextureRect 자동 교체
+  - 시간 정지 → 경고 숨김, 모든 땅거미 처치 → 자동 해제
 
 ### 미결 사항
 - [ ] 땅거미 자체 공격 패턴

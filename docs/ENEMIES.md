@@ -92,8 +92,8 @@ CORE_SYSTEMS.md에서 확정:
 | 전투 공격력 | 45 | 전투 엔티티 스폰 시 |
 | 처치 포인트 | 50 | 성장 포인트 |
 
-### 구현 상태 (Phase 2-3b 완료)
-- **DuskSpiderSystem**: Autoload. 시간 흐름 감지 → 스폰 → 이동 추적 → 도착 처리 → 전투 엔티티 스폰
+### 구현 상태 (Phase 2-3c 완료)
+- **DuskSpiderSystem**: Autoload. 시간 흐름 감지 → 스폰 → 이동 추적 → 도착 처리 → 전투 엔티티 스폰 → HUD 로딩
 - **DuskSpiderNavigator**: BFS 경로탐색. StageSystem의 인접 그래프 기반
 - **DuskSpiderEntity**: RefCounted 데이터 객체. 상태 머신 (IDLE → TRACKING → ARRIVED → DEFEATED)
 - **DuskSpiderConfigData**: 외부 설정 리소스 (.tres). 모든 수치 외부화
@@ -103,10 +103,8 @@ CORE_SYSTEMS.md에서 확정:
   - 씬: `DuskSpiderCombat.tscn` / 스탯: `dusk_spider_stats.tres`
 - **도착 시 적 강화**: EnemyStats.reinforce()로 HP/ATK 배율 적용
 - **도착 시 잔류 부활**: EventBus.residue_revival_requested 발신
-- **시스템 간 통신**: EventBus.dusk_spider_spawned / dusk_spider_defeated / enemy_reinforce_requested
-
-### 미구현 (후속 Phase)
-- [ ] HUD 접근 경고 표시 (Phase 2-3c)
+- **시스템 간 통신**: EventBus.dusk_spider_spawned / dusk_spider_approached / dusk_spider_arrived / dusk_spider_defeated / enemy_reinforce_requested
+- **접근 경고 HUD (Phase 2-3c)**: 우상단 DuskSpiderHud. 2맵 이내 접근 시 보라색 맥동, 1맵 시 긴급, 도착 시 플래시 연출. fallback ColorRect 사용.
 
 ### 미결 사항
 - [ ] 땅거미 자체 공격 패턴

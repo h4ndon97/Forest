@@ -283,7 +283,7 @@ Aseprite에서 태그별로 내보내기:
 | # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
 |---|---|---|---|---|---|
 | 32 | 땅거미 스프라이트 시트 | 192x192 캔버스, 가로 스트립 (37프레임) | `assets/sprites/enemies/` | `dusk_spider.png` | 특수 적. 일반 적(64~128)보다 큰 캔버스. 6개 애니메이션 태그 통합 시트 |
-| 33 | 접근 경고 이펙트 | 64x64, 가로 스트립 (4프레임) | `assets/sprites/effects/` | `fx_spider_warning.png` | 땅거미 접근 시 HUD에 표시. 어두운 보라/검정 파동. 256x64 PNG |
+| 33 | 접근 경고 이펙트 | 64x64, 가로 스트립 (4프레임) | `assets/sprites/effects/` | `fx_spider_warning.png` | 땅거미 접근 시 HUD에 표시. 어두운 보라/검정 파동. 256x64 PNG. **코드 연결 완료** (dusk_spider_hud.gd — fallback ColorRect 동작 중) |
 | 34 | 등장 웅덩이 이펙트 | 128x64, 가로 스트립 (4프레임) | `assets/sprites/effects/` | `fx_spider_pool.png` | emerge 애니메이션과 동기화. 바닥 그림자 웅덩이. 512x64 PNG |
 | 35 | 사망 잔류 이펙트 | 64x64, 단일 프레임 | `assets/sprites/effects/` | `fx_spider_residue.png` | 처치 후 남는 큰 그림자 얼룩. 일반 잔류 마커(32x8)보다 큼 |
 
