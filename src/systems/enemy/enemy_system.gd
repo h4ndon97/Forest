@@ -42,6 +42,7 @@ func _ready() -> void:
 	EventBus.shadow_scale_changed.connect(_on_shadow_scale_changed)
 	EventBus.day_night_changed.connect(_on_day_night_changed)
 	EventBus.lantern_toggled.connect(_on_lantern_toggled)
+	EventBus.enemy_reinforce_requested.connect(_on_reinforce_requested)
 
 
 ## 적을 시스템에 등록하고 ID를 반환한다.
@@ -89,6 +90,7 @@ func get_enemy_count() -> int:
 
 
 # --- 내부 ---
+
 
 func _on_time_state_changed(_old_state: int, new_state: int) -> void:
 	if new_state == TimeStateMachineScript.TimeState.FLOWING:
@@ -151,3 +153,7 @@ func _update_per_object_intensity() -> void:
 func _deactivate_enemies() -> void:
 	_enemies_active = false
 	_registry.deactivate_all()
+
+
+func _on_reinforce_requested(_stage_id: String, hp_mult: float, atk_mult: float) -> void:
+	_registry.reinforce_all(hp_mult, atk_mult)

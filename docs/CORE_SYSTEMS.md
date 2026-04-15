@@ -147,12 +147,14 @@
 
 ### 기본 규칙
 - 시간이 흐르는 맵을 감지하고 찾아오는 특수 적
-- **복수 존재 가능** — 월드맵 전체에 여러 마리 동시 존재
+- **복수 존재 가능** — 월드맵 전체에 최대 3마리 동시 존재
 - **우선 타겟**: 플레이어가 있는 시간이 흐르는 스테이지. 플레이어가 정지 스테이지에 있으면 시간이 흐르는 스테이지를 향해 이동.
+- **스폰 조건**: 시간이 흐르기 시작하면(FLOWING) 플레이어로부터 3~5맵 거리에 스폰
 
-### 이동 속도
-- **맵 1개 이동 = 실시간 2분 (인게임 2시간)**
+### 이동 속도 (확정)
+- **맵 1개 이동 = 실시간 2분 (120초, 인게임 2시간)**
 - 고정 타이머 없음 — 현재 위치와 목표 맵 사이의 거리가 곧 남은 시간
+- BFS 경로탐색으로 스테이지 인접 그래프를 따라 이동
 
 | 거리 | 도착까지 | 체감 |
 |---|---|---|
@@ -161,18 +163,51 @@
 | 6맵 | 12분 | 낮 1사이클과 동일, 여유 |
 
 ### 도착 시 행동 (동시 발생)
-1. **즉시 강화** — 해당 맵의 모든 그림자 적 능력치 강화
+1. **즉시 강화** — 해당 맵의 모든 그림자 적 HP/공격력 ×1.3 (+30%)
 2. **잔류 부활** — 그림자 잔류(처치된 적의 흔적) 재소환
-3. **전투 가능 적으로 등장** — 처치 시 위협 제거 가능
+3. **전투 가능 적으로 등장** — 처치 시 위협 제거 가능 (HP 200, 공격력 45, 처치 포인트 50)
 
 ### 대응 방법
 - 도착 전 시간을 정지시켜 감지를 끊음
 - 땅거미째 처치
 
+### 확정 수치 (DuskSpiderConfigData)
+
+| 항목 | 키 | 값 |
+|---|---|---|
+| 맵당 이동 시간 | seconds_per_map | 120초 |
+| 최소 스폰 거리 | spawn_distance_min | 3맵 |
+| 최대 스폰 거리 | spawn_distance_max | 5맵 |
+| 최대 동시 존재 | max_spiders | 3 |
+| 강화 HP 배율 | reinforce_hp_multiplier | 1.3 |
+| 강화 ATK 배율 | reinforce_atk_multiplier | 1.3 |
+| 전투 HP | combat_hp | 200 |
+| 전투 공격력 | combat_attack | 45 |
+| 처치 포인트 | defeat_points | 50 |
+
+### 구현 상태 (Phase 2-3b 완료)
+- **DuskSpiderSystem**: Autoload. 시간 흐름 감지 → 스폰 → 이동 추적 → 도착 처리 → 전투 엔티티 스폰
+- **DuskSpiderNavigator**: BFS 경로탐색. StageSystem의 인접 그래프 기반 최단 경로 계산
+- **DuskSpiderEntity**: RefCounted 데이터 객체. 상태 머신 (IDLE → TRACKING → ARRIVED → DEFEATED)
+- **DuskSpiderConfigData**: Resource 클래스. 모든 수치 외부화 (`data/dusk_spider/dusk_spider_config.tres`)
+- **DuskSpiderCombat**: BaseEnemy 확장 전투 엔티티 (`dusk_spider_combat.gd` + `DuskSpiderCombat.tscn`)
+  - 플레이어가 있는 스테이지에 땅거미 도착 시 플레이어 근처(±120px)에 스폰
+  - 잔류를 남기지 않음 (`leaves_residue = false`). 처치 시 논리 엔티티 자동 정리
+  - 스탯: `data/enemies/dusk_spider_stats.tres` (HP 200, ATK 45)
+- **도착 시 처리**: EnemyStats.reinforce() + EventBus.residue_revival_requested + 전투 엔티티 스폰
+- **시스템 간 통신**: EventBus.dusk_spider_spawned / dusk_spider_defeated / enemy_reinforce_requested
+- **디버그 R키 제거**: residue_reviver.gd에서 수동 트리거 삭제 완료
+
+### 미구현 (후속 Phase)
+- [ ] HUD 접근 경고 표시 (Phase 2-3c)
+
 ### 미결 사항
-- [ ] 이동 속도 수치 확정 (프로토타입으로 조정)
-- [ ] 강화 수치 (기존 적 스탯의 몇 % 추가?)
-- [ ] 땅거미 자체 처치 난이도 및 드롭
+- [ ] 땅거미 자체 공격 패턴
+- [x] ~~이동 속도 수치 확정~~ → 120초/맵 확정
+- [x] ~~강화 수치~~ → HP/ATK ×1.3 (+30%) 확정
+- [x] ~~전투 엔티티 씬 및 스폰 로직~~ → Phase 2-3b에서 구현 완료
+- [ ] 땅거미 자체 처치 난이도 및 드롭 (밸런싱 시 결정)
+- [ ] 땅거미 전용 아트 리소스 (현재 fallback 사각형 사용)
 
 ---
 

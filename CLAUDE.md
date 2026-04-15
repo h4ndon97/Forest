@@ -86,13 +86,20 @@
 
 ### Code Reviewer (코드 리뷰 에이전트)
 - **트리거**: 코드 작성/수정 작업이 완료된 후
-- **동작**: 아키텍처 원칙 준수 여부 검증, 위반 사항 리포트
+- **동작**:
+  1. 아키텍처 원칙 준수 여부 검증 (섹션 2 기준)
+  2. `gdlint` 로 수정된 파일 린트 검사 (네이밍, 미사용 인자 등)
+  3. `gdformat --check` 로 코드 스타일 일관성 확인
+  4. 위반 사항 리포트
 - **규칙**: 리뷰 결과에 위반 사항이 있으면 커밋 전 수정
 
 ### QA (품질 검증 에이전트)
 - **트리거**: 시스템 구현 완료 시 또는 여러 시스템 통합 시
-- **동작**: GDD/설계 문서와 구현 대조, 로직 정합성 검증, 엣지 케이스 점검
-- **규칙**: 불일치 발견 시 사용자에게 보고 후 수정
+- **동작**:
+  1. GDD/설계 문서와 구현 대조, 로직 정합성 검증, 엣지 케이스 점검
+  2. Godot CLI 로드 테스트 (`--headless --quit`) 로 프로젝트 정상 로드 확인
+  3. 에러 로그 분석 및 보고
+- **규칙**: 불일치 또는 로드 에러 발견 시 사용자에게 보고 후 수정
 
 ### Doc Manager (문서 관리 에이전트)
 - **트리거**: 구현 중 설계 변경이 발생했을 때
@@ -101,7 +108,11 @@
 
 ### Art Spec Writer (아트 명세서 에이전트)
 - **트리거**: 시각 요소가 포함된 기능 구현이 완료되었을 때
-- **동작**: 해당 요소의 아트 명세서 생성 (캔버스, 애니메이션, 프레임, 태그명 등)
+- **동작**:
+  1. 해당 요소의 아트 명세서 생성 (캔버스, 애니메이션, 프레임, 태그명 등)
+  2. `.ase` / `.aseprite` 파일이 존재하면 Aseprite CLI로 스프라이트 시트 내보내기 수행
+     - `aseprite --batch input.ase --sheet output.png --data output.json`
+  3. 출력물을 `assets/sprites/` 하위 적절한 폴더에 배치
 - **규칙**: ART_PIPELINE.md의 규격 준수
 
 ---
@@ -175,7 +186,35 @@ Forest/
 
 ---
 
-## 7. 커밋 규칙
+## 7. CLI 도구 규칙
+
+### 7.1 실행파일 경로
+- **Godot 콘솔**: `C:/_H4ndon/Godot_v4.6.2-stable_win64.exe/Godot_v4.6.2-stable_win64_console.exe`
+- **Aseprite**: `C:/Program Files/Aseprite/Aseprite.exe`
+- **gdlint / gdformat**: 시스템 PATH에 설치됨 (gdtoolkit 4.5.0)
+
+### 7.2 코드 검증 (코드 수정/생성 후 자동 수행)
+1. **gdlint** — 수정한 파일 대상 린트 검사
+   - `gdlint src/systems/enemy/enemy_system.gd`
+   - 네이밍 컨벤션, 미사용 인자 등 검출
+2. **Godot 로드 테스트** — 프로젝트 전체 로드 확인
+   - `godot --headless --path "c:/_H4ndon/Forest" --quit`
+3. 에러 발생 시 사용자에게 전달하기 전에 **먼저 수정 시도**
+4. 수정 불가능한 에러는 로그와 함께 사용자에게 보고
+
+### 7.3 코드 포매팅
+- **gdformat** — 코드 스타일 자동 정리 (필요 시 사용)
+  - `gdformat src/systems/enemy/enemy_system.gd`
+
+### 7.4 Aseprite 아트 파이프라인
+- 사용자가 `.ase` / `.aseprite` 파일을 제공하면 CLI로 스프라이트 시트 내보내기 수행
+  - `aseprite --batch input.ase --sheet output.png --data output.json`
+  - `--split-tags` 로 애니메이션 태그별 분리 가능
+- 출력 경로는 ART_PIPELINE.md 규격에 따라 `assets/sprites/` 하위에 배치
+
+---
+
+## 8. 커밋 규칙
 
 - 커밋 메시지: 한국어 허용
 - 시스템 단위로 커밋 (여러 시스템 한꺼번에 커밋 지양)

@@ -74,13 +74,43 @@
 
 CORE_SYSTEMS.md에서 확정:
 - 시간이 흐르는 맵을 감지하고 찾아옴
-- 복수 존재 가능
+- 복수 존재 가능 (최대 3마리 동시)
 - 2분/맵 속도로 이동
-- 도착 시: 적 강화 + 잔류 부활 + 전투 적 등장
+- 스폰 거리: 플레이어로부터 3~5맵 떨어진 위치
+- 도착 시: 적 강화(+30%) + 잔류 부활 + 전투 적 등장
+
+### 확정 수치 (Phase 2-3b)
+
+| 항목 | 값 | 비고 |
+|---|---|---|
+| 이동 속도 | 120초/맵 | 실시간 2분 |
+| 스폰 거리 | 3~5맵 | 플레이어 기준 |
+| 최대 동시 존재 | 3마리 | DuskSpiderConfigData |
+| 강화 배율 (HP) | ×1.3 | 도착 맵 적 전체 |
+| 강화 배율 (공격력) | ×1.3 | 도착 맵 적 전체 |
+| 전투 HP | 200 | 전투 엔티티 스폰 시 |
+| 전투 공격력 | 45 | 전투 엔티티 스폰 시 |
+| 처치 포인트 | 50 | 성장 포인트 |
+
+### 구현 상태 (Phase 2-3b 완료)
+- **DuskSpiderSystem**: Autoload. 시간 흐름 감지 → 스폰 → 이동 추적 → 도착 처리 → 전투 엔티티 스폰
+- **DuskSpiderNavigator**: BFS 경로탐색. StageSystem의 인접 그래프 기반
+- **DuskSpiderEntity**: RefCounted 데이터 객체. 상태 머신 (IDLE → TRACKING → ARRIVED → DEFEATED)
+- **DuskSpiderConfigData**: 외부 설정 리소스 (.tres). 모든 수치 외부화
+- **DuskSpiderCombat**: BaseEnemy 확장 전투 엔티티. 플레이어 스테이지 도착 시 스폰
+  - 잔류를 남기지 않음 (`leaves_residue = false`)
+  - 처치 시 `EventBus.dusk_spider_defeated` 발신 → 논리 엔티티 정리
+  - 씬: `DuskSpiderCombat.tscn` / 스탯: `dusk_spider_stats.tres`
+- **도착 시 적 강화**: EnemyStats.reinforce()로 HP/ATK 배율 적용
+- **도착 시 잔류 부활**: EventBus.residue_revival_requested 발신
+- **시스템 간 통신**: EventBus.dusk_spider_spawned / dusk_spider_defeated / enemy_reinforce_requested
+
+### 미구현 (후속 Phase)
+- [ ] HUD 접근 경고 표시 (Phase 2-3c)
 
 ### 미결 사항
 - [ ] 땅거미 자체 공격 패턴
-- [ ] 처치 난이도 및 보상
+- [ ] 땅거미 전용 아트 리소스 (현재 fallback 사각형 사용)
 
 ---
 
@@ -104,12 +134,13 @@ CORE_SYSTEMS.md에서 확정:
 - **트리거**: `EventBus.residue_revival_requested(stage_id)` (땅거미 또는 외부)
 - **자동 활성화**: 시간 흐름 중 부활 시 즉시 활성, 정지 시 DORMANT
 
-### 구현 상태 (Phase 2-3a)
+### 구현 상태 (Phase 2-3a + 2-3b)
 - **ResidueReviver**: EnemySystem 자식 컴포넌트, 부활 요청 처리
 - **ShadowResidue.revive()**: 팽창 연출 후 BaseEnemy 재소환
 - **BaseEnemy.setup_as_revived()**: HP/ATK 배율 적용, 재잔류 조건 분기
 - **EnemyStats**: 부활 배율이 intensity와 독립 적용 (HP = base × intensity × revive_ratio)
-- **디버그**: R키로 수동 부활 트리거 (땅거미 구현 시 제거)
+- **EnemyStats.reinforce()**: 땅거미 도착 시 HP/ATK 강화 배율 적용 (×1.3)
+- **디버그 R키 제거**: 땅거미 시스템 구현으로 수동 트리거 삭제 완료
 - **수치 외부화**: `enemy_config.tres`에서 배율/재잔류 설정
 
 ### 미결 사항

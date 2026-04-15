@@ -67,3 +67,12 @@ func update_all_intensity(intensity: float) -> void:
 	for enemy in _enemies.values():
 		if is_instance_valid(enemy) and enemy.has_method("update_intensity"):
 			enemy.update_intensity(intensity)
+
+
+func reinforce_all(hp_mult: float, atk_mult: float) -> void:
+	for enemy in _enemies.values():
+		if not is_instance_valid(enemy):
+			continue
+		var stats_node: Node = enemy.get_node_or_null("Stats")
+		if stats_node and stats_node.has_method("reinforce"):
+			stats_node.reinforce(hp_mult, atk_mult)

@@ -3,7 +3,6 @@
 ## 시스템이 직접 서로를 참조하지 않고, EventBus를 통해 통신한다.
 extends Node
 
-
 # === 시간 시스템 ===
 signal time_set_requested(hour: float)
 signal time_state_changed(old_state: int, new_state: int)
@@ -27,8 +26,11 @@ signal residue_revival_requested(stage_id: String)
 signal residue_revived(position: Vector2, enemy_type: String)
 
 # === 땅거미 시스템 ===
+signal dusk_spider_spawned(spider_id: int)
 signal dusk_spider_approached(distance: int)
 signal dusk_spider_arrived(stage_id: String)
+signal dusk_spider_defeated(spider_id: int)
+signal enemy_reinforce_requested(stage_id: String, hp_mult: float, atk_mult: float)
 
 # === 스테이지 시스템 ===
 signal stage_entered(stage_id: String)
@@ -42,19 +44,19 @@ signal stage_access_denied(stage_id: String, lock_type: int, reason: String)
 
 # === 시간 전파 ===
 signal flow_rate_changed(rate: float)
-signal time_flow_paused()
-signal time_flow_resumed()
+signal time_flow_paused
+signal time_flow_resumed
 signal time_hour_sync_requested(hour: float)
 signal time_flow_resume_requested(hour: float, rate: float)
 
 # === 전투 시스템 ===
 signal combo_hit_landed(hit_number: int)
 signal combo_finished(attribute: String)
-signal combo_resetted()
+signal combo_resetted
 signal damage_dealt(target_id: int, amount: float)
 signal damage_received(amount: float)
 signal health_changed(current_hp: float, max_hp: float)
-signal player_died()
+signal player_died
 signal player_respawned(position: Vector2)
 
 # === 성장 시스템 ===
@@ -67,12 +69,12 @@ signal lantern_toggled(is_on: bool, lantern_position: Vector2)
 # === 거점 시스템 ===
 signal checkpoint_entered(checkpoint_id: String)
 signal checkpoint_exited(checkpoint_id: String)
-signal full_recovery_requested()
+signal full_recovery_requested
 
 # === 월드맵 ===
-signal world_map_opened()
-signal world_map_closed()
+signal world_map_opened
+signal world_map_closed
 
 # === 시간 자원 ===
 signal time_resource_changed(current: float, max_val: float)
-signal time_resource_depleted()
+signal time_resource_depleted

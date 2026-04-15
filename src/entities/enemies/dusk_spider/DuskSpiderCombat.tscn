@@ -1,0 +1,80 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/entities/enemies/dusk_spider/dusk_spider_combat.gd" id="1"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_state_machine.gd" id="2"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_stats.gd" id="3"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_movement.gd" id="4"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_animation.gd" id="5"]
+[ext_resource type="Script" path="res://src/systems/shadow/shadow_caster.gd" id="6"]
+[ext_resource type="Resource" path="res://data/enemies/dusk_spider_stats.tres" id="7"]
+
+[sub_resource type="RectangleShape2D" id="body_shape"]
+size = Vector2(36, 40)
+
+[sub_resource type="CircleShape2D" id="detect_shape"]
+radius = 180.0
+
+[sub_resource type="RectangleShape2D" id="hurtbox_shape"]
+size = Vector2(34, 38)
+
+[sub_resource type="RectangleShape2D" id="hitbox_shape"]
+size = Vector2(50, 30)
+
+[node name="DuskSpiderCombat" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1")
+stats_data = ExtResource("7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -20)
+shape = SubResource("body_shape")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -22)
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="Movement" type="Node" parent="."]
+script = ExtResource("4")
+
+[node name="AnimationController" type="Node" parent="."]
+script = ExtResource("5")
+
+[node name="DetectArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="DetectShape" type="CollisionShape2D" parent="DetectArea"]
+shape = SubResource("detect_shape")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 8
+monitorable = false
+
+[node name="HurtboxShape" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -20)
+shape = SubResource("hurtbox_shape")
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 16
+collision_mask = 0
+monitoring = false
+
+[node name="HitboxShape" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(30, -20)
+shape = SubResource("hitbox_shape")
+
+[node name="ShadowCaster" type="Node2D" parent="."]
+script = ExtResource("6")
+base_offset = Vector2(0, 0)
+shadow_length_pixels = 0.0
+fallback_size = Vector2(32, 8)
+shadow_z_index = 1
+anchor_at_base = true
