@@ -20,6 +20,8 @@ extends Resource
 @export var residue_revive_hp_ratio: float = 0.5
 ## 잔류 부활 시 공격력 비율
 @export var residue_revive_attack_ratio: float = 1.5
+## 부활 적이 다시 잔류를 남기는지 여부
+@export var revived_leaves_residue: bool = false
 
 @export_group("AI 행동")
 ## 순찰 전환 간격 (초)

@@ -47,13 +47,16 @@
 
 - 서브 타입과 구역 고유 적도 각각 고유한 반응 특성을 가질 수 있음
 
-### 구현 상태 (Phase 1-5 완료)
+### 구현 상태 (Phase 1-5 + 2-3a 완료)
 - **구현 완료**: EnemySystem Autoload, EnemyRegistry(적 추적), EnemyIntensity(강도 계산)
-- **베이스 적 엔티티**: 컴포넌트 기반 구성 (StateMachine, Stats, Movement, AnimationController)
+- **베이스 적 엔티티**: 컴포넌트 기반 구성 (StateMachine, Stats, Movement, AnimationController, HPBar)
 - **AI 상태 머신**: DORMANT → IDLE → PATROL → CHASE → ATTACK → HURT → DEAD
 - **그림자 강도 연동**: ShadowSystem 강도 → 유형별 재매핑 → HP/공격력/속도 실시간 조정
 - **시간 흐름 연동**: FLOWING → 적 활성화, STOPPED/MANIPULATING → 적 비활성화
+- **그림자 잠금 연동**: FLOWING 진입 시 그림자 강도 고정 + HP 최대치 리셋 (치즈 전략 방지)
 - **그림자 잔류**: 처치 시 위치에 마커 생성, 부활 메카닉은 땅거미 시스템에서 처리
+- **HP 바**: 적 머리 위 HP 바 컴포넌트 (`enemy_hp_bar.gd`). 데미지 시 표시, 풀 HP 시 숨김. 30% 이하 색상 변경.
+- **DORMANT 비주얼**: fallback 초기 색상이 DORMANT_COLOR(어둡고 반투명)로 설정. 활성화 시 밝은 색으로 전환.
 - **수치 외부화**: `data/enemies/` 하위 .tres 파일에서 모든 수치 조정 가능
 - **fallback 비주얼**: 아트 없이 ColorRect로 동작
 - **임시 전투**: player_combat.gd 브릿지 (CombatSystem 구현 전까지)
@@ -92,10 +95,23 @@ CORE_SYSTEMS.md에서 확정:
   - 조건 충족 시 자동 정화 (PurificationDetector)
 - 시각적 구분: 낮 처치 = 보라빛 마커, 밤 처치 = 푸른빛 마커
 
-### 부활 상태 (확정)
+### 부활 상태 (확정, Phase 2-3a 구현 완료)
 - **HP 50%** — 원래보다 약함, 빠르게 처치 가능
 - **공격력 150%** — 원래보다 강함, 맞으면 위험
 - 유리대포 구조 → 긴박하지만 질질 끌리지 않음
+- **부활 연출**: 잔류 마커 팽창(0.5초) + 발광 → 적으로 변환
+- **재잔류 설정**: `revived_leaves_residue`로 on/off 가능 (기본값 off)
+- **트리거**: `EventBus.residue_revival_requested(stage_id)` (땅거미 또는 외부)
+- **자동 활성화**: 시간 흐름 중 부활 시 즉시 활성, 정지 시 DORMANT
+
+### 구현 상태 (Phase 2-3a)
+- **ResidueReviver**: EnemySystem 자식 컴포넌트, 부활 요청 처리
+- **ShadowResidue.revive()**: 팽창 연출 후 BaseEnemy 재소환
+- **BaseEnemy.setup_as_revived()**: HP/ATK 배율 적용, 재잔류 조건 분기
+- **EnemyStats**: 부활 배율이 intensity와 독립 적용 (HP = base × intensity × revive_ratio)
+- **디버그**: R키로 수동 부활 트리거 (땅거미 구현 시 제거)
+- **수치 외부화**: `enemy_config.tres`에서 배율/재잔류 설정
 
 ### 미결 사항
 - [ ] 잔류의 시각적 표현
+- [ ] 부활 적의 시각적 구분 (틴트/글로우 등)

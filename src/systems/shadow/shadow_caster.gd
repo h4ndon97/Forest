@@ -14,11 +14,14 @@ extends Node2D
 ## true: 발밑 고정, 방향으로 뻗음 (적용). false: 오프셋 이동 (환경 오브젝트용).
 @export var anchor_at_base: bool = false
 
+const TimeStateMachineScript = preload("res://src/systems/time/time_state_machine.gd")
+
 var _fallback_rect: ColorRect
 var _using_fallback: bool = false
 var _is_night_mode: bool = false
 var _shadow_visible: bool = true
 var _owner_instance_id: int = 0
+var _locked: bool = false
 
 
 func _ready() -> void:
@@ -29,6 +32,7 @@ func _ready() -> void:
 
 	EventBus.shadow_params_changed.connect(_on_shadow_params_changed)
 	EventBus.day_night_changed.connect(_on_day_night_changed)
+	EventBus.time_state_changed.connect(_on_time_state_changed)
 
 	# 초기 갱신
 	_is_night_mode = not ShadowSystem.is_day_mode()
@@ -47,8 +51,18 @@ func _ready() -> void:
 	set_process(_is_night_mode)
 
 
+func _on_time_state_changed(_old_state: int, new_state: int) -> void:
+	if new_state == TimeStateMachineScript.TimeState.FLOWING:
+		_locked = true
+	else:
+		_locked = false
+		# 잠금 해제 시 낮/밤 모드 동기화 (흐름 중 전환되었을 수 있음)
+		_is_night_mode = not ShadowSystem.is_day_mode()
+		set_process(_is_night_mode)
+
+
 func _process(_delta: float) -> void:
-	if not _is_night_mode:
+	if not _is_night_mode or _locked:
 		return
 
 	if not ShadowSystem.is_lantern_active():
@@ -74,6 +88,8 @@ func _process(_delta: float) -> void:
 
 
 func _on_shadow_params_changed(direction: Vector2, sprite_scale: float, _intensity: float) -> void:
+	if _locked:
+		return
 	if _is_night_mode:
 		# 밤에는 전역 시그널 중 sprite_scale=0 (등불 OFF)만 처리
 		if sprite_scale <= 0.0:
@@ -87,6 +103,8 @@ func _on_shadow_params_changed(direction: Vector2, sprite_scale: float, _intensi
 
 
 func _on_day_night_changed(is_day: bool) -> void:
+	if _locked:
+		return
 	_is_night_mode = not is_day
 	set_process(_is_night_mode)
 

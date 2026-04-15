@@ -54,6 +54,15 @@ func get_enemy_by_instance_id(inst_id: int) -> Node:
 	return _enemies.get(eid)
 
 
+func reset_all_hp() -> void:
+	for enemy in _enemies.values():
+		if not is_instance_valid(enemy):
+			continue
+		var stats_node: Node = enemy.get_node_or_null("Stats")
+		if stats_node and stats_node.has_method("reset_hp"):
+			stats_node.reset_hp()
+
+
 func update_all_intensity(intensity: float) -> void:
 	for enemy in _enemies.values():
 		if is_instance_valid(enemy) and enemy.has_method("update_intensity"):

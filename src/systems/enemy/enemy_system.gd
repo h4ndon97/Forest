@@ -5,6 +5,7 @@ extends Node
 ## 다른 시스템과 직접 참조 없이 EventBus로만 통신한다.
 
 const EnemyRegistryScript = preload("res://src/systems/enemy/enemy_registry.gd")
+const ResidueReviverScript = preload("res://src/systems/enemy/residue_reviver.gd")
 const TimeStateMachineScript = preload("res://src/systems/time/time_state_machine.gd")
 const CONFIG_PATH := "res://data/enemies/enemy_config.tres"
 
@@ -31,6 +32,11 @@ func _ready() -> void:
 	_activation_timer.timeout.connect(_on_activation_timeout)
 	add_child(_activation_timer)
 
+	var reviver := Node.new()
+	reviver.name = "ResidueReviver"
+	reviver.set_script(ResidueReviverScript)
+	add_child(reviver)
+
 	EventBus.time_state_changed.connect(_on_time_state_changed)
 	EventBus.shadow_params_changed.connect(_on_shadow_params_changed)
 	EventBus.shadow_scale_changed.connect(_on_shadow_scale_changed)
@@ -39,9 +45,15 @@ func _ready() -> void:
 
 
 ## 적을 시스템에 등록하고 ID를 반환한다.
+## 적이 활성 상태이면 새로 등록된 적도 즉시 활성화한다 (부활 적 대응).
 func register_enemy(enemy: Node) -> int:
 	var id: int = _registry.register(enemy)
 	EventBus.enemy_spawned.emit(id)
+	if _enemies_active:
+		if enemy.has_method("activate"):
+			enemy.activate()
+		if enemy.has_method("update_intensity"):
+			enemy.update_intensity(_current_intensity)
 	return id
 
 
@@ -52,7 +64,6 @@ func on_enemy_died(enemy_id: int, death_position: Vector2) -> bool:
 	var enemy_name: String = enemy.name if enemy else ""
 	var killed_during_day: bool = not _is_night
 	EventBus.enemy_killed.emit(enemy_id, enemy_name)
-	EventBus.residue_left.emit(death_position, killed_during_day)
 	_registry.unregister(enemy_id)
 	return killed_during_day
 
@@ -121,7 +132,20 @@ func _on_activation_timeout() -> void:
 func _activate_enemies() -> void:
 	_enemies_active = true
 	_registry.activate_all()
-	_registry.update_all_intensity(_current_intensity)
+	# 밤+등불 시 per-object 강도, 그 외 전역 강도 적용
+	if _is_night and _lantern_on:
+		_update_per_object_intensity()
+	else:
+		_registry.update_all_intensity(_current_intensity)
+	_registry.reset_all_hp()
+
+
+## 밤+등불 시 각 적의 위치 기반으로 개별 강도를 적용한다.
+func _update_per_object_intensity() -> void:
+	for enemy in _registry.get_all_enemies():
+		if is_instance_valid(enemy) and enemy.has_method("update_intensity"):
+			var intensity := ShadowSystem.get_intensity_at(enemy.global_position)
+			enemy.update_intensity(intensity)
 
 
 func _deactivate_enemies() -> void:

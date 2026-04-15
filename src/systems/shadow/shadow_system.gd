@@ -6,6 +6,7 @@ extends Node
 
 const CONFIG_PATH := "res://data/shadow/shadow_config.tres"
 const LANTERN_CONFIG_PATH := "res://data/lantern/lantern_config.tres"
+const TimeStateMachineScript = preload("res://src/systems/time/time_state_machine.gd")
 
 var _config: ShadowConfigData
 var _is_day: bool = true
@@ -13,6 +14,8 @@ var _shadow_direction: Vector2 = Vector2.DOWN
 var _shadow_scale_factor: float = 0.0
 var _shadow_sprite_scale: float = 0.1
 var _intensity_multiplier: float = 0.2
+var _locked: bool = false
+var _last_sun_angle: float = 0.0
 
 # 등불 소스 관리
 var _lantern_active: bool = false
@@ -30,6 +33,7 @@ func _ready() -> void:
 	EventBus.sun_state_updated.connect(_on_sun_state_updated)
 	EventBus.day_night_changed.connect(_on_day_night_changed)
 	EventBus.lantern_toggled.connect(_on_lantern_toggled)
+	EventBus.time_state_changed.connect(_on_time_state_changed)
 
 
 func get_shadow_direction() -> Vector2:
@@ -59,6 +63,8 @@ func is_day_mode() -> bool:
 ## 등불 토글 시그널 수신. 등불 ON/OFF에 따라 내부 상태를 갱신한다.
 func _on_lantern_toggled(is_on: bool, lantern_position: Vector2) -> void:
 	_lantern_active = is_on
+	if _locked:
+		return
 	if is_on:
 		_lantern_position = lantern_position
 	elif not _is_day:
@@ -67,6 +73,8 @@ func _on_lantern_toggled(is_on: bool, lantern_position: Vector2) -> void:
 
 ## 등불 위치를 갱신한다. 등불 ON 중 매 프레임 호출.
 func update_lantern_position(pos: Vector2) -> void:
+	if _locked:
+		return
 	_lantern_position = pos
 
 
@@ -114,8 +122,23 @@ func get_intensity_at(pos: Vector2) -> float:
 
 # --- 내부 ---
 
+func _on_time_state_changed(_old_state: int, new_state: int) -> void:
+	if new_state == TimeStateMachineScript.TimeState.FLOWING:
+		_locked = true
+	else:
+		_locked = false
+		# 잠금 해제 시 현재 상태로 즉시 갱신
+		if _is_day and _last_sun_angle >= 0.0:
+			_update_from_sun_angle(_last_sun_angle)
+		elif not _is_day and not _lantern_active:
+			_update_night_no_lantern()
+
+
 func _on_sun_state_updated(sun_angle: float, is_day: bool) -> void:
 	_is_day = is_day
+	_last_sun_angle = sun_angle
+	if _locked:
+		return
 	if _is_day and sun_angle >= 0.0:
 		_update_from_sun_angle(sun_angle)
 	elif not _lantern_active:
@@ -124,6 +147,8 @@ func _on_sun_state_updated(sun_angle: float, is_day: bool) -> void:
 
 func _on_day_night_changed(is_day: bool) -> void:
 	_is_day = is_day
+	if _locked:
+		return
 	if not is_day and not _lantern_active:
 		_update_night_no_lantern()
 

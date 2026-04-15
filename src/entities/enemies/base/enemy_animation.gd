@@ -69,7 +69,7 @@ func _state_to_anim(state: int) -> String:
 func _create_fallback() -> void:
 	_using_fallback = true
 	_fallback = ColorRect.new()
-	_fallback.color = FALLBACK_COLOR
+	_fallback.color = DORMANT_COLOR
 	_fallback.size = FALLBACK_SIZE
 	_fallback.position = Vector2(-FALLBACK_SIZE.x * 0.5, -FALLBACK_SIZE.y)
 	_fallback.z_index = 0

@@ -10,4 +10,5 @@ global_intensity_max = 1.5
 residue_duration = -1.0
 residue_revive_hp_ratio = 0.5
 residue_revive_attack_ratio = 1.5
+revived_leaves_residue = false
 temp_player_damage = 25.0

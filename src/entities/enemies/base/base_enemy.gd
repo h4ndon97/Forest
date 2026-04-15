@@ -6,6 +6,7 @@ extends CharacterBody2D
 const RESIDUE_PATH := "res://src/entities/enemies/shadow_residue/ShadowResidue.tscn"
 const DamageNumberScript = preload("res://src/ui/common/damage_number.gd")
 const EnemyStateMachine = preload("res://src/entities/enemies/base/enemy_state_machine.gd")
+const EnemyHPBarScript = preload("res://src/entities/enemies/base/enemy_hp_bar.gd")
 
 @export var stats_data: EnemyStatsData
 
@@ -18,19 +19,36 @@ const EnemyStateMachine = preload("res://src/entities/enemies/base/enemy_state_m
 @onready var hitbox: Area2D = $Hitbox
 
 var enemy_id: int = -1
+var _hp_bar: Node2D
+var _is_revived: bool = false
+var _revive_hp_ratio: float = 1.0
+var _revive_attack_ratio: float = 1.0
+
+
+## 부활 적으로 설정한다. add_child() 전에 호출해야 한다.
+func setup_as_revived(hp_ratio: float, attack_ratio: float) -> void:
+	_is_revived = true
+	_revive_hp_ratio = hp_ratio
+	_revive_attack_ratio = attack_ratio
 
 
 func _ready() -> void:
 	add_to_group("enemies")
 
-	stats_comp.setup(stats_data, EnemySystem.get_current_intensity())
+	stats_comp.setup(stats_data, EnemySystem.get_current_intensity(),
+			_revive_hp_ratio, _revive_attack_ratio)
 	movement_comp.setup(stats_data, stats_comp)
 	state_machine.setup(self)
 	animation_comp.setup($AnimatedSprite2D)
 
 	enemy_id = EnemySystem.register_enemy(self)
 
+	_hp_bar = Node2D.new()
+	_hp_bar.set_script(EnemyHPBarScript)
+	add_child(_hp_bar)
+
 	stats_comp.died.connect(_on_died)
+	stats_comp.health_changed.connect(_hp_bar.on_health_changed)
 	state_machine.state_changed.connect(_on_state_changed)
 	detect_area.body_entered.connect(_on_detect_body_entered)
 	detect_area.body_exited.connect(_on_detect_body_exited)
@@ -102,6 +120,9 @@ func _on_died() -> void:
 
 
 func _spawn_residue(killed_during_day: bool) -> void:
+	if _is_revived:
+		if not EnemySystem.get_config().revived_leaves_residue:
+			return
 	if not stats_data.leaves_residue:
 		return
 	if not ResourceLoader.exists(RESIDUE_PATH):
@@ -112,6 +133,7 @@ func _spawn_residue(killed_during_day: bool) -> void:
 	if residue.has_method("setup"):
 		residue.setup(stats_data, killed_during_day)
 	get_parent().add_child(residue)
+	EventBus.residue_left.emit(global_position, killed_during_day)
 
 
 func _on_state_changed(_old_state: int, new_state: int) -> void:

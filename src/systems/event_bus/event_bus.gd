@@ -23,6 +23,8 @@ signal enemy_spawned(enemy_id: int)
 signal enemy_killed(enemy_id: int, enemy_name: String)
 signal residue_left(position: Vector2, killed_during_day: bool)
 signal residue_purified(position: Vector2)
+signal residue_revival_requested(stage_id: String)
+signal residue_revived(position: Vector2, enemy_type: String)
 
 # === 땅거미 시스템 ===
 signal dusk_spider_approached(distance: int)

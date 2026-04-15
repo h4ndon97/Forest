@@ -205,6 +205,7 @@ func _connect_signals() -> void:
 	EventBus.enemy_killed.connect(_on_enemy_killed)
 	EventBus.residue_left.connect(_on_residue_left)
 	EventBus.residue_purified.connect(_on_residue_purified)
+	EventBus.residue_revived.connect(_on_residue_revived)
 	EventBus.stage_transition_requested.connect(_on_transition_requested)
 	EventBus.current_hour_changed.connect(func(hour: float): _tracked_hour = hour)
 	EventBus.time_flow_started.connect(func(_hour: float): _is_flowing = true)
@@ -279,6 +280,12 @@ func _on_residue_purified(position: Vector2) -> void:
 	var new_state: int = _clear_tracker.on_residue_purified(_current_stage_id, position)
 	if new_state >= 0:
 		EventBus.stage_clear_updated.emit(_current_stage_id, new_state)
+
+
+func _on_residue_revived(position: Vector2, _enemy_type: String) -> void:
+	if _current_stage_id.is_empty():
+		return
+	_clear_tracker.remove_residue_record(_current_stage_id, position)
 
 
 func _add_child_node(node_name: String, script: GDScript) -> Node:

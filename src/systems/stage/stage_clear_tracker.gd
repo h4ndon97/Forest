@@ -176,6 +176,11 @@ func respawn_residues_in_scene(residues: Array) -> void:
 		scene_root.add_child(residue)
 
 
+## 위치 기준으로 잔류 기록을 제거한다 (정화/부활 공용).
+func remove_residue_record(stage_id: String, pos: Vector2) -> void:
+	_remove_residue_near(stage_id, pos)
+
+
 ## 위치 기준으로 가장 가까운 잔류 기록을 제거한다.
 func _remove_residue_near(stage_id: String, pos: Vector2) -> void:
 	var records: Array = _residue_records.get(stage_id, [])

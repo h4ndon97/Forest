@@ -69,10 +69,11 @@
   - 적 강도 = shadow scale을 20%~150% 범위로 매핑한 통합 배율
 - 밤: 등불 위치 기반으로 동일한 공식 반전 적용
 
-### 구현 상태 (Phase 1-7 완료)
+### 구현 상태 (Phase 1-7 + 2-3a 완료)
 - **구현 완료**: ShadowSystem Autoload, ShadowCalculator(순수 계산), ShadowCaster(오브젝트 컴포넌트)
 - **낮 그림자**: 태양 각도(0°~180°) → 방향(cos), 스케일(1-sin) → 강도(20%~150%) 연속 매핑
 - **밤 그림자**: 등불 기반 per-object 계산. 등불 OFF 시 그림자 없음(강도 0).
+- **그림자 잠금**: FLOWING 진입 시 그림자 크기/강도 고정, STOPPED 시 해제+재계산 (Phase 2-3a)
 - **수치 외부화**: `data/shadow/shadow_config.tres`에서 모든 수치 조정 가능
 - **Curve 슬롯**: intensity_curve가 null이면 선형, Curve 리소스 설정 시 곡선 매핑
 - **fallback**: 그림자 스프라이트 아트 없이도 ColorRect로 동작
@@ -82,6 +83,19 @@
 - `anchor_at_base` 모드 추가: 발밑 고정 + 방향으로 뻗는 그림자 (적 등 지상 엔티티용)
 - `shadow_z_index` export 추가: 오브젝트별 그림자 렌더링 순서 제어 가능
 - 기존 환경 오브젝트용 오프셋 이동 모드는 `anchor_at_base = false`(기본값)로 유지
+
+### 그림자 잠금 (Phase 2-3a 확정)
+- **핵심 규칙**: 시간이 흐르기 시작하면(FLOWING 진입) 그림자 크기가 **그 시점의 값으로 고정**된다.
+  - 낮: 태양 각도 갱신을 무시 → 그림자 크기/강도 고정
+  - 밤: 등불 위치 변화를 무시 → per-object 그림자 크기/강도 고정
+- **해제**: 시간이 다시 멈추면(STOPPED) 잠금 해제. 현재 상태로 즉시 재계산.
+- **적 HP 초기화**: FLOWING 진입 시 모든 적의 HP가 최대치로 리셋됨.
+  - 이유: "데미지 → 시간 정지 → 리포지션 → 다시 흐름" 치즈 전략 방지
+- **구현**:
+  - `ShadowSystem._locked` — 전역 파라미터 갱신 차단
+  - `ShadowCaster._locked` — 개별 그림자 비주얼 갱신 차단 (낮 시그널 + 밤 _process 모두)
+  - `EnemySystem._activate_enemies()` — 활성화 시 현재 강도 적용 + HP 리셋
+  - 잠금 해제 시 양쪽 모두 현재 상태(is_day, lantern_active 등)로 재동기화
 
 ### 등불 시스템 연동 (Phase 1-7 완료)
 - **등불 컴포넌트**: `src/entities/player/player_lantern.gd` — Node2D, PointLight2D 자식

@@ -10,10 +10,15 @@ var _stats_data: EnemyStatsData
 var _intensity_multiplier: float = 1.0
 var _max_hp: float = 100.0
 var _current_hp: float = 100.0
+var _revive_hp_ratio: float = 1.0
+var _revive_attack_ratio: float = 1.0
 
 
-func setup(stats_data: EnemyStatsData, initial_intensity: float) -> void:
+func setup(stats_data: EnemyStatsData, initial_intensity: float,
+		revive_hp_ratio: float = 1.0, revive_attack_ratio: float = 1.0) -> void:
 	_stats_data = stats_data
+	_revive_hp_ratio = revive_hp_ratio
+	_revive_attack_ratio = revive_attack_ratio
 	update_intensity(initial_intensity)
 	_current_hp = _max_hp
 
@@ -25,7 +30,7 @@ func update_intensity(global_intensity: float) -> void:
 
 	# HP 비율 유지하며 최대 HP 갱신
 	var hp_ratio := _current_hp / _max_hp if _max_hp > 0.0 else 1.0
-	_max_hp = EnemyIntensity.apply_multiplier(_stats_data.base_hp, _intensity_multiplier)
+	_max_hp = EnemyIntensity.apply_multiplier(_stats_data.base_hp, _intensity_multiplier) * _revive_hp_ratio
 	_current_hp = _max_hp * hp_ratio
 
 	health_changed.emit(_current_hp, _max_hp)
@@ -38,12 +43,17 @@ func take_damage(amount: float) -> void:
 		died.emit()
 
 
+func reset_hp() -> void:
+	_current_hp = _max_hp
+	health_changed.emit(_current_hp, _max_hp)
+
+
 func is_dead() -> bool:
 	return _current_hp <= 0.0
 
 
 func get_attack() -> float:
-	return EnemyIntensity.apply_multiplier(_stats_data.base_attack, _intensity_multiplier)
+	return EnemyIntensity.apply_multiplier(_stats_data.base_attack, _intensity_multiplier) * _revive_attack_ratio
 
 
 func get_speed() -> float:
