@@ -62,6 +62,11 @@ signal player_respawned(position: Vector2)
 # === 성장 시스템 ===
 signal points_earned(amount: int, source: String)
 signal skill_unlocked(skill_id: String)
+signal growth_stats_changed()
+signal growth_points_changed(growth_available: int, property_available: int)
+signal growth_invested(category: String, total_invested: int)
+signal growth_respec_completed()
+signal hybrid_unlocked()
 
 # === 등불 시스템 ===
 signal lantern_toggled(is_on: bool, lantern_position: Vector2)

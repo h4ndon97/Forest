@@ -270,12 +270,28 @@ Phase 6  출시
 - [ ] 수동 조작 (시간 정지 중만)
 - **의존성**: Phase 1 완료
 
-#### 2-6. 성장 시스템
-- [ ] 강화 포인트 획득 (처치/클리어)
-- [ ] 빛/그림자 투자 + 능력치 상승
-- [ ] 프로퍼티 (시간 자원) 투자
-- [ ] 리스펙
+#### 2-6. 성장 시스템 ✅
+- [x] 강화 포인트 획득 (처치/클리어)
+- [x] 빛/그림자 투자 + 능력치 상승
+- [x] 프로퍼티 (시간 자원) 투자
+- [x] 리스펙
 - **의존성**: 2-1
+- **구현 파일**:
+  - `data/growth/growth_config_data.gd` — GrowthConfigData Resource 클래스
+  - `data/growth/growth_config.tres` — 수치 인스턴스
+  - `src/systems/growth/growth_system.gd` — Autoload 오케스트레이터
+  - `src/systems/growth/growth_point_tracker.gd` — 포인트 잔고/투자/리스펙
+  - `src/systems/growth/growth_stat_calculator.gd` — 보너스 계산
+- **수정 파일**:
+  - `src/systems/event_bus/event_bus.gd` — +5 성장 시그널
+  - `src/systems/combat/combat_system.gd` — 공격력 보너스 가산
+  - `src/entities/player/player_health.gd` — HP 보너스 + growth_stats_changed
+  - `src/systems/time/time_resource.gd` — 시간 최대치/회복량 보너스
+  - `src/systems/shadow/shadow_system.gd` — 등불 범위 보너스
+  - `src/entities/player/player_lantern.gd` — 등불 밝기 보너스
+  - `src/systems/stage/stage_system.gd` — load_save_data를 save_manager에 위임
+  - `src/systems/stage/save_manager.gd` — collect_data/apply_data에 growth 데이터 통합
+  - `project.godot` — +GrowthSystem Autoload (EventBus 직후)
 
 #### 2-7. 아이템/장비 시스템
 - [ ] 장착 슬롯 (무기 1 + 방어구 1 + 장신구 3)
@@ -618,6 +634,7 @@ Phase 6 (출시)
 | **2-3b** | **땅거미 엔티티 + AI** | **✅ 완료** | **땅거미 맵 이동 AI + 전투 엔티티** |
 | **2-3c** | **땅거미 HUD 경고** | **✅ 완료** | **접근 경고 HUD + 도착 이벤트** |
 | **2-1** | **전투 확장** | **✅ 완료** | **SkillSystem 프레임워크 + 4슬롯 + 쿨다운 + 피니시 속성 + 자동 회복 + 스킬 HUD** |
+| **2-6** | **성장 시스템** | **✅ 완료** | **GrowthSystem Autoload + 포인트 획득/투자/리스펙 + 5개 시스템 보너스 연동 + 세이브/로드** |
 
 ### Phase 2 세부 작업 순서
 
@@ -647,14 +664,20 @@ Phase 6 (출시)
   │   자동 회복 (STOPPED 상태)
   │   스킬 HUD + 테스트 스킬 2개
   │
+  └── 2-6 성장 시스템 ✅
+      GrowthSystem + PointTracker + StatCalculator
+      강화/프로퍼티 포인트 체계
+      5개 시스템 보너스 연동 + 혼합 해금 + 리스펙
+      세이브/로드 통합
+  │
   합의된 결정:
   - 정화: 프레임워크만 (해금은 Phase 3)
   - 잠금: 프레임워크 + 빛 잠금만 (나머지 Phase 3)
   - 적 확장: 땅거미에 필요한 최소 범위(잔류 부활)만
   - Phase 2-1: "프레임워크 우선, 콘텐츠 나중에" 전략
     - 스킬 로직 구조만 만들고, 실제 18개 스킬은 데이터(.tres)로 나중에 조립
-    - 속성 배율은 전부 1.0으로 설정 (Phase 2-6에서 밸런싱)
-  - 이후 작업 순서: 2-5 성장 → 2-6 스킬 확장 → 2-2 적 확장 → 2-7 환경 오브젝트
+    - 속성 배율은 전부 1.0으로 설정 (Phase 5 밸런싱에서 조정)
+  - 이후 작업 순서: 2-6 성장 → 2-7 아이템/장비 → 2-2 적 확장 → 2-5 환경 오브젝트
 ```
 
 ### 프로젝트 설정 변경 이력

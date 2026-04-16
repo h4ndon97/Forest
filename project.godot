@@ -22,6 +22,7 @@ config/features=PackedStringArray("4.6")
 [autoload]
 
 EventBus="*res://src/systems/event_bus/event_bus.gd"
+GrowthSystem="*res://src/systems/growth/growth_system.gd"
 TimeSystem="*res://src/systems/time/time_system.gd"
 ShadowSystem="*res://src/systems/shadow/shadow_system.gd"
 EnemySystem="*res://src/systems/enemy/enemy_system.gd"

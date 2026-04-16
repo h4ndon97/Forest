@@ -21,6 +21,7 @@ var _last_sun_angle: float = 0.0
 var _lantern_active: bool = false
 var _lantern_position: Vector2 = Vector2.ZERO
 var _lantern_max_range: float = 200.0
+var _lantern_base_range: float = 200.0
 
 
 func _ready() -> void:
@@ -28,12 +29,14 @@ func _ready() -> void:
 	_shadow_direction = _config.default_direction
 
 	var lantern_config: LanternConfigData = load(LANTERN_CONFIG_PATH) as LanternConfigData
-	_lantern_max_range = lantern_config.max_range
+	_lantern_base_range = lantern_config.max_range
+	_lantern_max_range = _lantern_base_range
 
 	EventBus.sun_state_updated.connect(_on_sun_state_updated)
 	EventBus.day_night_changed.connect(_on_day_night_changed)
 	EventBus.lantern_toggled.connect(_on_lantern_toggled)
 	EventBus.time_state_changed.connect(_on_time_state_changed)
+	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
 
 
 func get_shadow_direction() -> Vector2:
@@ -160,6 +163,10 @@ func _update_from_sun_angle(sun_angle: float) -> void:
 	_intensity_multiplier = ShadowCalculator.calculate_intensity(_shadow_scale_factor, true, _config)
 
 	EventBus.shadow_params_changed.emit(_shadow_direction, _shadow_sprite_scale, _intensity_multiplier)
+
+
+func _on_growth_stats_changed() -> void:
+	_lantern_max_range = _lantern_base_range + GrowthSystem.get_lantern_range_bonus()
 
 
 ## 밤 + 등불 OFF: 그림자 없음 상태를 전역 방송.

@@ -7,6 +7,50 @@ extends Node
 const SAVE_PATH := "user://save_data.json"
 const SAVE_VERSION := 1
 
+var _clear_tracker: Node
+
+
+func setup(clear_tracker: Node) -> void:
+	_clear_tracker = clear_tracker
+
+
+## 세이브용 전체 데이터를 수집한다.
+func collect_data(
+	last_checkpoint_id: String,
+	stage_hours: Dictionary,
+	discovered_checkpoints: Array,
+) -> Dictionary:
+	var data := {
+		"last_checkpoint_id": last_checkpoint_id,
+		"stage_hours": stage_hours.duplicate(),
+		"clear_tracker": _clear_tracker.get_save_data(),
+		"discovered_checkpoints": discovered_checkpoints.duplicate(),
+	}
+	if TimeSystem and TimeSystem.has_method("get_resource_data"):
+		data["time_resource"] = TimeSystem.get_resource_data()
+	if GrowthSystem and GrowthSystem.has_method("get_save_data"):
+		data["growth"] = GrowthSystem.get_save_data()
+	return data
+
+
+## 세이브 데이터를 적용한다. 스테이지 레벨 데이터를 Dictionary로 반환.
+func apply_data(data: Dictionary) -> Dictionary:
+	var result := {}
+	result["last_checkpoint_id"] = data.get("last_checkpoint_id", "")
+	var saved_hours: Dictionary = data.get("stage_hours", {})
+	var stage_hours := {}
+	for stage_id in saved_hours:
+		stage_hours[stage_id] = float(saved_hours[stage_id])
+	result["stage_hours"] = stage_hours
+	var tracker_data: Dictionary = data.get("clear_tracker", {})
+	if not tracker_data.is_empty():
+		_clear_tracker.load_save_data(tracker_data)
+	result["discovered_checkpoints"] = data.get("discovered_checkpoints", [])
+	var growth_data: Dictionary = data.get("growth", {})
+	if not growth_data.is_empty() and GrowthSystem and GrowthSystem.has_method("load_save_data"):
+		GrowthSystem.load_save_data(growth_data)
+	return result
+
 
 ## 게임 상태를 디스크에 저장한다.
 func save_game(data: Dictionary) -> void:

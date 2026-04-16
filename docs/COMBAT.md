@@ -327,7 +327,7 @@ GDD에서 확정된 환경 오브젝트:
 |---|---|---|
 | 피니시 속성 분기 (빛/그림자/혼합) | ✅ 구현 | SkillSystem.get_finish_attribute() 연동 (Phase 2-1) |
 | HP 자동 회복 (시간 정지 중) | ✅ 구현 | STOPPED 상태에서 자동 회복 (Phase 2-1) |
-| 속성별 데미지 배율 | ✅ 프레임워크 | CombatCalculator에 ATTRIBUTE_MULTIPLIERS 테이블 (전부 1.0, Phase 2-6에서 조정) |
+| 속성별 데미지 배율 | ✅ 프레임워크 | CombatCalculator에 ATTRIBUTE_MULTIPLIERS 테이블 (전부 1.0, Phase 5 밸런싱에서 조정) |
 | 스킬 슬롯 시스템 | ✅ 구현 | SkillSystem + 4슬롯 + 쿨다운 + HUD (Phase 2-1) |
 | 아이템 회복 | 미구현 | 인벤토리 시스템 연동 필요 |
 | 강화 이동 (빛 대시, 그림자 점프 등) | 미구현 | 성장/잠금 해제 시스템 |

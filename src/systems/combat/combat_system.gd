@@ -39,6 +39,7 @@ func get_config() -> CombatConfigData:
 
 func get_combo_damage(hit_number: int) -> float:
 	var base: float = CombatCalculatorScript.calculate_hit_damage(hit_number, _config)
+	base += GrowthSystem.get_attack_bonus()
 	return CombatCalculatorScript.calculate_final_damage(base, _config.finish_attribute)
 
 

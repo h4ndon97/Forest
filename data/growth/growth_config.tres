@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GrowthConfigData" load_steps=2 format=3 uid="uid://b5growth_config"]
+
+[ext_resource type="Script" path="res://data/growth/growth_config_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+kill_points_min = 1
+kill_points_max = 3
+stage_clear_points = 10
+boss_clear_points = 50
+attack_bonus_per_point = 5.0
+lantern_range_bonus_per_point = 15.0
+lantern_brightness_bonus_per_point = 0.05
+hp_bonus_per_point = 10.0
+time_max_bonus_per_point = 10.0
+time_recovery_bonus_per_point = 1.0
+hybrid_unlock_threshold = 3
+respec_cost_ratio = 0.5

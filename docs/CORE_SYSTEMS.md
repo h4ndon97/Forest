@@ -97,7 +97,7 @@
   - `EnemySystem._activate_enemies()` — 활성화 시 현재 강도 적용 + HP 리셋
   - 잠금 해제 시 양쪽 모두 현재 상태(is_day, lantern_active 등)로 재동기화
 
-### 등불 시스템 연동 (Phase 1-7 완료)
+### 등불 시스템 연동 (Phase 1-7 + 2-6 완료)
 - **등불 컴포넌트**: `src/entities/player/player_lantern.gd` — Node2D, PointLight2D 자식
 - **조작**: L키로 ON/OFF 토글 (시간 정지 중에도 가능)
 - **밤 per-object 계산**: 밤+등불 ON 시 ShadowCaster가 `_process`에서 `ShadowSystem.get_night_shadow_params(자기위치)` 호출
@@ -106,6 +106,7 @@
 - **등불 OFF 시**: 밤에 그림자 없음 (적도 없음 상태)
 - **per-enemy 강도**: ShadowCaster가 `shadow_scale_changed(instance_id, intensity)` 시그널 발신 → EnemySystem이 해당 적만 갱신
 - **수치 외부화**: `data/lantern/lantern_config.tres`
+- **성장 보너스 연동 (Phase 2-6)**: 빛 투자 시 등불 범위(+15px/pt, ShadowSystem) 및 밝기(+0.05 energy/pt, PlayerLantern) 증가. `growth_stats_changed` 시그널로 동적 반영.
 
 ### 미결 사항
 - [ ] scale과 강도의 매핑 곡선 (현재 선형, Curve 슬롯 준비됨 — 프로토타입으로 결정)
@@ -140,12 +141,13 @@
 - **거점 맵**: 완전 회복
 - 거점에서 멀어질수록 자원 고갈 → 싸움 조건이 점점 거칠어짐 → 탐색 깊이의 전략적 판단
 
-### 구현 상태 (Phase 1-3 + 2-1 + 2-8a 완료)
+### 구현 상태 (Phase 1-3 + 2-1 + 2-6 + 2-8a 완료)
 - **자동 회복**: 시간 흐름 중 인게임 시간당 5.0 회복 (구현 완료)
 - **처치 시 회복**: EventBus.enemy_killed 수신 시 고정 3.0 회복 (구현 완료)
 - **아이템 회복**: recover_flat() 메서드 준비 완료 (InventorySystem 구현 후 연결)
 - **스킬 소비**: consume_flat() — 스킬별 time_cost 만큼 즉시 소비 (Phase 2-1)
 - **거점 완전 회복**: full_recover() — 거점 진입 시 전량 회복 (Phase 2-8a)
+- **성장 보너스 연동 (Phase 2-6)**: 프로퍼티 투자 시 시간 자원 최대치(+10/pt) 및 회복량(+1.0/pt) 증가. `growth_stats_changed` 시그널로 동적 반영.
 
 ### 미결 사항
 - [ ] 초기 최대치 / 초기 회복속도 최종 확정 (현재 100 / 5.0, 프로토타입으로 조정)

@@ -35,6 +35,7 @@ func _ready() -> void:
 	_lock_validator = _add_child_node("LockValidator", LockValidatorScript)
 	_time_propagation = _add_child_node("TimePropagation", TimePropagationScript)
 	_save_manager = _add_child_node("SaveManager", SaveManagerScript)
+	_save_manager.setup(_clear_tracker)
 
 	_load_stage_data()
 	_connect_signals()
@@ -139,15 +140,11 @@ func transition_to_stage(target_stage_id: String, entry_direction: String) -> vo
 
 
 func load_save_data(data: Dictionary) -> void:
-	_last_checkpoint_id = data.get("last_checkpoint_id", "")
-	var saved_hours: Dictionary = data.get("stage_hours", {})
-	for stage_id in saved_hours:
-		_stage_hours[stage_id] = float(saved_hours[stage_id])
-	var tracker_data: Dictionary = data.get("clear_tracker", {})
-	if not tracker_data.is_empty():
-		_clear_tracker.load_save_data(tracker_data)
-	var saved_checkpoints: Array = data.get("discovered_checkpoints", [])
-	for cp_id in saved_checkpoints:
+	var result: Dictionary = _save_manager.apply_data(data)
+	_last_checkpoint_id = result["last_checkpoint_id"]
+	for stage_id in result["stage_hours"]:
+		_stage_hours[stage_id] = result["stage_hours"][stage_id]
+	for cp_id in result["discovered_checkpoints"]:
 		if cp_id not in _discovered_checkpoints:
 			_discovered_checkpoints.append(cp_id)
 
@@ -167,20 +164,6 @@ func _try_load_save() -> void:
 	if not _last_checkpoint_id.is_empty():
 		await get_tree().process_frame
 		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint")
-
-
-## 세이브용 전체 데이터를 수집한다.
-func _collect_save_data() -> Dictionary:
-	var data := {
-		"last_checkpoint_id": _last_checkpoint_id,
-		"stage_hours": _stage_hours.duplicate(),
-		"clear_tracker": _clear_tracker.get_save_data(),
-		"discovered_checkpoints": _discovered_checkpoints.duplicate(),
-	}
-	# TimeSystem public API로 시간 자원 데이터 수집
-	if TimeSystem and TimeSystem.has_method("get_resource_data"):
-		data["time_resource"] = TimeSystem.get_resource_data()
-	return data
 
 
 func _load_stage_data() -> void:
@@ -257,7 +240,10 @@ func _on_stage_entered(stage_id: String) -> void:
 			_discovered_checkpoints.append(stage_id)
 		EventBus.checkpoint_entered.emit(stage_id)
 		EventBus.full_recovery_requested.emit()
-		_save_manager.save_game(_collect_save_data())
+		var save_data: Dictionary = _save_manager.collect_data(
+			_last_checkpoint_id, _stage_hours, _discovered_checkpoints,
+		)
+		_save_manager.save_game(save_data)
 
 
 func _on_enemy_killed(_enemy_id: int, enemy_name: String) -> void:

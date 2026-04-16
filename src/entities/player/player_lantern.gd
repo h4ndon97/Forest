@@ -10,11 +10,14 @@ var _config: LanternConfigData
 var _light: PointLight2D
 var _is_on: bool = false
 var _facing_right: bool = true
+var _base_energy: float = 1.0
 
 
 func _ready() -> void:
 	_config = load(CONFIG_PATH) as LanternConfigData
+	_base_energy = _config.light_energy
 	_create_light()
+	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
 
 
 func toggle() -> void:
@@ -58,6 +61,11 @@ func _update_light_position() -> void:
 	if not _facing_right:
 		offset.x = -offset.x
 	_light.position = offset
+
+
+func _on_growth_stats_changed() -> void:
+	if _light:
+		_light.energy = _base_energy + GrowthSystem.get_lantern_brightness_bonus()
 
 
 func _create_light_texture() -> Texture2D:

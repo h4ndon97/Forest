@@ -15,12 +15,14 @@ var _invincible_timer: Timer
 var _knockback_timer: Timer
 var _auto_heal_timer: Timer
 var _config: CombatConfigData
+var _base_max_hp: float
 
 
 func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	_parent = parent
 	_config = config
-	max_hp = config.player_max_hp
+	_base_max_hp = config.player_max_hp
+	max_hp = _base_max_hp + GrowthSystem.get_hp_bonus()
 	current_hp = max_hp
 
 	_create_hurtbox()
@@ -32,6 +34,7 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
 	EventBus.player_died.connect(_on_player_died_heal)
 	EventBus.time_state_changed.connect(_on_time_state_changed)
+	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
 	EventBus.health_changed.emit(current_hp, max_hp)
 
 
@@ -131,7 +134,19 @@ func _on_respawned(_position: Vector2) -> void:
 	_reset_health_state()
 
 
+func _on_growth_stats_changed() -> void:
+	var new_max: float = _base_max_hp + GrowthSystem.get_hp_bonus()
+	if new_max == max_hp:
+		return
+	var old_max: float = max_hp
+	max_hp = new_max
+	if current_hp > 0.0:
+		current_hp = clampf(current_hp + (new_max - old_max), 1.0, max_hp)
+	EventBus.health_changed.emit(current_hp, max_hp)
+
+
 func _reset_health_state() -> void:
+	max_hp = _base_max_hp + GrowthSystem.get_hp_bonus()
 	current_hp = max_hp
 	_is_invincible = false
 	_is_knocked_back = false
