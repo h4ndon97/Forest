@@ -278,6 +278,16 @@ Aseprite에서 태그별로 내보내기:
 
 ---
 
+## Phase 2-1. 전투 확장 (스킬 시스템)
+
+| # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
+|---|---|---|---|---|---|
+| 36 | 스킬 슬롯 UI 프레임 | 20x20, 1프레임 | `assets/ui/` | `ui_skill_slot.png` | 4슬롯 배경 프레임. 현재 ColorRect fallback 동작 중 |
+| 37 | 빛 베기 이펙트 | 64x64, 4프레임, 가로 256x64 | `assets/sprites/effects/` | `fx_light_slash.png` | melee 스킬 이펙트. **코드 연결 미완** (Phase 3 아트 적용 시) |
+| 38 | 그림자 강타 이펙트 | 96x96, 4프레임, 가로 384x96 | `assets/sprites/effects/` | `fx_shadow_strike.png` | aoe 스킬 이펙트. **코드 연결 미완** (Phase 3 아트 적용 시) |
+
+---
+
 ## Phase 2-3a. 땅거미 시스템
 
 | # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
