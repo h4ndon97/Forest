@@ -21,4 +21,6 @@ hitbox_size = Vector2(36, 24)
 hitbox_offset = Vector2(24, -14)
 hurtbox_size = Vector2(14, 28)
 hurtbox_offset = Vector2(0, -14)
+auto_heal_amount = 2.0
+auto_heal_interval = 1.0
 respawn_delay = 1.0

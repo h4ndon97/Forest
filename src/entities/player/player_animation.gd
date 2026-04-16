@@ -41,14 +41,14 @@ func setup(sprite: AnimatedSprite2D) -> void:
 	_loaded_anims["slash"] = true
 	_load_dynamic_animations()
 	_register_combo_animations()
+	# 스킬 전용 애니메이션은 캐릭터 교체 시 등록 예정
 
 
 func update(current_state: int, facing_direction: int) -> void:
 	_sprite.flip_h = (facing_direction > 0)
 
-	# 콤보 공격 애니메이션 재생 중이면 덮어쓰지 않음
-	var current_anim: String = _sprite.animation
-	if current_anim.begins_with("slash") and _sprite.is_playing():
+	# 공격/스킬 애니메이션 재생 중이면 덮어쓰지 않음
+	if _sprite.is_playing() and _is_action_anim(_sprite.animation):
 		return
 
 	var anim_name: String = STATE_ANIM_MAP.get(current_state, "idle")
@@ -93,6 +93,10 @@ func _register_combo_animations() -> void:
 			frames.add_frame(combo_name, tex, dur)
 
 		_loaded_anims[combo_name] = true
+
+
+func _is_action_anim(anim_name: String) -> bool:
+	return anim_name.begins_with("slash") or anim_name.begins_with("skill_")
 
 
 func _register_animation(anim_name: String, texture: Texture2D) -> void:

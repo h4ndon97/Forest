@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/skills/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "light_slash"
+display_name = "빛 베기"
+description = "전방으로 빛의 참격을 휘두른다."
+path = "light"
+skill_type = "active"
+tier = 1
+effect_type = "melee"
+hitbox_size = Vector2(44, 28)
+hitbox_offset = Vector2(28, -14)
+aoe_radius = 48.0
+damage = 25.0
+cooldown = 2.0
+time_cost = 5.0
+active_duration = 0.2

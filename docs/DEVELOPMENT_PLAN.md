@@ -172,13 +172,37 @@ Phase 6  출시
 
 ### 마일스톤
 
-#### 2-1. 전투 확장
-- [ ] 4타 피니시 속성 공격 (빛/그림자/혼합)
-- [ ] 스킬 슬롯 시스템 (4슬롯, 쿨타임)
-- [ ] 스킬 2~3개 구현 (빛 1, 그림자 1, 혼합 1)
-- [ ] 피격 무적 프레임
-- [ ] 자동 회복 (시간 정지 상태)
+#### 2-1. 전투 확장 ✅
+- [x] 4타 피니시 속성 공격 (빛/그림자/혼합) — SkillSystem.get_finish_attribute() 연동
+- [x] 스킬 슬롯 시스템 (4슬롯, 쿨타임) — SkillSystem + SlotManager + HUD
+- [x] 스킬 2개 구현 (빛 베기, 그림자 강타) — SkillData Resource + .tres
+- [x] 피격 무적 프레임 — Phase 1-6에서 이미 구현 (0.5s i-frames)
+- [x] 자동 회복 (시간 정지 상태) — STOPPED 상태에서 auto_heal_timer
+- [x] 속성 데미지 배율 프레임워크 — CombatCalculator ATTRIBUTE_MULTIPLIERS (전부 1.0)
+- [x] 시간 자원 flat 소비 — consume_flat + EventBus 핸들러
 - **의존성**: Phase 1 완료
+- **구현 파일**:
+  - `data/skills/skill_data.gd` — SkillData Resource 클래스 (class_name)
+  - `data/skills/light_slash.tres` — 테스트 스킬: 빛 베기
+  - `data/skills/shadow_strike.tres` — 테스트 스킬: 그림자 강타
+  - `src/systems/skill/skill_system.gd` — Autoload 오케스트레이터
+  - `src/systems/skill/skill_slot_manager.gd` — 4슬롯 장착/쿨다운
+  - `src/systems/skill/skill_attribute_resolver.gd` — 피니시 속성 결정
+  - `src/entities/player/player_skill.gd` — 플레이어 스킬 입력/실행 컴포넌트
+  - `src/ui/hud/SkillHud.tscn` + `skill_hud.gd` — 스킬 슬롯 HUD
+- **수정 파일**:
+  - `src/systems/event_bus/event_bus.gd` — +스킬/시간자원 시그널 7개
+  - `src/entities/player/player_input.gd` — +skill_1~4 입력
+  - `src/entities/player/player.gd` — +Skill 컴포넌트 통합
+  - `src/entities/player/Player.tscn` — +Skill 자식 노드
+  - `src/entities/player/player_combo.gd` — SkillSystem 속성 읽기
+  - `src/entities/player/player_health.gd` — +자동 회복 (STOPPED 상태)
+  - `src/systems/combat/combat_calculator.gd` — +속성 배율 테이블
+  - `src/systems/combat/combat_config_data.gd` — +auto_heal 필드
+  - `data/combat/combat_config.tres` — +auto_heal 값
+  - `src/systems/time/time_system.gd` — +consume_flat 핸들러
+  - `src/systems/time/time_resource.gd` — +consume_flat() 메서드
+  - `project.godot` — +SkillSystem Autoload
 
 #### 2-2. 적 확장
 - [ ] 베이스 4종 완성 (나무, 바위, 꽃, 돌기둥)
@@ -574,7 +598,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-14, Phase 2 진행 중)
+## 구현 현황 요약 (최종 업데이트: 2026-04-16, Phase 2 진행 중)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -589,6 +613,11 @@ Phase 6 (출시)
 | **2-4a** | **스테이지 시스템 기반** | **✅ 완료** | **StageSystem Autoload + StageData + 3단계 클리어 상태** |
 | **2-4b** | **스테이지 전환** | **✅ 완료** | **StagePortal(윗방향키) + 페이드 전환 + Player 보존 + 적 유지 + 스테이지별 독립 시간** |
 | **2-8a** | **거점 씬 (회복, 세이브)** | **✅ 완료** | **거점 진입→완전 회복(tween 연출) + 시간 잠금 + 사망→거점 귀환 + JSON 세이브/로드 + Backspace 세이브 삭제** |
+| **2-8b** | **월드맵 포탈 + 월드맵 UI** | **✅ 완료** | **월드맵 UI + 거점 간 이동 + 테스트 거점 2** |
+| **2-3a** | **잔류 부활 메카닉** | **✅ 완료** | **잔류 부활(HP 50%, 공격력 150%) + 그림자 잠금 + 적 HP 바** |
+| **2-3b** | **땅거미 엔티티 + AI** | **✅ 완료** | **땅거미 맵 이동 AI + 전투 엔티티** |
+| **2-3c** | **땅거미 HUD 경고** | **✅ 완료** | **접근 경고 HUD + 도착 이벤트** |
+| **2-1** | **전투 확장** | **✅ 완료** | **SkillSystem 프레임워크 + 4슬롯 + 쿨다운 + 피니시 속성 + 자동 회복 + 스킬 HUD** |
 
 ### Phase 2 세부 작업 순서
 
@@ -611,10 +640,21 @@ Phase 6 (출시)
   │                       │
   │                       └── 2-3c 땅거미 HUD 경고 ✅
   │
+  │
+  2-1 전투 확장 ✅
+  │   SkillSystem 프레임워크 + 4슬롯 + 쿨다운
+  │   피니시 속성 (장착 스킬 다수결)
+  │   자동 회복 (STOPPED 상태)
+  │   스킬 HUD + 테스트 스킬 2개
+  │
   합의된 결정:
   - 정화: 프레임워크만 (해금은 Phase 3)
   - 잠금: 프레임워크 + 빛 잠금만 (나머지 Phase 3)
   - 적 확장: 땅거미에 필요한 최소 범위(잔류 부활)만
+  - Phase 2-1: "프레임워크 우선, 콘텐츠 나중에" 전략
+    - 스킬 로직 구조만 만들고, 실제 18개 스킬은 데이터(.tres)로 나중에 조립
+    - 속성 배율은 전부 1.0으로 설정 (Phase 2-6에서 밸런싱)
+  - 이후 작업 순서: 2-5 성장 → 2-6 스킬 확장 → 2-2 적 확장 → 2-7 환경 오브젝트
 ```
 
 ### 프로젝트 설정 변경 이력

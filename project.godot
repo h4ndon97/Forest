@@ -28,6 +28,7 @@ EnemySystem="*res://src/systems/enemy/enemy_system.gd"
 CombatSystem="*res://src/systems/combat/combat_system.gd"
 StageSystem="*res://src/systems/stage/stage_system.gd"
 DuskSpiderSystem="*res://src/systems/dusk_spider/dusk_spider_system.gd"
+SkillSystem="*res://src/systems/skill/skill_system.gd"
 WorldMapUI="*res://src/ui/menus/world_map/world_map_ui.gd"
 
 [display]

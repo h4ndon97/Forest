@@ -54,6 +54,7 @@ func _ready() -> void:
 	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
 	EventBus.checkpoint_exited.connect(_on_checkpoint_exited)
 	EventBus.full_recovery_requested.connect(_on_full_recovery_requested)
+	EventBus.time_resource_consume_flat_requested.connect(_on_consume_flat_requested)
 
 	_atmosphere.update_atmosphere(_clock.current_hour, _config)
 	EventBus.current_hour_changed.emit(_clock.current_hour)
@@ -119,6 +120,7 @@ func get_resource_data() -> Dictionary:
 
 
 # --- 내부 ---
+
 
 func _on_manipulate_pressed() -> void:
 	_manipulation_start_hour = _clock.current_hour
@@ -218,6 +220,10 @@ func _on_checkpoint_exited(_checkpoint_id: String) -> void:
 
 func _on_full_recovery_requested() -> void:
 	_resource.full_recover()
+
+
+func _on_consume_flat_requested(amount: float) -> void:
+	_resource.consume_flat(amount)
 
 
 func _on_enemy_killed(_enemy_id: int, _enemy_name: String) -> void:

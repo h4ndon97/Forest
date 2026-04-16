@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene load_steps=30 format=3]
 
 [ext_resource type="Script" path="res://src/entities/player/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player/player_spritesheet.png" id="2"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/entities/player/player_combo.gd" id="8"]
 [ext_resource type="Script" path="res://src/entities/player/player_health.gd" id="9"]
 [ext_resource type="Script" path="res://src/entities/player/player_lantern.gd" id="10"]
+[ext_resource type="Script" path="res://src/entities/player/player_skill.gd" id="11"]
 
 [sub_resource type="AtlasTexture" id="idle_0"]
 atlas = ExtResource("2")
@@ -186,6 +187,9 @@ script = ExtResource("8")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("9")
+
+[node name="Skill" type="Node" parent="."]
+script = ExtResource("11")
 
 [node name="Lantern" type="Node2D" parent="."]
 script = ExtResource("10")

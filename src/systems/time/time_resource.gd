@@ -3,7 +3,7 @@ extends Node
 ## 시간 자원 잔량을 관리하고, 소모/회복 계산을 담당한다.
 
 signal resource_changed(current: float, max_val: float)
-signal resource_depleted()
+signal resource_depleted
 
 var current: float = 100.0
 var max_value: float = 100.0
@@ -33,6 +33,14 @@ func recover(game_hours_elapsed: float) -> void:
 		return
 	var amount: float = _config.recover_per_game_hour * game_hours_elapsed
 	_apply_recovery(amount)
+
+
+func consume_flat(amount: float) -> void:
+	current = maxf(current - amount, 0.0)
+	resource_changed.emit(current, max_value)
+	if current <= 0.0 and not _was_depleted:
+		_was_depleted = true
+		resource_depleted.emit()
 
 
 func recover_flat(amount: float) -> void:

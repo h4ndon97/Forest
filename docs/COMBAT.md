@@ -29,7 +29,7 @@ GDD에서 확정된 3가지 전투 수단:
 - **4타 콤보** — 횡베기만 (좌우)
 - 1~3타: 무속성 횡베기 (데미지 20)
 - **4타(피니시)**: 최다 투자 스킬 트리의 속성 공격 (데미지 40)
-  - 현재 속성은 `"neutral"` — 스킬 시스템 연결 시 빛/그림자/혼합 분기 활성화
+  - 속성은 SkillSystem에서 동적 결정 (장착 스킬 경로 다수결: light/shadow/hybrid/neutral)
 - 콤보를 끝까지 쳐야 속성 타격 발생 → 중간에 끊기면 무속성만
 - 자원 소모 없음
 
@@ -124,11 +124,13 @@ IDLE → (공격 입력) → ATTACKING → (HitTimer 만료) → WINDOW → (입
 - 사망 시 `monitoring = false`로 비활성화
 - 리스폰 시 `monitoring = true`로 복원
 
-### 회복 수단 (확정 / 미구현)
-- **아이템** — 전투 중 소모품 사용으로 회복
-- **자동 회복** — 시간이 멈춘 상태에서만 약하게 회복
-  - 전투 중(시간 흐름): 자동 회복 없음
-  - 전투 후(시간 정지): 소량 자동 회복
+### 회복 수단
+- **아이템** — 전투 중 소모품 사용으로 회복 (미구현, 인벤토리 시스템 연동 필요)
+- **자동 회복** — 시간이 멈춘 상태(STOPPED)에서만 약하게 회복 (✅ Phase 2-1 구현 완료)
+  - 전투 중(시간 흐름 FLOWING/MANIPULATING): 자동 회복 없음
+  - 전투 후(시간 정지 STOPPED): 소량 자동 회복 (1초 간격, 2.0 HP)
+  - HP 만땅이면 타이머 미시작, 사망 시 타이머 정지
+  - 수치는 `combat_config.tres`의 `auto_heal_amount`, `auto_heal_interval`로 조정
 
 ### 사망 처리
 1. `player_died` 시그널 발신
@@ -243,6 +245,8 @@ IDLE → (공격 입력) → ATTACKING → (HitTimer 만료) → WINDOW → (입
 | | `hitbox_offset` | (24, -14) |
 | **Hurtbox** | `hurtbox_size` | (14, 28) |
 | | `hurtbox_offset` | (0, -14) |
+| **Auto Heal** | `auto_heal_amount` | 2.0 |
+| | `auto_heal_interval` | 1.0s |
 | **Respawn** | `respawn_delay` | 1.0s |
 
 ---
@@ -257,10 +261,12 @@ src/systems/combat/
 
 src/entities/player/
 ├── player_combo.gd            # 콤보 상태 머신, 히트박스 생성/관리
-└── player_health.gd           # HP, 무적, 넉백, 허트박스 생성/관리
+├── player_health.gd           # HP, 무적, 넉백, 허트박스, 자동 회복 관리
+└── player_skill.gd            # 스킬 입력/실행, 히트박스 전환
 
 src/ui/hud/
-└── combat_hud.gd              # HP바 + 콤보 인디케이터 + 사망 오버레이
+├── combat_hud.gd              # HP바 + 콤보 인디케이터 + 사망 오버레이
+└── skill_hud.gd               # 스킬 슬롯 HUD (4슬롯 + 쿨다운 오버레이)
 
 src/ui/common/
 └── damage_number.gd           # 플로팅 데미지 숫자
@@ -319,11 +325,12 @@ GDD에서 확정된 환경 오브젝트:
 
 | 항목 | 상태 | 비고 |
 |---|---|---|
-| 피니시 속성 분기 (빛/그림자/혼합) | 미구현 | 스킬 시스템 연결 시 활성화 |
-| HP 자동 회복 (시간 정지 중) | 미구현 | 시간 시스템 연동 필요 |
+| 피니시 속성 분기 (빛/그림자/혼합) | ✅ 구현 | SkillSystem.get_finish_attribute() 연동 (Phase 2-1) |
+| HP 자동 회복 (시간 정지 중) | ✅ 구현 | STOPPED 상태에서 자동 회복 (Phase 2-1) |
+| 속성별 데미지 배율 | ✅ 프레임워크 | CombatCalculator에 ATTRIBUTE_MULTIPLIERS 테이블 (전부 1.0, Phase 2-6에서 조정) |
+| 스킬 슬롯 시스템 | ✅ 구현 | SkillSystem + 4슬롯 + 쿨다운 + HUD (Phase 2-1) |
 | 아이템 회복 | 미구현 | 인벤토리 시스템 연동 필요 |
 | 강화 이동 (빛 대시, 그림자 점프 등) | 미구현 | 성장/잠금 해제 시스템 |
 | 환경 오브젝트 전투 활용 | 미구현 | 월드/스테이지 구현 시 |
 | HP 성장 곡선 | 미결 | 밸런싱 단계에서 결정 |
-| 속성별 데미지 배율 | 미구현 | `CombatCalculator`에 확장 지점 준비됨 |
 | 피격 이펙트 / 무적 깜빡임 | 미구현 | 아트 리소스 필요 |

@@ -37,6 +37,13 @@ extends Resource
 @export var hurtbox_size: Vector2 = Vector2(14, 28)
 @export var hurtbox_offset: Vector2 = Vector2(0, -14)
 
+# === 자동 회복 ===
+@export_group("Auto Heal")
+## 시간 정지 중 자동 회복량 (틱당)
+@export var auto_heal_amount: float = 2.0
+## 자동 회복 간격 (초)
+@export var auto_heal_interval: float = 1.0
+
 # === 리스폰 ===
 @export_group("Respawn")
 @export var respawn_delay: float = 1.0

@@ -10,6 +10,10 @@ var jump_released: bool = false
 var dash_pressed: bool = false
 var attack_pressed: bool = false
 var lantern_pressed: bool = false
+var skill_1_pressed: bool = false
+var skill_2_pressed: bool = false
+var skill_3_pressed: bool = false
+var skill_4_pressed: bool = false
 
 
 func update() -> void:
@@ -20,3 +24,7 @@ func update() -> void:
 	dash_pressed = Input.is_action_just_pressed("dash")
 	attack_pressed = Input.is_action_just_pressed("attack")
 	lantern_pressed = Input.is_action_just_pressed("lantern")
+	skill_1_pressed = Input.is_action_just_pressed("skill_1")
+	skill_2_pressed = Input.is_action_just_pressed("skill_2")
+	skill_3_pressed = Input.is_action_just_pressed("skill_3")
+	skill_4_pressed = Input.is_action_just_pressed("skill_4")

@@ -7,6 +7,10 @@ const StateMachine = preload("res://src/entities/player/player_state_machine.gd"
 
 @export var stats: PlayerStatsData
 
+var _is_dead: bool = false
+var _input_blocked: bool = false
+var _death_tween: Tween
+
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_machine: Node = $StateMachine
 @onready var input_handler: Node = $InputHandler
@@ -14,14 +18,11 @@ const StateMachine = preload("res://src/entities/player/player_state_machine.gd"
 @onready var animation_controller: Node = $AnimationController
 @onready var combo: Node = $Combo
 @onready var health: Node = $Health
+@onready var skill: Node = $Skill
 @onready var lantern: Node2D = $Lantern
 @onready var coyote_timer: Timer = $CoyoteTimer
 @onready var dash_duration_timer: Timer = $DashDurationTimer
 @onready var dash_cooldown_timer: Timer = $DashCooldownTimer
-
-var _is_dead: bool = false
-var _input_blocked: bool = false
-var _death_tween: Tween
 
 
 func _ready() -> void:
@@ -34,6 +35,7 @@ func _ready() -> void:
 	state_machine.setup(coyote_timer, dash_duration_timer, dash_cooldown_timer, stats.max_air_jumps)
 	combo.setup(self, combat_config)
 	health.setup(self, combat_config)
+	skill.setup(self)
 
 	# 타이머 설정
 	coyote_timer.wait_time = stats.coyote_time
@@ -98,6 +100,9 @@ func _physics_process(delta: float) -> void:
 	# 2. 콤보 업데이트
 	combo.update(input_handler, EnemySystem.are_enemies_active())
 
+	# 2.5 스킬 업데이트
+	skill.update(input_handler, EnemySystem.are_enemies_active())
+
 	# 3. 상태 전이 판정
 	state_machine.update(input_handler, is_on_floor(), velocity)
 
@@ -130,7 +135,7 @@ func is_attacking() -> bool:
 	return combo.is_attacking()
 
 
-func _on_state_changed(old_state: int, new_state: int) -> void:
+func _on_state_changed(_old_state: int, new_state: int) -> void:
 	# 점프 진입 시 velocity.y 설정
 	if new_state == StateMachine.State.JUMP:
 		velocity.y = stats.jump_velocity

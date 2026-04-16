@@ -75,6 +75,15 @@ signal full_recovery_requested
 signal world_map_opened
 signal world_map_closed
 
+# === 스킬 시스템 ===
+signal skill_equipped(slot_index: int, skill_id: String)
+signal skill_unequipped(slot_index: int)
+signal skill_used(slot_index: int, skill_id: String)
+signal skill_cooldown_started(slot_index: int, duration: float)
+signal skill_cooldown_finished(slot_index: int)
+signal finish_attribute_changed(attribute: String)
+
 # === 시간 자원 ===
 signal time_resource_changed(current: float, max_val: float)
 signal time_resource_depleted
+signal time_resource_consume_flat_requested(amount: float)

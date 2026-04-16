@@ -60,6 +60,7 @@ func get_combo_count() -> int:
 
 # === 콤보 로직 ===
 
+
 func _start_hit(hit_number: int) -> void:
 	_combo_count = hit_number
 	_combo_state = ComboState.ATTACKING
@@ -97,7 +98,10 @@ func _on_hit_timer_timeout() -> void:
 	if _combo_count >= _config.combo_max_hits:
 		# 피니시 완료 — 공격 플래그 즉시 해제, 리셋 타이머 후 콤보 초기화
 		_is_attacking = false
-		EventBus.combo_finished.emit(_config.finish_attribute)
+		var attribute: String = _config.finish_attribute
+		if SkillSystem:
+			attribute = SkillSystem.get_finish_attribute()
+		EventBus.combo_finished.emit(attribute)
 		_combo_state = ComboState.IDLE
 		_reset_timer.start()
 		return
@@ -139,6 +143,7 @@ func _reset_combo() -> void:
 
 
 # === 히트박스/타이머 생성 ===
+
 
 func _create_attack_hitbox() -> void:
 	_attack_hitbox = Area2D.new()

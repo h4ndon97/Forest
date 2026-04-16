@@ -1,7 +1,9 @@
 extends Node
 
-## 플레이어 HP / 무적 / 사망 관리.
+## 플레이어 HP / 무적 / 사망 / 자동 회복 관리.
 ## 허트박스 생성 및 적 공격 감지 처리.
+
+const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
 
 var max_hp: float
 var current_hp: float
@@ -11,6 +13,7 @@ var _parent: CharacterBody2D
 var _hurtbox: Area2D
 var _invincible_timer: Timer
 var _knockback_timer: Timer
+var _auto_heal_timer: Timer
 var _config: CombatConfigData
 
 
@@ -23,9 +26,12 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	_create_hurtbox()
 	_create_invincible_timer()
 	_create_knockback_timer()
+	_create_auto_heal_timer()
 
 	EventBus.player_respawned.connect(_on_respawned)
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
+	EventBus.player_died.connect(_on_player_died_heal)
+	EventBus.time_state_changed.connect(_on_time_state_changed)
 	EventBus.health_changed.emit(current_hp, max_hp)
 
 
@@ -46,6 +52,7 @@ func take_damage(amount: float) -> void:
 
 
 # === 내부 ===
+
 
 func _create_hurtbox() -> void:
 	_hurtbox = Area2D.new()
@@ -129,5 +136,48 @@ func _reset_health_state() -> void:
 	_is_invincible = false
 	_is_knocked_back = false
 	_knockback_timer.stop()
+	_stop_auto_healing()
 	_hurtbox.monitoring = true
 	EventBus.health_changed.emit(current_hp, max_hp)
+
+
+# === 자동 회복 ===
+
+
+func _create_auto_heal_timer() -> void:
+	_auto_heal_timer = Timer.new()
+	_auto_heal_timer.name = "AutoHealTimer"
+	_auto_heal_timer.one_shot = false
+	_auto_heal_timer.wait_time = _config.auto_heal_interval
+	_auto_heal_timer.timeout.connect(_on_auto_heal_tick)
+	add_child(_auto_heal_timer)
+
+
+func _on_time_state_changed(_old_state: int, new_state: int) -> void:
+	if new_state == TimeStateMachine.TimeState.STOPPED and current_hp < max_hp and current_hp > 0.0:
+		_start_auto_healing()
+	else:
+		_stop_auto_healing()
+
+
+func _start_auto_healing() -> void:
+	if _auto_heal_timer.is_stopped():
+		_auto_heal_timer.start()
+
+
+func _stop_auto_healing() -> void:
+	_auto_heal_timer.stop()
+
+
+func _on_auto_heal_tick() -> void:
+	if current_hp <= 0.0 or current_hp >= max_hp:
+		_stop_auto_healing()
+		return
+	current_hp = minf(current_hp + _config.auto_heal_amount, max_hp)
+	EventBus.health_changed.emit(current_hp, max_hp)
+	if current_hp >= max_hp:
+		_stop_auto_healing()
+
+
+func _on_player_died_heal() -> void:
+	_stop_auto_healing()

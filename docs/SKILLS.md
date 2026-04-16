@@ -37,15 +37,42 @@
 
 ## 2. 스킬 구성
 
-### 슬롯 구조 (확정)
+### 슬롯 구조 (확정 / ✅ Phase 2-1 프레임워크 구현)
 - **기본 공격** 1개 (고정, 자원 소모 없음)
 - **스킬 슬롯** 4개 (자유 장착, 트리 제한 없음)
 - 쿨타임 기반
+- **시간 자원 소모**: 각 스킬 사용 시 `time_cost`만큼 시간 자원 소비 (EventBus 시그널)
+- **입력**: U/I/O/P (skill_1~4 InputMap 액션)
 
 ### 트리 규모 (확정)
 - 트리당 **6개** 스킬 → 총 18개
 - 초반 스킬 2개는 후반에 자연스럽게 교체됨
 - 트리 내 파워 곡선: 앞쪽 = 기본기, 뒤쪽 = 상위 스킬
+
+### SkillData Resource (✅ 구현)
+
+```
+data/skills/skill_data.gd (class_name: SkillData)
+├── Identity: id, display_name, description
+├── Classification: path (light/shadow/hybrid), skill_type (active/passive), tier (1~3)
+├── Effect: effect_type (melee/aoe/projectile/buff), hitbox_size, hitbox_offset, aoe_radius
+└── Parameters: damage, cooldown, time_cost, active_duration
+```
+
+- `effect_type`이 히트박스 형상 결정 (melee=RectangleShape2D, aoe=CircleShape2D)
+- 새 스킬 추가 = .tres 파일 생성 + SKILL_PATHS 배열에 등록
+
+### 테스트 스킬 (✅ 2개 구현)
+
+| 항목 | light_slash | shadow_strike |
+|---|---|---|
+| id | "light_slash" | "shadow_strike" |
+| display_name | "빛 베기" | "그림자 강타" |
+| path | "light" | "shadow" |
+| effect_type | "melee" | "aoe" |
+| damage | 25.0 | 35.0 |
+| cooldown | 2.0s | 5.0s |
+| time_cost | 5.0 | 10.0 |
 
 ### 미결 사항
 - [ ] 기본 공격 상세 (빛 쏘기/베기의 구체적 동작)
@@ -76,7 +103,71 @@
 
 ---
 
-## 4. 성장 연동
+## 4. SkillSystem 구조 (✅ Phase 2-1 구현)
+
+### Autoload 구조
+
+```
+SkillSystem (Autoload, src/systems/skill/skill_system.gd)
+├── SlotManager (skill_slot_manager.gd) — 4슬롯 장착/쿨다운 타이머
+└── AttributeResolver (skill_attribute_resolver.gd) — 피니시 속성 결정
+```
+
+### Public API
+
+| 카테고리 | 메서드 | 용도 |
+|---|---|---|
+| 슬롯 | `equip_skill(slot, id)` | 스킬 장착 |
+| | `unequip_skill(slot)` | 스킬 해제 |
+| | `get_equipped_skill(slot)` | 장착된 SkillData 반환 |
+| 쿨다운 | `can_use_skill(slot)` | 사용 가능 여부 |
+| | `start_cooldown(slot)` | 쿨다운 시작 |
+| | `get_cooldown_ratio(slot)` | 0.0=준비, 1.0=쿨다운중 |
+| 속성 | `get_finish_attribute()` | "light"/"shadow"/"hybrid"/"neutral" |
+| 레지스트리 | `get_skill_data(id)` | SkillData 조회 |
+| | `unlock_skill(id)` / `is_skill_unlocked(id)` | 해금 관리 |
+
+### 피니시 속성 결정 (AttributeResolver)
+
+장착된 4슬롯의 `path` 집계:
+- light > shadow → "light"
+- shadow > light → "shadow"
+- light == shadow && 둘 다 > 0 → "hybrid"
+- hybrid만 장착 → "hybrid"
+- 모두 빈 슬롯 → "neutral"
+
+### 스킬 HUD (✅ 구현)
+
+- 화면 우하단 4슬롯 (20x20 ColorRect)
+- 장착 시 색상: 빛=노랑, 그림자=보라, 혼합=청록, 빈=회색
+- 쿨다운: 상단→하단 어두운 오버레이 sweep
+- 사용 시: 밝은 플래시 (0.15s)
+- 키 라벨: U/I/O/P
+
+### 파일 구조
+
+```
+src/systems/skill/
+├── skill_system.gd            # Autoload 오케스트레이터
+├── skill_slot_manager.gd      # 4슬롯 장착/쿨다운 관리
+└── skill_attribute_resolver.gd # 피니시 속성 결정
+
+src/entities/player/
+└── player_skill.gd            # 플레이어 스킬 입력/실행 컴포넌트
+
+src/ui/hud/
+├── SkillHud.tscn              # 스킬 HUD 씬
+└── skill_hud.gd               # 스킬 HUD 스크립트
+
+data/skills/
+├── skill_data.gd              # SkillData Resource 클래스
+├── light_slash.tres           # 테스트 스킬: 빛 베기
+└── shadow_strike.tres         # 테스트 스킬: 그림자 강타
+```
+
+---
+
+## 5. 성장 연동
 
 ### 미결 사항
 - [ ] 빛/그림자 투자에 따른 플레이 스타일 분화
