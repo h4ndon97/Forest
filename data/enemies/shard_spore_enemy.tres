@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "그림자 파편"
+enemy_type = "shard"
+base_hp = 25.0
+base_attack = 3.0
+attack_range = 24.0
+attack_cooldown = 0.8
+base_speed = 90.0
+patrol_speed = 50.0
+detect_range = 120.0
+lose_range = 180.0
+min_intensity = 0.1
+max_intensity = 1.0
+collision_width = 12.0
+collision_height = 12.0
+gravity_scale = 0.9
+leaves_residue = false
+attack_behavior = "none"
+death_behavior = "none"
+hitbox_size = Vector2(16.0, 12.0)
+hitbox_offset = Vector2(12.0, -6.0)
+is_spore = true

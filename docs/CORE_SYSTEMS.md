@@ -225,6 +225,61 @@
 
 ---
 
+## 4. 환경 오브젝트 (Environment Objects)
+
+### 기본 규칙
+- 시간 정지 상태(STOPPED)에서만 수동 조작 가능 (Phase 2-5a 확정)
+- 시간 흐름 진입(FLOWING) 시 효과 발동, 흐르는 동안 상태 고정
+- "세팅(STOPPED) → 실행(FLOWING)" 리듬을 강제
+
+### 공통 아키텍처 (Phase 2-5a)
+- **EnvironmentObjectData (Resource)**: 오브젝트 공통 메타. `object_name`, `prompt_text`, `can_interact`, `interaction_radius`, `influence_radius`, `sprite_path`
+- **environment_object.gd (Node2D 베이스)**: STOPPED 상태 게이팅(`is_operable`), `interact()` 진입점, `EventBus.time_state_changed` 수신
+- **environment_influence_zone.gd (Area2D)**: 영향권 내 적 추적. `get_tracked_enemies()` 제공
+- **environment_prompt.gd / environment_highlight.gd**: fallback 비주얼 (Label / Line2D)
+- **콜리전 레이어 32 (environment)**: 오브젝트의 InteractionArea가 사용. 플레이어의 `EnvironmentInteractor`(mask 32)가 감지
+- **입력**: `interact_environment` (E키, 임시. 전체 키맵 재조정 시 변경 예정)
+- **플레이어**: `player_environment_interactor.gd` (Area2D). 근접 오브젝트 자동 타겟팅 + 입력 처리
+
+### 거울 (Mirror) — Phase 2-5a 완료
+- **데이터**: `MirrorData` (extends EnvironmentObjectData) — `preset_count(4)`, `initial_preset_index`, `beam_length(128)`, `beam_angle_degrees(60)`, `split_on_flow_start(true)`, `default_shard_spore_path`
+- **회전**: STOPPED 중 E키 입력으로 4프리셋(90°씩) 순환. `RotationPivot` 노드 회전.
+- **분열 발동**: FLOWING 진입 시 `_apply_split_to_zone()` 호출 → 영향권 내 적에게 `BaseEnemy.trigger_split(fallback)` 일괄 적용
+- **분열 인프라 공용화**:
+  - `split_spawner.gd` (RefCounted 정적 헬퍼) — 적 사망 분열(`death_behavior_split`)과 거울 분열이 공용
+  - `BaseEnemy.trigger_split(fallback_spore_path, count, spread_radius)` public API — 사망 없이 외부 트리거. 드롭/잔류 미발생 (전투 처치가 아니므로)
+  - 재분열 가드: `_is_revived` 또는 `stats_data.is_spore=true`인 적은 무시
+- **공용 폴백 스포어**: `data/enemies/shard_spore_enemy.tres` ("그림자 파편", HP 25, attack 3, `attack_behavior="none"`, `is_spore=true`, `leaves_residue=false`). 적별 `spore_stats_path`가 있으면 그것을 우선 사용 (Plan C).
+- **EventBus 시그널**:
+  - `environment_interacted(object_id, state_index)` — 회전 등 상호작용
+  - `environment_split_triggered(object_id, enemy_ids)` — 거울 분열 발동
+  - `environment_blocked_shadow(cover_id, caster_id, blocked)` — 차폐물 투영 영역 출입 알림 (Phase 2-5b 가동)
+
+### 차폐물 (Cover) — Phase 2-5b 완료
+- **데이터**: `CoverData` (extends EnvironmentObjectData) — `move_step_pixels(16)`, `min_x_offset(-64)`, `max_x_offset(64)`, `block_mode(CREATE)`, `block_intensity(0.9)`, `shadow_projection_length(96)`, `shadow_projection_width(32)`, `projection_mode(LIGHT_OPPOSITE)`, `body_size(24×64)`, `body_color`
+  - `BlockMode` enum: `CREATE / REMOVE / BOTH` — Phase 2-5b는 CREATE만 구현, 나머지는 자리 확보
+  - `ProjectionMode` enum: `LIGHT_OPPOSITE`(빛 반대 방향) / `LOCAL_FIXED`(차폐물 local 고정)
+- **이동(밀기)**: STOPPED 중 E키 입력으로 플레이어 반대 방향 1스텝(±16px, ±64px 클램프) 이동. `EventBus.environment_interacted(object_id, step_index)` 발신.
+- **그림자 투영 영역 (ShadowProjectionZone)**:
+  - `Area2D` (collision layer 0, mask 4 = enemy). 본체 기준 부채꼴 대신 직사각형(96×32) 투영.
+  - `ProjectionMode.LIGHT_OPPOSITE`: 낮=`ShadowSystem.get_shadow_direction()` / 밤=`ShadowSystem.get_night_shadow_params(global_position).direction`. 밤+등불 OFF 시 투영 각도 0 (사실상 비활성).
+  - `EventBus.shadow_params_changed` 수신 시 투영 방향 재계산 (회전만 갱신, 위치 고정).
+- **강도 override (CREATE 모드)**:
+  - 영역 진입: `enemy.update_intensity(maxf(현재, block_intensity))` — max() 병합으로 더 강한 쪽이 적용
+  - 매 프레임 재적용(`_process` → `_reapply_override_to_all`): EnemySystem 브로드캐스트가 override를 덮어쓰는 것을 무효화
+  - 영역 이탈: 낮=`EnemySystem.get_current_intensity()` / 밤+등불 ON=`ShadowSystem.get_intensity_at(enemy.global_position)` 로 복원. 밤+등불 OFF는 override 대상 자체가 없음.
+  - `EventBus.environment_blocked_shadow(cover_id, enemy_id, blocked)` 발신.
+- **콜리전 구조**: Body(StaticBody2D layer 1 / 플레이어·적 물리 차단) + InteractionArea(layer 32) + ShadowProjectionZone(mask 4) + Highlight + Prompt
+
+### 미결 사항
+- [ ] 렌즈 (Lens) — Phase 2-5c (계산 모델 B: zone-based 파라미터 오버라이드 확정)
+- [ ] 반사 바닥 (Reflective Floor) — Phase 2-5d (정적, 비상호작용)
+- [ ] 차폐물 `BlockMode.REMOVE / BOTH` (현재 CREATE만 구현)
+- [ ] 거울/차폐물/렌즈 전용 아트 리소스 (현재 ColorRect/Polygon2D fallback)
+- [ ] 키맵 재조정 시 `interact_environment` 액션 최종 키 결정
+
+---
+
 ## 시스템 간 상호작용
 
 ```

@@ -116,3 +116,8 @@ signal inventory_closed
 
 # === 아이템 드롭 ===
 signal enemy_drop_requested(position: Vector2, enemy_name: String)
+
+# === 환경 오브젝트 시스템 ===
+signal environment_interacted(object_id: int, state_index: int)
+signal environment_split_triggered(object_id: int, enemy_ids: Array)
+signal environment_blocked_shadow(cover_id: int, caster_id: int, blocked: bool)

@@ -297,12 +297,42 @@ Phase 6  출시
   - `src/systems/stage/stage_system.gd` — 독립 흐름 자동 재개/정지 분기, 전환 중 flow pause/resume
 
 #### 2-5. 환경 오브젝트
-- [ ] 거울/수정 (빛 분산)
-- [ ] 렌즈 (빛 집중)
-- [ ] 차폐물 (빛 차단)
-- [ ] 반사 바닥 (이중 약화)
-- [ ] 수동 조작 (시간 정지 중만)
+- [x] **2-5a 거울/수정 (빛 분산 → 분열)** ✅
+- [x] **2-5b 차폐물 (빛 차단 → 그림자 투영 영역 강도 override)** ✅
+- [ ] 2-5c 렌즈 (빛 집중 → 그림자 극도 축소, 계산 모델 B)
+- [ ] 2-5d 반사 바닥 (이중 약화, 정적/비상호작용)
+- [x] 수동 조작 (시간 정지 중만, STOPPED 게이팅 — Phase 2-5a 베이스에서 확정)
 - **의존성**: Phase 1 완료
+- **2-5a 구현 파일**:
+  - `data/environment/environment_object_data.gd` — 공통 베이스 Resource (object_name, prompt_text, can_interact, interaction_radius, influence_radius, sprite_path)
+  - `data/environment/mirror_data.gd` — MirrorData (preset_count=4, beam_length=128, beam_angle_degrees=60, split_on_flow_start, default_shard_spore_path)
+  - `data/environment/mirror_basic.tres` — 기본 거울 인스턴스
+  - `data/enemies/shard_spore_enemy.tres` — 공용 폴백 스포어 ("그림자 파편", attack_behavior="none", is_spore=true, leaves_residue=false)
+  - `src/entities/objects/environment/base/environment_object.gd` — Node2D 베이스, STOPPED 게이팅 + interact() 진입점
+  - `src/entities/objects/environment/base/environment_influence_zone.gd` — Area2D, 영향권 적 추적
+  - `src/entities/objects/environment/common/environment_prompt.gd` — Label fallback ("[E] <prompt_text>")
+  - `src/entities/objects/environment/common/environment_highlight.gd` — Line2D fallback (40×56 노란 테두리)
+  - `src/entities/objects/environment/mirror/mirror.gd` — 4프리셋 회전 + FLOWING 진입 시 분열
+  - `src/entities/objects/environment/mirror/Mirror.tscn` — InteractionArea(layer 32) + RotationPivot(BeamVisual, InfluenceZone, MirrorBody) + Highlight + Prompt
+  - `src/entities/enemies/base/behaviors/split_spawner.gd` — 분열 인프라 공용 헬퍼 (RefCounted 정적)
+  - `src/entities/player/player_environment_interactor.gd` — Area2D(mask 32), 근접 오브젝트 자동 타겟팅 + E키 입력
+- **2-5a 수정 파일**:
+  - `src/entities/enemies/base/behaviors/death_behavior_split.gd` — split_spawner 사용으로 리팩토링
+  - `src/entities/enemies/base/base_enemy.gd` — `trigger_split()` public API 추가, 재분열 가드(_is_revived/is_spore)
+  - `src/entities/player/Player.tscn` — EnvironmentInteractor 노드 추가
+  - `src/systems/event_bus/event_bus.gd` — +3 환경 시그널 (environment_interacted, environment_split_triggered, environment_blocked_shadow)
+  - `project.godot` — +interact_environment InputMap (E키, 임시)
+- **2-5a 아트 명세서**: `docs/art_specs/environment_mirror_art_spec.md`
+- **2-5b 구현 파일**:
+  - `data/environment/cover_data.gd` — CoverData (move_step_pixels, min/max_x_offset, block_mode 자리 확보(CREATE만), block_intensity, shadow_projection_length/width, projection_mode, body_size/color)
+  - `data/environment/cover_basic.tres` — 기본 차폐물 인스턴스 (길이 96 / 폭 32 / 강도 0.9)
+  - `src/entities/objects/environment/cover/cover.gd` — STOPPED 중 interact() = 플레이어 반대 방향 1스텝 밀기, 투영 영역 진입 적 강도 상시 override (max 병합), _process 매 프레임 재적용
+  - `src/entities/objects/environment/cover/shadow_projection_zone.gd` — Area2D 브리지 (enemy_entered/exited 시그널)
+  - `src/entities/objects/environment/cover/Cover.tscn` — Body(StaticBody2D layer 1 / Cover body 충돌) + InteractionArea(layer 32) + ShadowProjectionZone(mask 4) + Highlight + Prompt
+- **2-5b 수정 파일**:
+  - `src/world/stages/TestStage.tscn` — Cover1 인스턴스 배치 (360, 296)
+- **2-5b 투영 방향**: 낮=태양 그림자 방향 그대로 / 밤=등불 반대 방향(get_night_shadow_params 위치 기반). 밤 등불 OFF 시 투영 없음.
+- **2-5b 복원 로직**: 이탈 시 낮=EnemySystem.get_current_intensity, 밤+등불=ShadowSystem.get_intensity_at(enemy.global_position)
 
 #### 2-6. 성장 시스템 ✅
 - [x] 강화 포인트 획득 (처치/클리어)
@@ -683,7 +713,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-16, Phase 2 진행 중)
+## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 2 진행 중 — 2-5b 차폐물 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -706,6 +736,8 @@ Phase 6 (출시)
 | **2-6** | **성장 시스템** | **✅ 완료** | **GrowthSystem Autoload + 포인트 획득/투자/리스펙 + 5개 시스템 보너스 연동 + 세이브/로드** |
 | **2-7** | **아이템/장비 시스템** | **✅ 완료** | **InventorySystem Autoload + 5슬롯 장비 + 소모품(2종) + 드롭 + 상점 + 인벤토리/소모품 HUD + 세이브/로드** |
 | **2-2** | **적 확장 (행동 차별화)** | **✅ 완료** | **AttackBehavior/DeathBehavior/Defense 컴포넌트 + 4종 차별화 (나무 범위/바위 방어/돌기둥 투사체/꽃 분열) + EnemyProjectile** |
+| **2-5a** | **환경 오브젝트 — 거울** | **✅ 완료** | **EnvironmentObjectData 베이스 + MirrorData(4프리셋, 60°/128px 부채꼴) + STOPPED 게이팅 + FLOWING 진입 시 분열 + split_spawner 공용화 + BaseEnemy.trigger_split() + shard_spore_enemy.tres 폴백 + EventBus 3시그널 + interact_environment(E키)** |
+| **2-5b** | **환경 오브젝트 — 차폐물** | **✅ 완료** | **CoverData(move_step=16, 투영 96×32, 강도 0.9) + STOPPED 중 밀기(±64) + ShadowProjectionZone(mask 4) + 영역 내 적 강도 상시 override(max 병합, _process 재적용) + 낮=태양방향/밤=등불반대 투영 방향 회전 + 이탈 시 per-object 강도 복원** |
 
 ### Phase 2 세부 작업 순서
 
@@ -755,6 +787,7 @@ Phase 6 (출시)
     - 스킬 로직 구조만 만들고, 실제 18개 스킬은 데이터(.tres)로 나중에 조립
     - 속성 배율은 전부 1.0으로 설정 (Phase 5 밸런싱에서 조정)
   - 이후 작업 순서: 2-6 성장 → 2-7 아이템/장비 → 2-2 적 확장 → 2-5 환경 오브젝트
+  - 2-5 세부 순서: 2-5a 거울(완료) → 2-5b 차폐물(완료) → 2-5c 렌즈 → 2-5d 반사 바닥
 ```
 
 ### 프로젝트 설정 변경 이력

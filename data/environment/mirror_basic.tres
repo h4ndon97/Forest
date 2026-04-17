@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MirrorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/mirror_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "거울"
+prompt_text = "거울 회전"
+can_interact = true
+interaction_radius = 48.0
+influence_radius = 128.0
+sprite_path = ""
+preset_count = 4
+initial_preset_index = 0
+beam_length = 128.0
+beam_angle_degrees = 60.0
+split_on_flow_start = true
+default_shard_spore_path = "res://data/enemies/shard_spore_enemy.tres"

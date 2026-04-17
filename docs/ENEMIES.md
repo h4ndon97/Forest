@@ -73,8 +73,19 @@
 
 - **투사체 엔티티**: `EnemyProjectile.tscn` (레이어 16 재사용, 벽 충돌 시 소멸, 수명 만료 시 소멸)
 - **분열체**: `flower_spore_enemy.tres` (HP 30, 공격력 4, 크기 14x14, is_spore=true, leaves_residue=false)
-- **재분열 방지**: 부활(`_is_revived`) 또는 분열체(`is_spore`)는 death_behavior를 강제로 none 설정
+- **공용 폴백 분열체** (Phase 2-5a): `shard_spore_enemy.tres` ("그림자 파편", HP 25, 공격력 3, attack_behavior="none", is_spore=true, leaves_residue=false). 적별 `spore_stats_path`가 비어 있을 때 환경 오브젝트(거울 등)가 사용하는 기본값.
+- **재분열 방지**: 부활(`_is_revived`) 또는 분열체(`is_spore`)는 death_behavior를 강제로 none 설정. `BaseEnemy.trigger_split()` 외부 호출 시에도 동일 가드 적용 (무한 분열 차단)
 - **잔류 폭발 방지**: 분열체는 `leaves_residue=false`로 잔류 미생성
+
+### 분열 인프라 공용화 (Phase 2-5a)
+적의 사망 분열(`death_behavior_split`)과 환경 오브젝트(거울)의 분열 트리거가 동일한 인프라를 공유한다.
+
+- **`split_spawner.gd`** (RefCounted 정적 헬퍼): 스포어 인스턴스화 + 위치 분산 + EnemySystem 등록. 사망/외부 트리거 양쪽에서 사용.
+- **`BaseEnemy.trigger_split(fallback_spore_path, count, spread_radius)`** (public API): 사망 없이 외부에서 분열을 강제. 거울이 FLOWING 진입 시 영향권 내 적에게 호출.
+  - `count=0` / `spread_radius=0.0` 전달 시 `stats_data`의 기본값 사용
+  - 전투 처치가 아니므로 드롭/잔류 미발생
+  - 재분열 가드 통과 시에만 분열, 원본 1체는 `queue_free()`
+- **EventBus**: `enemy_split_spawned(position, count)` 시그널을 사망 분열/외부 트리거 모두 발신
 
 ### 미결 사항
 - [ ] 구역별 서브 타입 목록

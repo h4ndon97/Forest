@@ -12,6 +12,8 @@ const AttackBehaviorMeleeScript = preload(
 		"res://src/entities/enemies/base/behaviors/attack_behavior_melee.gd")
 const AttackBehaviorNoneScript = preload(
 		"res://src/entities/enemies/base/behaviors/attack_behavior_none.gd")
+const SplitSpawnerScript = preload(
+		"res://src/entities/enemies/base/behaviors/split_spawner.gd")
 
 @export var stats_data: EnemyStatsData
 
@@ -123,6 +125,27 @@ func take_damage(amount: float) -> void:
 	if not stats_comp.is_dead():
 		if defense.should_enter_hurt_state():
 			state_machine.on_hurt()
+
+
+## 외부(거울 등 환경 오브젝트)에서 사망 없이 분열을 강제한다.
+## 재분열 방지: 부활체/분열체는 무시.
+## spore_stats_path가 비어있으면 fallback_spore_path 사용.
+## 분열 후 원본은 제거된다 (1체 → 다수).
+func trigger_split(fallback_spore_path: String, count: int, spread_radius: float) -> Array:
+	if _is_revived or (stats_data and stats_data.is_spore):
+		return []
+	if stats_data == null:
+		return []
+	var spore_path: String = stats_data.spore_stats_path
+	var use_count: int = count if count > 0 else stats_data.spore_count
+	var use_radius: float = spread_radius if spread_radius > 0.0 else stats_data.spore_spread_radius
+	var spawned: Array = SplitSpawnerScript.spawn_spores(
+			self, spore_path, fallback_spore_path, use_count, use_radius)
+	if spawned.size() > 0:
+		EventBus.enemy_split_spawned.emit(global_position, spawned.size())
+		EnemySystem.on_enemy_died(enemy_id, global_position)
+		queue_free()
+	return spawned
 
 
 # --- 내부 ---

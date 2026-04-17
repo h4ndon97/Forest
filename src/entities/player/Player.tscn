@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://src/entities/player/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player/player_spritesheet.png" id="2"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://src/entities/player/player_health.gd" id="9"]
 [ext_resource type="Script" path="res://src/entities/player/player_lantern.gd" id="10"]
 [ext_resource type="Script" path="res://src/entities/player/player_skill.gd" id="11"]
+[ext_resource type="Script" path="res://src/entities/player/player_environment_interactor.gd" id="12"]
 
 [sub_resource type="AtlasTexture" id="idle_0"]
 atlas = ExtResource("2")
@@ -145,6 +146,9 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="collision_shape"]
 size = Vector2(14, 28)
 
+[sub_resource type="CircleShape2D" id="env_interact_shape"]
+radius = 48.0
+
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
 collision_mask = 1
@@ -196,3 +200,14 @@ script = ExtResource("10")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(0, -16)
+
+[node name="EnvironmentInteractor" type="Area2D" parent="."]
+position = Vector2(0, -14)
+collision_layer = 0
+collision_mask = 32
+monitoring = true
+monitorable = false
+script = ExtResource("12")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnvironmentInteractor"]
+shape = SubResource("env_interact_shape")
