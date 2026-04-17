@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ArmorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/armor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "leather_vest"
+display_name = "가죽 조끼"
+description = "가벼운 가죽 조끼. 기본적인 보호를 제공한다."
+category = 1
+rarity = 0
+buy_price = 30
+sell_price = 10
+hp_bonus = 20.0
+defense_bonus = 3.0

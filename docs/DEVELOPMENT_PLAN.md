@@ -293,13 +293,48 @@ Phase 6  출시
   - `src/systems/stage/save_manager.gd` — collect_data/apply_data에 growth 데이터 통합
   - `project.godot` — +GrowthSystem Autoload (EventBus 직후)
 
-#### 2-7. 아이템/장비 시스템
-- [ ] 장착 슬롯 (무기 1 + 방어구 1 + 장신구 3)
-- [ ] 장비 능력치 적용
-- [ ] 장신구 특수 효과 (1~2개)
-- [ ] 소모품 (HP 회복, 시간 자원 회복)
-- [ ] 인벤토리 UI
+#### 2-7. 아이템/장비 시스템 ✅
+- [x] 장착 슬롯 (무기 1 + 방어구 1 + 장신구 3)
+- [x] 장비 능력치 적용 (성장 + 장비 합산, 방어력)
+- [x] 소모품 (HP 회복 키1, 시간자원 회복 키2, 종류별 최대 3개)
+- [x] 등급 체계 (일반/희귀/유니크, 강화 없음)
+- [x] 인벤토리 UI (Tab), 소모품 HUD, 상점 UI
+- [x] 드롭 시스템 (적 사망 확률 드롭 + 맵 배치)
+- [x] 세이브/로드 통합
 - **의존성**: 2-6
+- **구현 파일**:
+  - `data/items/item_data.gd` — ItemData Resource 베이스 (class_name)
+  - `data/items/weapon_data.gd` — WeaponData (attack_bonus, speed, combo)
+  - `data/items/armor_data.gd` — ArmorData (hp_bonus, defense_bonus)
+  - `data/items/accessory_data.gd` — AccessoryData (5종 보너스 + special_effect_id)
+  - `data/items/consumable_data.gd` — ConsumableData (type, amount, max_carry)
+  - `data/items/weapons/sword_basic.tres` — 테스트 무기 (COMMON)
+  - `data/items/weapons/sword_shadow.tres` — 테스트 무기 (RARE)
+  - `data/items/armors/leather_vest.tres` — 테스트 방어구
+  - `data/items/accessories/ring_of_strength.tres` — 테스트 장신구
+  - `data/items/consumables/hp_potion.tres` — HP 회복 소모품
+  - `data/items/consumables/time_crystal.tres` — 시간자원 회복 소모품
+  - `src/systems/inventory/inventory_system.gd` — Autoload 오케스트레이터
+  - `src/systems/inventory/item_registry.gd` — .tres 자동 로드/캐시
+  - `src/systems/inventory/equipment_manager.gd` — 5슬롯 장착/해제
+  - `src/systems/inventory/consumable_manager.gd` — 소모품 재고 관리
+  - `src/systems/inventory/equipment_stat_calculator.gd` — 장비 보너스 합산
+  - `src/ui/hud/ConsumableHud.tscn` + `consumable_hud.gd` — 소모품 HUD (2슬롯)
+  - `src/ui/menus/inventory/inventory_menu.gd` — 인벤토리 메뉴 Autoload
+  - `src/ui/menus/shop/shop_menu.gd` — 상점 메뉴 Autoload
+  - `src/entities/objects/item_drop/item_drop.gd` + `ItemDrop.tscn` — 드롭 아이템 엔티티
+  - `src/entities/npcs/shop_keeper/shop_keeper.gd` + `ShopKeeper.tscn` — 상점 NPC
+- **수정 파일**:
+  - `src/systems/event_bus/event_bus.gd` — +13 시그널 (아이템/장비/소모품/상점/드롭)
+  - `src/entities/player/player_health.gd` — +장비 HP/방어 보너스, +소모품 HP 회복
+  - `src/systems/combat/combat_system.gd` — +장비 공격력 보너스
+  - `src/systems/time/time_resource.gd` — +장비 시간 보너스
+  - `src/systems/time/time_system.gd` — +소모품 시간자원 회복
+  - `src/entities/enemies/base/base_enemy.gd` — +enemy_drop_requested 발신
+  - `src/entities/player/player.gd` — +inventory_opened/closed 입력 차단
+  - `src/systems/stage/save_manager.gd` — +인벤토리 세이브/로드
+  - `src/world/checkpoints/TestCheckpoint.tscn` — +ShopKeeper NPC
+  - `project.godot` — +InventorySystem/InventoryMenu/ShopMenu Autoload, +consumable_1/2/inventory 입력
 
 #### 2-8. 거점 시스템
 - [x] 거점 씬 (회복, 세이브) — 2-8a
@@ -635,6 +670,7 @@ Phase 6 (출시)
 | **2-3c** | **땅거미 HUD 경고** | **✅ 완료** | **접근 경고 HUD + 도착 이벤트** |
 | **2-1** | **전투 확장** | **✅ 완료** | **SkillSystem 프레임워크 + 4슬롯 + 쿨다운 + 피니시 속성 + 자동 회복 + 스킬 HUD** |
 | **2-6** | **성장 시스템** | **✅ 완료** | **GrowthSystem Autoload + 포인트 획득/투자/리스펙 + 5개 시스템 보너스 연동 + 세이브/로드** |
+| **2-7** | **아이템/장비 시스템** | **✅ 완료** | **InventorySystem Autoload + 5슬롯 장비 + 소모품(2종) + 드롭 + 상점 + 인벤토리/소모품 HUD + 세이브/로드** |
 
 ### Phase 2 세부 작업 순서
 
@@ -669,6 +705,12 @@ Phase 6 (출시)
       강화/프로퍼티 포인트 체계
       5개 시스템 보너스 연동 + 혼합 해금 + 리스펙
       세이브/로드 통합
+        │
+        └── 2-7 아이템/장비 시스템 ✅
+            InventorySystem + 4 컴포넌트
+            5슬롯 장비 + 소모품 2종 + 드롭 + 상점
+            인벤토리 메뉴 + 소모품 HUD + 상점 메뉴
+            세이브/로드 통합
   │
   합의된 결정:
   - 정화: 프레임워크만 (해금은 Phase 3)

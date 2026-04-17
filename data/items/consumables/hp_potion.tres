@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/consumable_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hp_potion"
+display_name = "HP 회복 물약"
+description = "체력을 30 회복한다."
+category = 3
+rarity = 0
+buy_price = 10
+sell_price = 3
+consumable_type = 0
+effect_amount = 30.0
+max_carry = 3

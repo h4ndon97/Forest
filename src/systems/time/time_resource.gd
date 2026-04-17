@@ -16,10 +16,11 @@ var _base_max: float = 100.0
 func setup(config: TimeConfigData) -> void:
 	_config = config
 	_base_max = config.resource_max
-	max_value = _base_max + GrowthSystem.get_time_max_bonus()
+	max_value = _calculate_max_value()
 	current = config.resource_initial
 	_was_depleted = false
-	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
+	EventBus.growth_stats_changed.connect(_on_bonus_changed)
+	EventBus.equipment_stats_changed.connect(_on_bonus_changed)
 
 
 func consume(game_hours_elapsed: float) -> void:
@@ -34,7 +35,9 @@ func consume(game_hours_elapsed: float) -> void:
 func recover(game_hours_elapsed: float) -> void:
 	if current >= max_value:
 		return
-	var rate: float = _config.recover_per_game_hour + GrowthSystem.get_time_recovery_bonus()
+	var rate: float = _config.recover_per_game_hour
+	rate += GrowthSystem.get_time_recovery_bonus()
+	rate += InventorySystem.get_time_recovery_bonus()
 	var amount: float = rate * game_hours_elapsed
 	_apply_recovery(amount)
 
@@ -69,13 +72,17 @@ func get_ratio() -> float:
 	return current / max_value
 
 
-func _on_growth_stats_changed() -> void:
-	var new_max: float = _base_max + GrowthSystem.get_time_max_bonus()
+func _on_bonus_changed() -> void:
+	var new_max: float = _calculate_max_value()
 	if new_max == max_value:
 		return
 	max_value = new_max
 	current = minf(current, max_value)
 	resource_changed.emit(current, max_value)
+
+
+func _calculate_max_value() -> float:
+	return _base_max + GrowthSystem.get_time_max_bonus() + InventorySystem.get_time_max_bonus()
 
 
 func _apply_recovery(amount: float) -> void:

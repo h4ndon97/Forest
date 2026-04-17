@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/consumable_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "time_crystal"
+display_name = "시간 결정"
+description = "시간 자원을 20 회복한다."
+category = 3
+rarity = 0
+buy_price = 15
+sell_price = 5
+consumable_type = 1
+effect_amount = 20.0
+max_carry = 3

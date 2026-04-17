@@ -141,13 +141,14 @@
 - **거점 맵**: 완전 회복
 - 거점에서 멀어질수록 자원 고갈 → 싸움 조건이 점점 거칠어짐 → 탐색 깊이의 전략적 판단
 
-### 구현 상태 (Phase 1-3 + 2-1 + 2-6 + 2-8a 완료)
+### 구현 상태 (Phase 1-3 + 2-1 + 2-6 + 2-7 + 2-8a 완료)
 - **자동 회복**: 시간 흐름 중 인게임 시간당 5.0 회복 (구현 완료)
 - **처치 시 회복**: EventBus.enemy_killed 수신 시 고정 3.0 회복 (구현 완료)
-- **아이템 회복**: recover_flat() 메서드 준비 완료 (InventorySystem 구현 후 연결)
+- **아이템 회복**: `consumable_used` 시그널 수신 → TIME_RECOVER 타입일 때 recover_flat(amount) 호출 (Phase 2-7 연결 완료)
 - **스킬 소비**: consume_flat() — 스킬별 time_cost 만큼 즉시 소비 (Phase 2-1)
 - **거점 완전 회복**: full_recover() — 거점 진입 시 전량 회복 (Phase 2-8a)
 - **성장 보너스 연동 (Phase 2-6)**: 프로퍼티 투자 시 시간 자원 최대치(+10/pt) 및 회복량(+1.0/pt) 증가. `growth_stats_changed` 시그널로 동적 반영.
+- **장비 보너스 연동 (Phase 2-7)**: 장비/장신구의 time_max_bonus, time_recovery_bonus 합산. `equipment_stats_changed` 시그널로 동적 반영.
 
 ### 미결 사항
 - [ ] 초기 최대치 / 초기 회복속도 최종 확정 (현재 100 / 5.0, 프로토타입으로 조정)

@@ -115,6 +115,7 @@ func _on_died() -> void:
 	hitbox.set_deferred("monitoring", false)
 	hurtbox.set_deferred("monitoring", false)
 	var killed_during_day: bool = EnemySystem.on_enemy_died(enemy_id, global_position)
+	EventBus.enemy_drop_requested.emit(global_position, stats_data.enemy_name)
 	_spawn_residue(killed_during_day)
 	queue_free()
 

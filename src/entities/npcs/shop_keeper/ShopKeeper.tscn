@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/entities/npcs/shop_keeper/shop_keeper.gd" id="1"]
+
+[node name="ShopKeeper" type="Area2D"]
+script = ExtResource("1")
+shop_items = Array[String](["sword_shadow", "leather_vest", "ring_of_strength", "hp_potion", "time_crystal"])

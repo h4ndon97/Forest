@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/accessory_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ring_of_strength"
+display_name = "힘의 반지"
+description = "착용자의 공격력을 높여주는 반지."
+category = 2
+rarity = 0
+buy_price = 40
+sell_price = 15
+attack_bonus = 8.0
+hp_bonus = 0.0
+defense_bonus = 0.0
+time_max_bonus = 0.0
+time_recovery_bonus = 0.0
+special_effect_id = ""

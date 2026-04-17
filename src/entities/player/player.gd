@@ -52,6 +52,8 @@ func _ready() -> void:
 	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
 	EventBus.world_map_opened.connect(func(): _input_blocked = true)
 	EventBus.world_map_closed.connect(func(): _input_blocked = false)
+	EventBus.inventory_opened.connect(func(): _input_blocked = true)
+	EventBus.inventory_closed.connect(func(): _input_blocked = false)
 
 
 func _physics_process(delta: float) -> void:

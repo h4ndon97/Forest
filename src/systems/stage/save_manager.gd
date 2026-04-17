@@ -30,6 +30,8 @@ func collect_data(
 		data["time_resource"] = TimeSystem.get_resource_data()
 	if GrowthSystem and GrowthSystem.has_method("get_save_data"):
 		data["growth"] = GrowthSystem.get_save_data()
+	if InventorySystem and InventorySystem.has_method("get_save_data"):
+		data["inventory"] = InventorySystem.get_save_data()
 	return data
 
 
@@ -49,6 +51,9 @@ func apply_data(data: Dictionary) -> Dictionary:
 	var growth_data: Dictionary = data.get("growth", {})
 	if not growth_data.is_empty() and GrowthSystem and GrowthSystem.has_method("load_save_data"):
 		GrowthSystem.load_save_data(growth_data)
+	var inv_data: Dictionary = data.get("inventory", {})
+	if not inv_data.is_empty() and InventorySystem and InventorySystem.has_method("load_save_data"):
+		InventorySystem.load_save_data(inv_data)
 	return result
 
 

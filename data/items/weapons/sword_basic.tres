@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/weapon_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "sword_basic"
+display_name = "낡은 검"
+description = "평범한 검. 쓸만하다."
+category = 0
+rarity = 0
+buy_price = 0
+sell_price = 0
+attack_bonus = 5.0
+attack_speed_mult = 1.0
+combo_damage_mult = 1.0

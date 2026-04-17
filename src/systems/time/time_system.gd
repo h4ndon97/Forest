@@ -8,6 +8,7 @@ const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
 const TimeClock = preload("res://src/systems/time/time_clock.gd")
 const TimeResource = preload("res://src/systems/time/time_resource.gd")
 const TimeAtmosphere = preload("res://src/systems/time/time_atmosphere.gd")
+const ConsumableDataClass = preload("res://data/items/consumable_data.gd")
 
 const CONFIG_PATH := "res://data/time/time_config.tres"
 const HUD_PATH := "res://src/ui/hud/TimeHud.tscn"
@@ -55,6 +56,7 @@ func _ready() -> void:
 	EventBus.checkpoint_exited.connect(_on_checkpoint_exited)
 	EventBus.full_recovery_requested.connect(_on_full_recovery_requested)
 	EventBus.time_resource_consume_flat_requested.connect(_on_consume_flat_requested)
+	EventBus.consumable_used.connect(_on_consumable_used)
 
 	_atmosphere.update_atmosphere(_clock.current_hour, _config)
 	EventBus.current_hour_changed.emit(_clock.current_hour)
@@ -224,6 +226,12 @@ func _on_full_recovery_requested() -> void:
 
 func _on_consume_flat_requested(amount: float) -> void:
 	_resource.consume_flat(amount)
+
+
+func _on_consumable_used(consumable_type: int, amount: float) -> void:
+	if consumable_type != ConsumableDataClass.ConsumableType.TIME_RECOVER:
+		return
+	_resource.recover_flat(amount)
 
 
 func _on_enemy_killed(_enemy_id: int, _enemy_name: String) -> void:

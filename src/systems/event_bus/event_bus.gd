@@ -92,3 +92,25 @@ signal finish_attribute_changed(attribute: String)
 signal time_resource_changed(current: float, max_val: float)
 signal time_resource_depleted
 signal time_resource_consume_flat_requested(amount: float)
+
+# === 인벤토리/장비 시스템 ===
+signal item_acquired(item_id: String)
+signal item_removed(item_id: String)
+## slot_type: 0=weapon, 1=armor, 2~4=accessory. item_id="" = 해제
+signal equipment_changed(slot_type: int, item_id: String)
+signal equipment_stats_changed()
+signal consumable_used(consumable_type: int, amount: float)
+signal consumable_count_changed(item_id: String, current: int, max_val: int)
+signal consumables_refilled()
+
+# === 상점 시스템 ===
+signal shop_opened(shop_id: String)
+signal shop_closed
+signal shop_purchase_completed(item_id: String)
+
+# === 인벤토리 UI ===
+signal inventory_opened
+signal inventory_closed
+
+# === 아이템 드롭 ===
+signal enemy_drop_requested(position: Vector2, enemy_name: String)

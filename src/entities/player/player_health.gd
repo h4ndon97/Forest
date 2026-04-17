@@ -4,6 +4,7 @@ extends Node
 ## 허트박스 생성 및 적 공격 감지 처리.
 
 const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
+const ConsumableDataClass = preload("res://data/items/consumable_data.gd")
 
 var max_hp: float
 var current_hp: float
@@ -22,7 +23,7 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	_parent = parent
 	_config = config
 	_base_max_hp = config.player_max_hp
-	max_hp = _base_max_hp + GrowthSystem.get_hp_bonus()
+	max_hp = _calculate_max_hp()
 	current_hp = max_hp
 
 	_create_hurtbox()
@@ -34,7 +35,9 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
 	EventBus.player_died.connect(_on_player_died_heal)
 	EventBus.time_state_changed.connect(_on_time_state_changed)
-	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
+	EventBus.growth_stats_changed.connect(_on_stats_bonus_changed)
+	EventBus.equipment_stats_changed.connect(_on_stats_bonus_changed)
+	EventBus.consumable_used.connect(_on_consumable_used)
 	EventBus.health_changed.emit(current_hp, max_hp)
 
 
@@ -42,7 +45,9 @@ func take_damage(amount: float) -> void:
 	if _is_invincible:
 		return
 
-	current_hp = maxf(current_hp - amount, 0.0)
+	var defense: float = InventorySystem.get_defense_bonus()
+	var actual: float = maxf(amount - defense, 1.0)
+	current_hp = maxf(current_hp - actual, 0.0)
 	EventBus.health_changed.emit(current_hp, max_hp)
 	EventBus.damage_received.emit(amount)
 
@@ -134,8 +139,8 @@ func _on_respawned(_position: Vector2) -> void:
 	_reset_health_state()
 
 
-func _on_growth_stats_changed() -> void:
-	var new_max: float = _base_max_hp + GrowthSystem.get_hp_bonus()
+func _on_stats_bonus_changed() -> void:
+	var new_max: float = _calculate_max_hp()
 	if new_max == max_hp:
 		return
 	var old_max: float = max_hp
@@ -146,7 +151,7 @@ func _on_growth_stats_changed() -> void:
 
 
 func _reset_health_state() -> void:
-	max_hp = _base_max_hp + GrowthSystem.get_hp_bonus()
+	max_hp = _calculate_max_hp()
 	current_hp = max_hp
 	_is_invincible = false
 	_is_knocked_back = false
@@ -196,3 +201,16 @@ func _on_auto_heal_tick() -> void:
 
 func _on_player_died_heal() -> void:
 	_stop_auto_healing()
+
+
+func _calculate_max_hp() -> float:
+	return _base_max_hp + GrowthSystem.get_hp_bonus() + InventorySystem.get_hp_bonus()
+
+
+func _on_consumable_used(consumable_type: int, amount: float) -> void:
+	if consumable_type != ConsumableDataClass.ConsumableType.HP_RECOVER:
+		return
+	if current_hp <= 0.0 or current_hp >= max_hp:
+		return
+	current_hp = minf(current_hp + amount, max_hp)
+	EventBus.health_changed.emit(current_hp, max_hp)
