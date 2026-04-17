@@ -7,8 +7,20 @@ const RESIDUE_PATH := "res://src/entities/enemies/shadow_residue/ShadowResidue.t
 const DamageNumberScript = preload("res://src/ui/common/damage_number.gd")
 const EnemyStateMachine = preload("res://src/entities/enemies/base/enemy_state_machine.gd")
 const EnemyHPBarScript = preload("res://src/entities/enemies/base/enemy_hp_bar.gd")
+const EnemyDefenseScript = preload("res://src/entities/enemies/base/enemy_defense.gd")
+const AttackBehaviorMeleeScript = preload(
+		"res://src/entities/enemies/base/behaviors/attack_behavior_melee.gd")
+const AttackBehaviorNoneScript = preload(
+		"res://src/entities/enemies/base/behaviors/attack_behavior_none.gd")
 
 @export var stats_data: EnemyStatsData
+
+var enemy_id: int = -1
+
+var _hp_bar: Node2D
+var _is_revived: bool = false
+var _revive_hp_ratio: float = 1.0
+var _revive_attack_ratio: float = 1.0
 
 @onready var state_machine: Node = $StateMachine
 @onready var stats_comp: Node = $Stats
@@ -17,12 +29,9 @@ const EnemyHPBarScript = preload("res://src/entities/enemies/base/enemy_hp_bar.g
 @onready var detect_area: Area2D = $DetectArea
 @onready var hurtbox: Area2D = $Hurtbox
 @onready var hitbox: Area2D = $Hitbox
-
-var enemy_id: int = -1
-var _hp_bar: Node2D
-var _is_revived: bool = false
-var _revive_hp_ratio: float = 1.0
-var _revive_attack_ratio: float = 1.0
+@onready var attack_behavior: Node = $AttackBehavior
+@onready var death_behavior: Node = $DeathBehavior
+@onready var defense: Node = $Defense
 
 
 ## 부활 적으로 설정한다. add_child() 전에 호출해야 한다.
@@ -35,11 +44,17 @@ func setup_as_revived(hp_ratio: float, attack_ratio: float) -> void:
 func _ready() -> void:
 	add_to_group("enemies")
 
+	_inject_behaviors()
+
 	stats_comp.setup(stats_data, EnemySystem.get_current_intensity(),
 			_revive_hp_ratio, _revive_attack_ratio)
 	movement_comp.setup(stats_data, stats_comp)
 	state_machine.setup(self)
 	animation_comp.setup($AnimatedSprite2D)
+	defense.setup(stats_data)
+	attack_behavior.setup(self, stats_data, hitbox)
+	if death_behavior.has_method("setup"):
+		death_behavior.setup(self, stats_data)
 
 	enemy_id = EnemySystem.register_enemy(self)
 
@@ -75,6 +90,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	state_machine.update(delta)
+	attack_behavior.on_state_update(delta)
 
 	velocity = movement_comp.calculate_velocity(
 		state_machine.current_state,
@@ -102,12 +118,39 @@ func update_intensity(intensity: float) -> void:
 
 
 func take_damage(amount: float) -> void:
-	stats_comp.take_damage(amount)
+	var final_damage: float = defense.apply_damage_reduction(amount)
+	stats_comp.take_damage(final_damage)
 	if not stats_comp.is_dead():
-		state_machine.on_hurt()
+		if defense.should_enter_hurt_state():
+			state_machine.on_hurt()
 
 
 # --- 내부 ---
+
+func _inject_behaviors() -> void:
+	var attack_type: String = stats_data.attack_behavior if stats_data else "melee"
+	match attack_type:
+		"ranged":
+			attack_behavior.set_script(load(
+					"res://src/entities/enemies/base/behaviors/attack_behavior_ranged.gd"))
+		"none":
+			attack_behavior.set_script(AttackBehaviorNoneScript)
+		_:
+			attack_behavior.set_script(AttackBehaviorMeleeScript)
+
+	var death_type: String = stats_data.death_behavior if stats_data else "none"
+	# 부활 또는 분열체는 재분열 금지
+	if _is_revived or (stats_data and stats_data.is_spore):
+		death_type = "none"
+	match death_type:
+		"split":
+			death_behavior.set_script(load(
+					"res://src/entities/enemies/base/behaviors/death_behavior_split.gd"))
+		_:
+			pass
+
+	defense.set_script(EnemyDefenseScript)
+
 
 func _on_died() -> void:
 	state_machine.on_death()
@@ -117,6 +160,8 @@ func _on_died() -> void:
 	var killed_during_day: bool = EnemySystem.on_enemy_died(enemy_id, global_position)
 	EventBus.enemy_drop_requested.emit(global_position, stats_data.enemy_name)
 	_spawn_residue(killed_during_day)
+	if death_behavior.has_method("on_death"):
+		death_behavior.on_death()
 	queue_free()
 
 
@@ -137,11 +182,13 @@ func _spawn_residue(killed_during_day: bool) -> void:
 	EventBus.residue_left.emit(global_position, killed_during_day)
 
 
-func _on_state_changed(_old_state: int, new_state: int) -> void:
-	# ATTACK 상태 진입 시 히트박스 활성화 (시그널 중 직접 변경 불가 → deferred)
-	var is_attack := (new_state == EnemyStateMachine.State.ATTACK)
-	hitbox.set_deferred("monitoring", is_attack)
-	hitbox.set_deferred("monitorable", is_attack)
+func _on_state_changed(old_state: int, new_state: int) -> void:
+	var entered_attack: bool = (new_state == EnemyStateMachine.State.ATTACK)
+	var exited_attack: bool = (old_state == EnemyStateMachine.State.ATTACK)
+	if entered_attack:
+		attack_behavior.on_attack_enter()
+	elif exited_attack:
+		attack_behavior.on_attack_exit()
 
 
 func _on_detect_body_entered(body: Node2D) -> void:

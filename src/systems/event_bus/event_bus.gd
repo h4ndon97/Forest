@@ -24,6 +24,8 @@ signal residue_left(position: Vector2, killed_during_day: bool)
 signal residue_purified(position: Vector2)
 signal residue_revival_requested(stage_id: String)
 signal residue_revived(position: Vector2, enemy_type: String)
+signal enemy_projectile_fired(origin: Vector2, direction: Vector2)
+signal enemy_split_spawned(origin: Vector2, spore_count: int)
 
 # === 땅거미 시스템 ===
 signal dusk_spider_spawned(spider_id: int)

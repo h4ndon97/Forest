@@ -34,3 +34,43 @@ extends Resource
 
 @export_group("잔류")
 @export var leaves_residue: bool = true
+
+@export_group("행동 타입")
+## 공격 행동 (melee / ranged / none)
+@export_enum("melee", "ranged", "none") var attack_behavior: String = "melee"
+## 사망 행동 (none / split)
+@export_enum("none", "split") var death_behavior: String = "none"
+
+@export_group("근접 공격 형상")
+## 공격 히트박스 크기
+@export var hitbox_size: Vector2 = Vector2(30.0, 20.0)
+## 공격 히트박스 오프셋 (전방 기준, x는 양수 = 전방)
+@export var hitbox_offset: Vector2 = Vector2(20.0, -14.0)
+## 히트박스 활성 지속 (초). 0이면 ATTACK 상태 내내 활성
+@export var hitbox_active_duration: float = 0.0
+
+@export_group("방어")
+## 고정 데미지 감산 (피격 후 최소 1 보장)
+@export var damage_reduction_flat: float = 0.0
+## HURT 상태 진입 확률 (0=항상 저항, 1=항상 경직)
+@export var hurt_resistance_chance: float = 1.0
+
+@export_group("원거리 공격")
+## 투사체 씬 경로 (ranged일 때 필수)
+@export var projectile_scene_path: String = ""
+## 투사체 속도 (px/s)
+@export var projectile_speed: float = 180.0
+## 투사체 수명 (초)
+@export var projectile_lifetime: float = 3.0
+## 발사 선딜 (공격 트리거 후 실제 발사까지)
+@export var projectile_telegraph: float = 0.35
+
+@export_group("분열")
+## 분열체 스탯 리소스 경로 (split일 때 필수)
+@export var spore_stats_path: String = ""
+## 분열체 생성 개수
+@export var spore_count: int = 2
+## 스폰 분산 반경 (px)
+@export var spore_spread_radius: float = 16.0
+## 분열체 여부 (재분열 방지)
+@export var is_spore: bool = false

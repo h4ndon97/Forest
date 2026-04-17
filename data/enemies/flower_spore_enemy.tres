@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "꽃 그림자 포자"
+enemy_type = "flower"
+base_hp = 30.0
+base_attack = 4.0
+attack_range = 28.0
+attack_cooldown = 0.7
+base_speed = 100.0
+patrol_speed = 55.0
+detect_range = 140.0
+lose_range = 200.0
+min_intensity = 0.1
+max_intensity = 1.5
+collision_width = 14.0
+collision_height = 14.0
+gravity_scale = 0.8
+leaves_residue = false
+attack_behavior = "melee"
+death_behavior = "none"
+hitbox_size = Vector2(18.0, 14.0)
+hitbox_offset = Vector2(14.0, -8.0)
+is_spore = true

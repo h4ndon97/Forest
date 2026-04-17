@@ -47,9 +47,9 @@
 
 - 서브 타입과 구역 고유 적도 각각 고유한 반응 특성을 가질 수 있음
 
-### 구현 상태 (Phase 1-5 + 2-3a 완료)
+### 구현 상태 (Phase 1-5 + 2-2 + 2-3a 완료)
 - **구현 완료**: EnemySystem Autoload, EnemyRegistry(적 추적), EnemyIntensity(강도 계산)
-- **베이스 적 엔티티**: 컴포넌트 기반 구성 (StateMachine, Stats, Movement, AnimationController, HPBar)
+- **베이스 적 엔티티**: 컴포넌트 기반 구성 (StateMachine, Stats, Movement, AnimationController, HPBar, AttackBehavior, DeathBehavior, Defense)
 - **AI 상태 머신**: DORMANT → IDLE → PATROL → CHASE → ATTACK → HURT → DEAD
 - **그림자 강도 연동**: ShadowSystem 강도 → 유형별 재매핑 → HP/공격력/속도 실시간 조정
 - **시간 흐름 연동**: FLOWING → 적 활성화, STOPPED/MANIPULATING → 적 비활성화
@@ -59,14 +59,29 @@
 - **DORMANT 비주얼**: fallback 초기 색상이 DORMANT_COLOR(어둡고 반투명)로 설정. 활성화 시 밝은 색으로 전환.
 - **수치 외부화**: `data/enemies/` 하위 .tres 파일에서 모든 수치 조정 가능
 - **fallback 비주얼**: 아트 없이 ColorRect로 동작
-- **임시 전투**: player_combat.gd 브릿지 (CombatSystem 구현 전까지)
-- **시스템 간 통신**: EventBus.time_state_changed/shadow_params_changed 수신, enemy_spawned/enemy_killed/residue_left 발신
+- **시스템 간 통신**: EventBus.time_state_changed/shadow_params_changed 수신, enemy_spawned/enemy_killed/residue_left/enemy_projectile_fired/enemy_split_spawned 발신
+
+### 유형별 행동 차별화 (Phase 2-2 완료)
+컴포넌트 패턴: `AttackBehavior` / `DeathBehavior` / `Defense` 3개 자식 슬롯에 stats_data.attack_behavior/death_behavior 값을 보고 런타임에 스크립트 주입.
+
+| 유형 | AttackBehavior | DeathBehavior | Defense | 핵심 특성 |
+|---|---|---|---|---|
+| 나무 | melee (히트박스 50x28, 0.35s) | none | 기본 | 넓은 범위, 오래 지속 |
+| 바위 | melee (기본 30x20) | none | 감산 3, 경직 저항 30% | 단단함, 경직 잘 안 됨 |
+| 꽃 | melee (기본 30x20) | split (2마리, 반경 20) | 기본 | 처치 시 분열체 스폰 |
+| 돌기둥 | ranged (투사체 200px/s, 2.5s, 선딜 0.4s) | none | 기본 | 근접 히트박스 차단, 원거리 공격 |
+
+- **투사체 엔티티**: `EnemyProjectile.tscn` (레이어 16 재사용, 벽 충돌 시 소멸, 수명 만료 시 소멸)
+- **분열체**: `flower_spore_enemy.tres` (HP 30, 공격력 4, 크기 14x14, is_spore=true, leaves_residue=false)
+- **재분열 방지**: 부활(`_is_revived`) 또는 분열체(`is_spore`)는 death_behavior를 강제로 none 설정
+- **잔류 폭발 방지**: 분열체는 `leaves_residue=false`로 잔류 미생성
 
 ### 미결 사항
 - [ ] 구역별 서브 타입 목록
 - [ ] 각 서브 타입별 공격 패턴
 - [ ] 구역 고유 오브젝트 및 신규 적 종류
 - [ ] 서브 타입/구역 고유 적의 그림자 반응 수치
+- [ ] Phase 5 밸런싱: 나무 히트박스 크기, 바위 방어 수치, 돌기둥 투사체 속도/선딜, 꽃 분열체 개수/HP
 
 ---
 

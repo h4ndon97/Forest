@@ -111,6 +111,16 @@ func _start_invincibility() -> void:
 func _on_enemy_attack_hit(area: Area2D) -> void:
 	if _is_invincible:
 		return
+	if area.is_in_group("enemy_projectile"):
+		var proj_damage: float = area.get_meta("damage", 0.0)
+		if proj_damage <= 0.0:
+			return
+		take_damage(proj_damage)
+		if current_hp > 0.0:
+			_apply_knockback(area)
+		if area.has_method("on_hit"):
+			area.on_hit()
+		return
 	var enemy := area.get_parent()
 	if not enemy.is_in_group("enemies"):
 		return

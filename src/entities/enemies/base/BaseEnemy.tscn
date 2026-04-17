@@ -76,3 +76,9 @@ shadow_length_pixels = 0.0
 fallback_size = Vector2(20, 6)
 shadow_z_index = 1
 anchor_at_base = true
+
+[node name="AttackBehavior" type="Node" parent="."]
+
+[node name="DeathBehavior" type="Node" parent="."]
+
+[node name="Defense" type="Node" parent="."]

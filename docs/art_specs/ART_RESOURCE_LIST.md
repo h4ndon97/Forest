@@ -337,3 +337,29 @@ Aseprite에서 태그별로 내보내기:
 > 상세 명세: `docs/art_specs/dusk_spider_art_spec.md` 참조
 
 **우선순위**: 32번(메인 시트) > 33번(접근 경고) > 34번(등장 웅덩이) > 35번(사망 잔류)
+
+---
+
+## Phase 2-2. 적 확장 (행동 차별화)
+
+| # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
+|---|---|---|---|---|---|
+| 36 | 돌기둥 투사체 | 16x12 (또는 가로 스트립 4프레임 회전) | `assets/sprites/effects/` | `enemy_projectile_stone.png` | 돌 파편. 비행 방향 우향 기준. 좌향은 코드로 flip_h |
+| 37 | 꽃 분열체 스프라이트 | 64x64 캔버스, 원본 꽃의 70% 크기 | `assets/sprites/enemies/` | `flower_spore.png` | 작은 꽃 포자. Idle/Move/Attack 태그 |
+| 38 | 나무 범위 공격 이펙트 | 96x48 가로 스트립 4프레임 | `assets/sprites/effects/` | `fx_tree_sweep.png` | 호형 슬래시 이펙트. 반투명 녹/갈색 |
+| 39 | 바위 데미지 감산 피드백 | 32x32 가로 스트립 3프레임 | `assets/sprites/effects/` | `fx_block_spark.png` | 반짝 이펙트. 회색/흰색 |
+| 40 | 분열 연출 파티클 | 32x32 가로 스트립 4프레임 | `assets/sprites/effects/` | `fx_flower_burst.png` | 포자 흩뿌림. 핑크/흰색 |
+| 41 | 투사체 소멸 파티클 | 16x16 가로 스트립 3프레임 | `assets/sprites/effects/` | `fx_stone_puff.png` | 먼지. 회색 반투명 |
+
+### Phase 2-2 아트 우선순위
+
+1. **36, 37** (투사체, 분열체) — 실제 전투 체감에 직결
+2. **38** (나무 범위) — 히트박스 가시화 (플레이어 회피 학습 보조)
+3. **40, 41** (연출 파티클) — 폴리싱
+4. **39** (바위 방어 피드백) — "BLOCK" 텍스트 대체
+
+### Fallback 현황
+
+- 투사체: `EnemyProjectile.tscn`의 `FallbackVisual` ColorRect 8x6 회색갈(#9988 ish)
+- 꽃 분열체: `BaseEnemy.tscn` 기본 fallback 재사용 (collision 14x14)
+- 나머지: 이펙트 없이 동작, 데미지 넘버로만 피드백

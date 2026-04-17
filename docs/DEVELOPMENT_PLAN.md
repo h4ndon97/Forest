@@ -204,11 +204,45 @@ Phase 6  출시
   - `src/systems/time/time_resource.gd` — +consume_flat() 메서드
   - `project.godot` — +SkillSystem Autoload
 
-#### 2-2. 적 확장
-- [ ] 베이스 4종 완성 (나무, 바위, 꽃, 돌기둥)
-- [ ] 유형별 그림자 반응 (표준/둔감/민감)
-- [ ] 잔류 부활 (HP 50%, 공격력 150%)
+#### 2-2. 적 확장 ✅
+- [x] 베이스 4종 행동 차별화 (나무 범위/바위 방어/돌기둥 원거리/꽃 분열)
+- [x] 유형별 그림자 반응 (표준/둔감/민감) — min_intensity로 이미 Phase 1-5에 반영
+- [x] 잔류 부활 (HP 50%, 공격력 150%) — Phase 2-3a에서 완료
 - **의존성**: Phase 1 완료
+- **구현 파일** (2-2a 행동 훅 프레임워크):
+  - `src/entities/enemies/base/behaviors/attack_behavior_base.gd` — 공격 행동 베이스 인터페이스
+  - `src/entities/enemies/base/behaviors/attack_behavior_melee.gd` — 근접 (hitbox shape 파라미터화 + 활성 지속)
+  - `src/entities/enemies/base/behaviors/attack_behavior_none.gd` — 공격 없는 적 (분열체 부활 등)
+  - `src/entities/enemies/base/behaviors/death_behavior_base.gd` — 사망 행동 베이스 인터페이스
+  - `src/entities/enemies/base/enemy_defense.gd` — 데미지 감산 + 경직 저항 확률
+- **구현 파일** (2-2b 나무/바위):
+  - `data/enemies/tree_enemy.tres` 수정 — hitbox_size(50x28), offset(30,-14), duration 0.35s
+  - `data/enemies/rock_enemy.tres` 수정 — damage_reduction_flat 3, hurt_resistance_chance 0.3
+- **구현 파일** (2-2c 돌기둥 투사체):
+  - `src/entities/enemies/base/behaviors/attack_behavior_ranged.gd` — 투사체 스폰 + 선딜(telegraph) + 근접 히트박스 차단
+  - `src/entities/enemies/projectile/enemy_projectile.gd` — 투사체 엔티티 (직선 이동, 수명, 벽 충돌 소멸)
+  - `src/entities/enemies/projectile/EnemyProjectile.tscn` — 투사체 씬 (Area2D + fallback ColorRect)
+  - `data/enemies/pillar_enemy.tres` 수정 — attack_behavior="ranged", speed 200, lifetime 2.5, telegraph 0.4
+- **구현 파일** (2-2d 꽃 분열):
+  - `src/entities/enemies/base/behaviors/death_behavior_split.gd` — 사망 시 spore_count만큼 분열체 스폰
+  - `data/enemies/flower_spore_enemy.tres` — 분열체 스탯 (작고 약함, is_spore=true, leaves_residue=false)
+  - `data/enemies/flower_enemy.tres` 수정 — death_behavior="split", spore_count 2, radius 20
+- **수정 파일**:
+  - `src/entities/enemies/base/base_enemy.gd` — `_inject_behaviors`로 behavior 스크립트 주입, ATTACK 진입/종료 위임, take_damage 방어력 훅, _on_died 분열 훅
+  - `src/entities/enemies/base/BaseEnemy.tscn` — AttackBehavior/DeathBehavior/Defense 3개 빈 Node 슬롯 추가
+  - `data/enemies/enemy_stats_data.gd` — 행동 타입/히트박스 형상/방어/투사체/분열 총 14개 필드 추가
+  - `src/systems/event_bus/event_bus.gd` — +2 시그널 (enemy_projectile_fired, enemy_split_spawned)
+  - `src/entities/player/player_health.gd` — _on_enemy_attack_hit에 투사체 분기 추가 (area.is_in_group("enemy_projectile"))
+- **설계 결정**:
+  - 옵션 C(자식 Node 컴포넌트) + 옵션 B(데이터 필드) 하이브리드 패턴
+  - 씬 4개(TreeEnemy 등) 대신 단일 BaseEnemy + stats_data.attack_behavior로 런타임 스크립트 주입 (서브 타입 확장성)
+  - 부활 꽃과 분열체는 재분열 금지(`_is_revived or is_spore` → death_behavior 강제 none)
+  - 투사체는 레이어 16(LAYER_ENEMY_ATTACK) 재사용, 플레이어 hurtbox 자동 감지
+- **임시 밸런싱 값** (Phase 5에서 재조정):
+  - 나무 히트박스 50x28 (기본 대비 1.67배)
+  - 바위 방어 3 flat, 경직 저항 30%
+  - 돌기둥 투사체 속도 200px/s, 수명 2.5s, 선딜 0.4s
+  - 꽃 분열체 2마리, HP 30(원본 60의 50%), 분산 반경 20
 
 #### 2-3. 땅거미 시스템
 - [x] 잔류 부활 메카닉 (2-2 최소 범위) — 2-3a
@@ -671,6 +705,7 @@ Phase 6 (출시)
 | **2-1** | **전투 확장** | **✅ 완료** | **SkillSystem 프레임워크 + 4슬롯 + 쿨다운 + 피니시 속성 + 자동 회복 + 스킬 HUD** |
 | **2-6** | **성장 시스템** | **✅ 완료** | **GrowthSystem Autoload + 포인트 획득/투자/리스펙 + 5개 시스템 보너스 연동 + 세이브/로드** |
 | **2-7** | **아이템/장비 시스템** | **✅ 완료** | **InventorySystem Autoload + 5슬롯 장비 + 소모품(2종) + 드롭 + 상점 + 인벤토리/소모품 HUD + 세이브/로드** |
+| **2-2** | **적 확장 (행동 차별화)** | **✅ 완료** | **AttackBehavior/DeathBehavior/Defense 컴포넌트 + 4종 차별화 (나무 범위/바위 방어/돌기둥 투사체/꽃 분열) + EnemyProjectile** |
 
 ### Phase 2 세부 작업 순서
 

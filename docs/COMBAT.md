@@ -100,9 +100,11 @@ IDLE → (공격 입력) → ATTACKING → (HitTimer 만료) → WINDOW → (입
 - 초기 HP: 100.0 (`player_max_hp`)
 
 ### 피격 처리
-1. 적 히트박스가 플레이어 허트박스에 진입
+1. 적 히트박스 또는 `enemy_projectile` 그룹 Area2D가 플레이어 허트박스에 진입
 2. 무적 상태면 무시
-3. 적의 `Stats.get_attack()` 값만큼 데미지 적용
+3. 데미지 소스 판별:
+   - 근접 히트박스: 적의 `Stats.get_attack()` 값 사용
+   - 투사체(`enemy_projectile` 그룹): `area.get_meta("damage")` 값 사용 후 `area.on_hit()`로 소멸 처리 (Phase 2-2)
 4. `health_changed` / `damage_received` 시그널 발신
 5. HP가 0 이하 → 사망 처리 / HP가 남음 → 무적 + 넉백
 
@@ -158,12 +160,21 @@ IDLE → (공격 입력) → ATTACKING → (HitTimer 만료) → WINDOW → (입
 - 기본 상태: `monitoring = false`, `monitorable = false`
 - ATTACK 상태 진입 시만 양쪽 모두 `true`
 - 상태 전환 시 `state_changed` 시그널로 자동 전환
+- **행동 주입 (Phase 2-2)**: ATTACK 진입/종료 훅은 `AttackBehavior` 자식 컴포넌트로 위임. melee(근접 히트박스)/ranged(투사체 발사)/none 스크립트 중 `stats_data.attack_behavior`에 따라 런타임 주입.
+  - melee: `hitbox_size` / `hitbox_offset` / `hitbox_active_duration` 값으로 `RectangleShape2D`를 크기/위치/지속시간 조정 (예: 나무 50x28 0.35s)
+  - ranged: `projectile_telegraph` 선딜 후 `projectile_scene_path`의 투사체 스폰, 근접 히트박스는 비활성 유지
+  - none: 훅 비어있음 (분열체, 부활체 등)
 
 ### 적 허트박스 (피격용)
 - 플레이어 공격 히트박스(`player_attack` 그룹) 진입 감지
 - 히트박스 메타데이터에서 `damage`, `is_finish` 읽어서 처리
+- **방어 컴포넌트 (Phase 2-2)**: `take_damage()` 호출 시 `Defense` 자식 컴포넌트로 분기
+  - `damage_reduction_flat`: 최종 데미지에서 감산 (최소 1 보장, 예: 바위 3 감산)
+  - `hurt_resistance_chance`: 경직(HURT 상태 진입) 확률 (예: 바위 30% → 70% 경직 저항)
 - 데미지 적용 후 `damage_dealt` 시그널 발신
-- 사망 시 히트박스/허트박스 모두 비활성화 → 잔류물 생성 → `queue_free()`
+- 사망 시 히트박스/허트박스 모두 비활성화 → **DeathBehavior 훅** → 잔류물 생성 → `queue_free()`
+  - DeathBehavior: `stats_data.death_behavior`에 따라 `none`/`split` 스크립트 주입. `split`은 `spore_stats_path`의 분열체를 `spore_count`만큼 `spore_spread_radius` 범위에 스폰 (예: 꽃 2마리, 반경 20)
+  - **재분열 방지**: 부활체(`_is_revived`) 또는 분열체(`is_spore`)는 death_behavior를 강제로 none 설정
 
 ---
 

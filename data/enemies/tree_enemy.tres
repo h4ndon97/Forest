@@ -20,3 +20,7 @@ collision_width = 28.0
 collision_height = 36.0
 gravity_scale = 1.0
 leaves_residue = true
+attack_behavior = "melee"
+hitbox_size = Vector2(50.0, 28.0)
+hitbox_offset = Vector2(30.0, -14.0)
+hitbox_active_duration = 0.35
