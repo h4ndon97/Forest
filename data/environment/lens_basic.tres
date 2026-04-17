@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LensData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/lens_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "렌즈"
+prompt_text = "렌즈 회전"
+can_interact = true
+interaction_radius = 48.0
+influence_radius = 0.0
+sprite_path = ""
+preset_count = 4
+initial_preset_index = 0
+beam_length = 160.0
+focus_zone_length = 48.0
+focus_zone_width = 24.0
+focus_intensity = 0.1
+body_size = Vector2(24, 24)
+body_color = Color(0.82, 0.91, 0.94, 1.0)
+body_border_color = Color(0.55, 0.48, 0.29, 1.0)

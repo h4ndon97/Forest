@@ -1,0 +1,63 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/entities/objects/environment/lens/lens.gd" id="1"]
+[ext_resource type="Script" path="res://src/entities/objects/environment/base/environment_influence_zone.gd" id="2"]
+[ext_resource type="Script" path="res://src/entities/objects/environment/common/environment_prompt.gd" id="3"]
+[ext_resource type="Script" path="res://src/entities/objects/environment/common/environment_highlight.gd" id="4"]
+
+[sub_resource type="CircleShape2D" id="interact_shape"]
+radius = 32.0
+
+[sub_resource type="RectangleShape2D" id="focus_shape"]
+size = Vector2(48, 24)
+
+[node name="Lens" type="Node2D"]
+script = ExtResource("1")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 32
+collision_mask = 0
+monitorable = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("interact_shape")
+
+[node name="RotationPivot" type="Node2D" parent="."]
+
+[node name="BeamVisual" type="Polygon2D" parent="RotationPivot"]
+color = Color(1, 0.92, 0.35, 0.22)
+polygon = PackedVector2Array(0, -12, 112, -12, 160, -12, 160, 12, 112, 12, 0, 12)
+
+[node name="FocusZone" type="Area2D" parent="RotationPivot"]
+collision_layer = 0
+collision_mask = 4
+monitoring = true
+monitorable = false
+script = ExtResource("2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RotationPivot/FocusZone"]
+position = Vector2(136, 0)
+shape = SubResource("focus_shape")
+
+[node name="FocusVisual" type="ColorRect" parent="RotationPivot/FocusZone"]
+offset_left = 112.0
+offset_top = -12.0
+offset_right = 160.0
+offset_bottom = 12.0
+color = Color(1, 1, 0.6, 0.35)
+
+[node name="LensBody" type="Polygon2D" parent="RotationPivot"]
+color = Color(0.82, 0.91, 0.94, 1)
+polygon = PackedVector2Array(12, 0, 10.39, 6, 6, 10.39, 0, 12, -6, 10.39, -10.39, 6, -12, 0, -10.39, -6, -6, -10.39, 0, -12, 6, -10.39, 10.39, -6)
+
+[node name="LensBorder" type="Line2D" parent="RotationPivot"]
+width = 1.5
+default_color = Color(0.55, 0.48, 0.29, 1)
+points = PackedVector2Array(12, 0, 10.39, 6, 6, 10.39, 0, 12, -6, 10.39, -10.39, 6, -12, 0, -10.39, -6, -6, -10.39, 0, -12, 6, -10.39, 10.39, -6, 12, 0)
+
+[node name="Highlight" type="Node2D" parent="."]
+script = ExtResource("4")
+
+[node name="Prompt" type="Node2D" parent="."]
+script = ExtResource("3")
+prompt_text = "렌즈 회전"

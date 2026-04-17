@@ -299,7 +299,7 @@ Phase 6  출시
 #### 2-5. 환경 오브젝트
 - [x] **2-5a 거울/수정 (빛 분산 → 분열)** ✅
 - [x] **2-5b 차폐물 (빛 차단 → 그림자 투영 영역 강도 override)** ✅
-- [ ] 2-5c 렌즈 (빛 집중 → 그림자 극도 축소, 계산 모델 B)
+- [x] **2-5c 렌즈 (빛 집중 → 그림자 극도 축소, min 병합 override)** ✅
 - [ ] 2-5d 반사 바닥 (이중 약화, 정적/비상호작용)
 - [x] 수동 조작 (시간 정지 중만, STOPPED 게이팅 — Phase 2-5a 베이스에서 확정)
 - **의존성**: Phase 1 완료
@@ -333,6 +333,15 @@ Phase 6  출시
   - `src/world/stages/TestStage.tscn` — Cover1 인스턴스 배치 (360, 296)
 - **2-5b 투영 방향**: 낮=태양 그림자 방향 그대로 / 밤=등불 반대 방향(get_night_shadow_params 위치 기반). 밤 등불 OFF 시 투영 없음.
 - **2-5b 복원 로직**: 이탈 시 낮=EnemySystem.get_current_intensity, 밤+등불=ShadowSystem.get_intensity_at(enemy.global_position)
+- **2-5c 구현 파일**:
+  - `data/environment/lens_data.gd` — LensData (preset_count, beam_length, focus_zone_length/width, focus_intensity, body_size/color/border_color)
+  - `data/environment/lens_basic.tres` — 기본 렌즈 인스턴스 (4프리셋 / 빔 160 / focus 48×24 / intensity 0.1)
+  - `src/entities/objects/environment/lens/lens.gd` — 4프리셋 회전(거울 패턴) + FocusZone 진입 적 강도 min 병합 override (차폐물 대칭), _process 매 프레임 재적용
+  - `src/entities/objects/environment/lens/Lens.tscn` — InteractionArea(layer 32) + RotationPivot(BeamVisual + FocusZone(mask 4) + LensBody + LensBorder) + Highlight + Prompt
+- **2-5c 수정 파일**:
+  - `src/entities/objects/environment/base/environment_influence_zone.gd` — enemy_entered/exited 시그널 추가 (lens 스트림 처리용, mirror는 영향 없음)
+  - `src/world/stages/TestStage.tscn` — Lens1 인스턴스 배치 (200, 296)
+- **2-5c 오버라이드 대칭**: 차폐물=max() 병합(강화), 렌즈=min() 병합(약화). focus_intensity=0.1(극도 약화)
 
 #### 2-6. 성장 시스템 ✅
 - [x] 강화 포인트 획득 (처치/클리어)
@@ -738,6 +747,7 @@ Phase 6 (출시)
 | **2-2** | **적 확장 (행동 차별화)** | **✅ 완료** | **AttackBehavior/DeathBehavior/Defense 컴포넌트 + 4종 차별화 (나무 범위/바위 방어/돌기둥 투사체/꽃 분열) + EnemyProjectile** |
 | **2-5a** | **환경 오브젝트 — 거울** | **✅ 완료** | **EnvironmentObjectData 베이스 + MirrorData(4프리셋, 60°/128px 부채꼴) + STOPPED 게이팅 + FLOWING 진입 시 분열 + split_spawner 공용화 + BaseEnemy.trigger_split() + shard_spore_enemy.tres 폴백 + EventBus 3시그널 + interact_environment(E키)** |
 | **2-5b** | **환경 오브젝트 — 차폐물** | **✅ 완료** | **CoverData(move_step=16, 투영 96×32, 강도 0.9) + STOPPED 중 밀기(±64) + ShadowProjectionZone(mask 4) + 영역 내 적 강도 상시 override(max 병합, _process 재적용) + 낮=태양방향/밤=등불반대 투영 방향 회전 + 이탈 시 per-object 강도 복원** |
+| **2-5c** | **환경 오브젝트 — 렌즈** | **✅ 완료** | **LensData(4프리셋, 빔 160/focus 48×24, intensity 0.1) + STOPPED 중 회전(거울 패턴) + FocusZone(mask 4, RotationPivot 자식) + 영역 내 적 강도 상시 override(min 병합, Cover 대칭, _process 재적용) + environment_influence_zone 시그널 확장 재사용** |
 
 ### Phase 2 세부 작업 순서
 
@@ -787,7 +797,7 @@ Phase 6 (출시)
     - 스킬 로직 구조만 만들고, 실제 18개 스킬은 데이터(.tres)로 나중에 조립
     - 속성 배율은 전부 1.0으로 설정 (Phase 5 밸런싱에서 조정)
   - 이후 작업 순서: 2-6 성장 → 2-7 아이템/장비 → 2-2 적 확장 → 2-5 환경 오브젝트
-  - 2-5 세부 순서: 2-5a 거울(완료) → 2-5b 차폐물(완료) → 2-5c 렌즈 → 2-5d 반사 바닥
+  - 2-5 세부 순서: 2-5a 거울(완료) → 2-5b 차폐물(완료) → 2-5c 렌즈(완료) → 2-5d 반사 바닥
 ```
 
 ### 프로젝트 설정 변경 이력

@@ -2,6 +2,10 @@ extends Area2D
 
 ## 환경 오브젝트의 영향 구역 Area2D.
 ## 구역 내 ShadowCaster / 적을 추적하고, 베이스 오브젝트가 조회할 수 있게 한다.
+## 스트림 처리가 필요한 서브타입(렌즈 등)은 enemy_entered/exited 시그널도 사용할 수 있다.
+
+signal enemy_entered(enemy: Node)
+signal enemy_exited(enemy: Node)
 
 var _tracked_enemies: Array = []  # Array[Node] - "enemies" 그룹 Body
 
@@ -24,8 +28,10 @@ func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("enemies"):
 		if not _tracked_enemies.has(body):
 			_tracked_enemies.append(body)
+		enemy_entered.emit(body)
 
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.is_in_group("enemies"):
 		_tracked_enemies.erase(body)
+		enemy_exited.emit(body)

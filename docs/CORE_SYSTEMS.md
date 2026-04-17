@@ -271,8 +271,22 @@
   - `EventBus.environment_blocked_shadow(cover_id, enemy_id, blocked)` 발신.
 - **콜리전 구조**: Body(StaticBody2D layer 1 / 플레이어·적 물리 차단) + InteractionArea(layer 32) + ShadowProjectionZone(mask 4) + Highlight + Prompt
 
+### 렌즈 (Lens) — Phase 2-5c 완료
+- **데이터**: `LensData` (extends EnvironmentObjectData) — `preset_count(4)`, `initial_preset_index`, `beam_length(160)`, `focus_zone_length(48)`, `focus_zone_width(24)`, `focus_intensity(0.1)`, `body_size(24×24)`, `body_color`, `body_border_color`
+- **회전**: STOPPED 중 E키 입력으로 4프리셋(90°씩) 순환. `RotationPivot` 노드 회전 (거울과 동일 패턴).
+- **집광 영역 (FocusZone)**:
+  - `Area2D` (collision layer 0, mask 4 = enemy). 빔 끝단 좁은 구간(48×24)에만 배치 — "다수 중 하나만 골라 약화" 감각.
+  - `RotationPivot` 자식으로 배치되어 프리셋 회전 시 함께 회전.
+  - `environment_influence_zone.gd` 재사용 (mirror와 공용). 스트림 처리용 `enemy_entered/exited` 시그널 추가.
+- **강도 override (min 병합, 차폐물의 대칭)**:
+  - 영역 진입: `enemy.update_intensity(minf(현재, focus_intensity))` — min() 병합으로 더 약한 쪽이 적용
+  - 매 프레임 재적용(`_process` → `_reapply_override_to_all`): EnemySystem 브로드캐스트 무효화
+  - 영역 이탈: 낮=`EnemySystem.get_current_intensity()` / 밤+등불 ON=`ShadowSystem.get_intensity_at(enemy.global_position)` 로 복원.
+  - `EventBus.environment_blocked_shadow(lens_id, enemy_id, blocked)` 발신 (시그널 시그니처 재사용).
+- **콜리전 구조**: InteractionArea(layer 32) + RotationPivot { BeamVisual + FocusZone(mask 4) + LensBody + LensBorder } + Highlight + Prompt
+- **본체 물리**: 없음 — 렌즈는 빛을 집중하는 광학 장치이므로 플레이어/적을 물리적으로 차단하지 않음 (차폐물과의 차이점)
+
 ### 미결 사항
-- [ ] 렌즈 (Lens) — Phase 2-5c (계산 모델 B: zone-based 파라미터 오버라이드 확정)
 - [ ] 반사 바닥 (Reflective Floor) — Phase 2-5d (정적, 비상호작용)
 - [ ] 차폐물 `BlockMode.REMOVE / BOTH` (현재 CREATE만 구현)
 - [ ] 거울/차폐물/렌즈 전용 아트 리소스 (현재 ColorRect/Polygon2D fallback)

@@ -314,7 +314,7 @@ GDD에서 확정된 환경 오브젝트:
 | 오브젝트 | 효과 | 전투 활용 | 구현 |
 |---|---|---|---|
 | 거울/수정 | 빛 분산 → 그림자 분열 | 강한 적 1체 → 약한 적(그림자 파편) 다수로 분할 | **Phase 2-5a 완료** |
-| 렌즈(볼록) | 빛 집중 → 특정 그림자 극도로 축소 | 다수 중 하나만 골라 약화 | Phase 2-5c |
+| 렌즈(볼록) | 빛 집중 → 특정 그림자 극도로 축소 | 다수 중 하나만 골라 약화 | **Phase 2-5c 완료** |
 | 차폐물(기둥, 벽) | 빛 차단 → 그림자 강제 생성/제거 | 투영 영역 내 적 강도 override (현재 CREATE만) | **Phase 2-5b 완료** |
 | 반사 바닥(물, 얼음) | 아래에서도 빛 → 그림자 이중 약화 | 특정 지형 위에서 유리한 전투 | Phase 2-5d |
 
@@ -325,7 +325,7 @@ GDD에서 확정된 환경 오브젝트:
 - 플레이어의 `EnvironmentInteractor` Area2D가 근접 오브젝트를 자동 타겟팅 (거리 기반)
 - 조작은 단순하게:
   - 거울/수정: 상호작용 버튼 → 프리셋 각도로 회전 (4프리셋, 90°씩)
-  - 렌즈: 위치 이동 (예정)
+  - 렌즈: 상호작용 버튼 → 프리셋 각도로 회전 (4프리셋, 90°씩) — Phase 2-5c
   - 차폐물: 플레이어 반대 방향으로 1스텝 밀기(±16px, ±64px 클램프) — Phase 2-5b
   - 반사 바닥: 고정 지형 (조작 대상 아님)
 
@@ -338,6 +338,20 @@ GDD에서 확정된 환경 오브젝트:
 - **분열 인프라 공용화**: 적 사망 분열(`death_behavior_split`)과 거울 분열이 `split_spawner.gd` 정적 헬퍼를 공유. `BaseEnemy.trigger_split(fallback, count, spread_radius)` public API로 외부에서 호출.
 - **재분열 가드**: 부활체(`_is_revived=true`) 또는 스포어(`is_spore=true`)는 거울 영향권에 들어와도 무시 — 무한 분열 방지
 - **드롭/잔류 차이**: `trigger_split()`은 전투 처치가 아니므로 드롭/잔류를 발생시키지 않음
+
+### 렌즈 활용 메커니즘 (Phase 2-5c)
+- **목적**: 다수의 적 중 특정 1체만 정밀 약화 → 차폐물이 "전체 난이도 연출"이라면 렌즈는 "단일 타겟 조정". 보스/엘리트 적을 일시 약화시켜 피니시 타이밍 잡는 용도로 설계.
+- **흐름**:
+  1. STOPPED 중: 렌즈에 접근 → [E]로 4프리셋(90°씩) 회전 — 좁은 집광 영역(48×24)을 목표 적에 겹치도록 조준
+  2. 집광 영역에 들어간 적의 그림자 강도가 `focus_intensity(0.1)`로 상시 override — "극도로 약화"
+  3. 영역 이탈 시 낮/밤 상태에 맞는 원래 강도로 복원 (차폐물과 동일 로직)
+- **override 구조**:
+  - `enemy.update_intensity(minf(현재, focus_intensity))` — min 병합으로 "더 약한 쪽 승" (차폐물 max 병합의 대칭)
+  - `_process`에서 매 프레임 재적용 — EnemySystem 브로드캐스트 무효화 (차폐물과 동일)
+  - 이탈 복원: 낮=`EnemySystem.get_current_intensity()` / 밤+등불 ON=`ShadowSystem.get_intensity_at(enemy.global_position)`
+- **거울과의 차이**: 거울은 FLOWING 진입 시 1회 트리거(분열), 렌즈는 STOPPED+FLOWING 상시 override. 또한 거울은 넓은 부채꼴(60°/128px), 렌즈는 좁은 집광 영역(48×24)으로 타겟팅 정밀도를 차별화.
+- **차폐물과의 차이**: 투영 방향이 빛 방향과 독립 (렌즈는 프리셋 회전으로만 결정, 빛 각도 무관). 본체 물리 차단 없음 (광학 장치 특성).
+- **재사용 인프라**: `environment_object.gd` 베이스 + `environment_influence_zone.gd`(enemy_entered/exited 시그널 추가) + `environment_prompt.gd` + `environment_highlight.gd` 공유
 
 ### 차폐물 활용 메커니즘 (Phase 2-5b)
 - **목적**: 전투 중 적의 그림자 강도를 국소적으로 강제 → "낮에 짧은 그림자/밤에 긴 그림자" 같은 불리 지점을 플레이어가 연출 → 전투 난이도/피니시 속성 타이밍 조정
@@ -371,7 +385,8 @@ GDD에서 확정된 환경 오브젝트:
 | 강화 이동 (빛 대시, 그림자 점프 등) | 미구현 | 성장/잠금 해제 시스템 |
 | 환경 오브젝트 전투 활용 — 거울 | ✅ Phase 2-5a 완료 | EnvironmentObject 베이스 + Mirror + 분열 트리거 |
 | 환경 오브젝트 전투 활용 — 차폐물 | ✅ Phase 2-5b 완료 | CoverData + ShadowProjectionZone + 강도 override(CREATE) + 매 프레임 재적용 |
-| 환경 오브젝트 전투 활용 — 렌즈/반사 바닥 | 미구현 | Phase 2-5c/d |
+| 환경 오브젝트 전투 활용 — 렌즈 | ✅ Phase 2-5c 완료 | LensData + FocusZone + 강도 override(min 병합, focus_intensity=0.1) + 4프리셋 회전 |
+| 환경 오브젝트 전투 활용 — 반사 바닥 | 미구현 | Phase 2-5d |
 | HP 성장 곡선 | 미결 | 밸런싱 단계에서 결정 |
 | **힛 플래시 (피격 시 화이트 플래시)** | 미구현 → Phase 3-7 Pass 2 | 전 Damageable 공통 shader. 피니시 속성별 색상 분기 (EFFECTS.md 선택지 #2) |
 | **힛스톱 (피격 시 프리즈)** | 미구현 → Phase 3-7 Pass 2 | `Engine.time_scale` + 약/중/강/피니시 3~4단계. CombatSystem API로 노출 |
