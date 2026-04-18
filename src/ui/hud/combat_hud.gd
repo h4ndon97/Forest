@@ -2,30 +2,41 @@ extends CanvasLayer
 
 ## 전투 HUD — 좌상단 클러스터 (속성 오브 + 콤보 도트 + HP 불씨 pip + 상태이상 배지).
 ## EventBus 시그널만 수신하여 갱신한다.
-## ui_design_master.md §A-5/A-6 / UI_IMPLEMENTATION_PLAN.md §1.1.
+## ui_design_master.md §A-5/A-6/A-10 / UI_IMPLEMENTATION_PLAN.md §1.1/§2.3.
+
+const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
 
 const MAX_HP_DEFAULT: float = 100.0
 const HP_PER_PIP: float = 20.0
 
 # 콤보 도트 색
-const DOT_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 1.0)       # #4A4A50
+const DOT_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 1.0)  # #4A4A50
 const DOT_COLOR_ACTIVE := Color(0.95, 0.95, 0.95, 1.0)
-const DOT_COLOR_FINISH := Color(0.949, 0.8, 0.4, 1.0)       # 금색 피니시
+const DOT_COLOR_FINISH := Color(0.949, 0.8, 0.4, 1.0)  # 금색 피니시
 
 # HP pip 색 (횃불 불씨)
-const PIP_COLOR_FULL := Color(0.949, 0.8, 0.4, 1.0)          # #F2CC66
-const PIP_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 0.6)        # dim
+const PIP_COLOR_FULL := Color(0.949, 0.8, 0.4, 1.0)  # #F2CC66
+const PIP_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 0.6)  # dim
 
 # 속성 오브 색 (A-6)
-const ORB_COLOR_NEUTRAL := Color(0.541, 0.541, 0.565, 0.9)   # #8A8A90
-const ORB_COLOR_LIGHT := Color(0.949, 0.8, 0.4, 1.0)         # #F2CC66
-const ORB_COLOR_SHADOW := Color(0.545, 0.184, 0.776, 1.0)    # #8B2FC6
-const ORB_COLOR_HYBRID := Color(0.8, 0.5, 0.6, 1.0)          # placeholder (Pass 2: pulse)
+const ORB_COLOR_NEUTRAL := Color(0.541, 0.541, 0.565, 0.9)  # #8A8A90
+const ORB_COLOR_LIGHT := Color(0.949, 0.8, 0.4, 1.0)  # #F2CC66
+const ORB_COLOR_SHADOW := Color(0.545, 0.184, 0.776, 1.0)  # #8B2FC6
+const ORB_COLOR_HYBRID := Color(0.8, 0.5, 0.6, 1.0)  # placeholder (Pass 2: pulse)
+
+# A-10 펄스 (§2.3): STOPPED 호흡 1.0s, 저체력(<20%) 경고 0.8s — A-7/B-5와 리듬 동조
+const BREATH_PERIOD: float = 1.0
+const BREATH_AMPLITUDE: float = 0.05
+const LOW_HP_PERIOD: float = 0.8
+const LOW_HP_THRESHOLD: float = 0.2
+const LOW_HP_TINT := Color(0.9, 0.275, 0.275, 1.0)  # #E64646
 
 var _combo_dots: Array[ColorRect] = []
 var _hp_pips: Array[ColorRect] = []
 var _max_hp: float = MAX_HP_DEFAULT
 var _current_hp: float = MAX_HP_DEFAULT
+var _time_state: int = TimeStateMachine.TimeState.STOPPED
+var _pulse_t: float = 0.0
 var _death_overlay: ColorRect
 var _death_label: Label
 var _death_tween: Tween
@@ -46,9 +57,15 @@ func _ready() -> void:
 	EventBus.player_respawned.connect(_on_player_respawned)
 	EventBus.checkpoint_entered.connect(_on_checkpoint_respawned)
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
+	EventBus.time_state_changed.connect(_on_time_state_changed)
 
 	_collect_children()
 	_create_death_overlay()
+
+
+func _process(delta: float) -> void:
+	_pulse_t += delta
+	_apply_pip_pulse()
 
 
 func _collect_children() -> void:
@@ -83,6 +100,7 @@ func _create_death_overlay() -> void:
 
 # === HP pip ===
 
+
 func _on_health_changed(current_hp: float, max_hp: float) -> void:
 	_max_hp = max_hp if max_hp > 0.0 else MAX_HP_DEFAULT
 	_current_hp = current_hp
@@ -96,6 +114,34 @@ func _apply_pip_state() -> void:
 	filled_count = clamp(filled_count, 0, _hp_pips.size())
 	for i in _hp_pips.size():
 		_hp_pips[i].color = PIP_COLOR_FULL if i < filled_count else PIP_COLOR_EMPTY
+	_apply_pip_pulse()
+
+
+func _apply_pip_pulse() -> void:
+	# A-10: STOPPED 호흡(채워진 pip alpha ±5%) + 저체력(<20%) 붉은 0.8s 맥동.
+	# 저체력 > STOPPED 호흡 > 정상(무처리) 순으로 덮어씀.
+	if _hp_pips.is_empty():
+		return
+	var hp_ratio: float = _current_hp / _max_hp if _max_hp > 0.0 else 0.0
+	var is_low: bool = hp_ratio > 0.0 and hp_ratio < LOW_HP_THRESHOLD
+	var is_stopped: bool = _time_state == TimeStateMachine.TimeState.STOPPED
+	var filled_count: int = int(ceil(_current_hp / HP_PER_PIP))
+	filled_count = clamp(filled_count, 0, _hp_pips.size())
+
+	for i in _hp_pips.size():
+		var pip := _hp_pips[i]
+		if i >= filled_count:
+			pip.modulate = Color.WHITE
+			continue
+		if is_low:
+			var k: float = 0.5 + 0.5 * sin(_pulse_t * TAU / LOW_HP_PERIOD)
+			pip.modulate = LOW_HP_TINT.lerp(Color.WHITE, 1.0 - k)
+		elif is_stopped:
+			var breath: float = 0.5 + 0.5 * sin(_pulse_t * TAU / BREATH_PERIOD)
+			var a: float = lerpf(1.0 - BREATH_AMPLITUDE, 1.0, breath)
+			pip.modulate = Color(1.0, 1.0, 1.0, a)
+		else:
+			pip.modulate = Color.WHITE
 
 
 func _on_full_recovery() -> void:
@@ -106,7 +152,12 @@ func _on_full_recovery() -> void:
 	_apply_pip_state()
 
 
+func _on_time_state_changed(_old_state: int, new_state: int) -> void:
+	_time_state = new_state
+
+
 # === 콤보 ===
+
 
 func _on_combo_hit_landed(hit_number: int) -> void:
 	if hit_number < 1 or hit_number > _combo_dots.size():
@@ -129,13 +180,18 @@ func _on_combo_resetted() -> void:
 
 func _orb_color_for(attribute: String) -> Color:
 	match attribute:
-		"light": return ORB_COLOR_LIGHT
-		"shadow": return ORB_COLOR_SHADOW
-		"hybrid": return ORB_COLOR_HYBRID
-		_: return ORB_COLOR_NEUTRAL
+		"light":
+			return ORB_COLOR_LIGHT
+		"shadow":
+			return ORB_COLOR_SHADOW
+		"hybrid":
+			return ORB_COLOR_HYBRID
+		_:
+			return ORB_COLOR_NEUTRAL
 
 
 # === 사망/리스폰 ===
+
 
 func _on_player_died() -> void:
 	_death_overlay.visible = true
@@ -148,13 +204,13 @@ func _on_player_died() -> void:
 
 	_death_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0.6), 0.5)
 
-	_death_tween.tween_callback(func():
-		_death_label.text = "..."
-		_death_label.add_theme_color_override("font_color", Color(0.8, 0.2, 0.2, 0))
+	_death_tween.tween_callback(
+		func():
+			_death_label.text = "..."
+			_death_label.add_theme_color_override("font_color", Color(0.8, 0.2, 0.2, 0))
 	)
 	_death_tween.tween_property(
-		_death_label, "theme_override_colors/font_color",
-		Color(0.8, 0.2, 0.2, 1.0), 0.3
+		_death_label, "theme_override_colors/font_color", Color(0.8, 0.2, 0.2, 1.0), 0.3
 	)
 
 
@@ -177,10 +233,10 @@ func _clear_death_overlay() -> void:
 	_clear_tween = create_tween().set_parallel(true)
 	_clear_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0), 0.3)
 	_clear_tween.tween_property(
-		_death_label, "theme_override_colors/font_color",
-		Color(0.8, 0.2, 0.2, 0), 0.2
+		_death_label, "theme_override_colors/font_color", Color(0.8, 0.2, 0.2, 0), 0.2
 	)
-	_clear_tween.chain().tween_callback(func():
-		_death_overlay.visible = false
-		_death_label.text = ""
+	_clear_tween.chain().tween_callback(
+		func():
+			_death_overlay.visible = false
+			_death_label.text = ""
 	)

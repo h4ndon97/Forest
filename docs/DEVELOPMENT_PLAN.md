@@ -545,12 +545,18 @@ Phase 6  출시
 - **상세**: `docs/PHASE_3_PLAN.md` §7
 
 #### 3-6. UI 완성
-- [ ] 인게임 HUD (시계, HP, 시간 자원, 스킬, 미니맵)
+- [x] 인게임 HUD Pass 1 (33ac495 — HP pip/콤보/속성 오브/스킬 슬롯/포션/시간 코어 placeholder, 4분면 배치)
+- [x] 인게임 HUD Pass 2 §2.2 (ba721ad — A-7 스킬 슬롯 원형 링 + 쿨다운 스윕 + 이끼 배경 + 아이콘 교보재)
+- [x] 인게임 HUD Pass 2 §2.3 (2026-04-18 — HP pip 호흡/저체력 맥동 + 자원 링 호흡/저자원 맥동)
+- [ ] 인게임 HUD Pass 2 §2.1 (B-6 arc_mask shader — draw_arc placeholder 충분, 우선순위 ↓)
+- [ ] 인게임 HUD 미니맵
 - [ ] 타이틀 화면
 - [ ] 일시정지 메뉴
-- [ ] 장비/스킬 관리 메뉴
+- [ ] 장비 관리 메뉴 폴리싱 (Tab 인벤토리는 2-7에서 기본 구현)
+- [ ] 스킬 관리 메뉴 (4슬롯 장착/해제 + 상세)
 - [ ] 맵 상세 패널
 - **의존성**: Phase 2 완료
+- **상세**: `docs/UI_IMPLEMENTATION_PLAN.md` (A/B 카테고리 Pass 구조) / `docs/PHASE_3_PLAN.md` §8
 
 #### 3-7. 1구역 아트 적용
 - [ ] 플레이어 스프라이트 + 애니메이션
@@ -764,7 +770,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 3-2 1구역 적 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 3-6 UI Pass 2 §2.3 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -793,6 +799,12 @@ Phase 6 (출시)
 | **2-5d** | **환경 오브젝트 — 반사 바닥** | **✅ 완료** | **ReflectiveFloorData(reflect_multiplier=0.5, body 192×32 수면 청록) + 정적/비상호작용(can_interact=false) + InfluenceZone(mask 4, environment_influence_zone 공용) + 영역 내 적 baseline × 0.5 상시 override(multiplier 방식, Cover/Lens와 다른 축) + _process 재적용 + TestStage 배치** |
 | **3-1** | **1구역 레벨 디자인** | **✅ 완료** | **7 스테이지(1-1~1-6 + 1-H) .tres/.tscn/.gd + ENVIRONMENT 잠금 3종 프레임워크(α LightSensor / β EnvironmentStateRegistry / γ StateFlagPersistence Autoload) + HiddenRevealer 컴포넌트(4조건/2액션/StateFlags 영속화) + Cover `PlayerShadowDetectZone` + Lens FocusZone layer=128 승격 + ReflectiveFloor `LightEmitterZone` + EventBus 4시그널 신설 + StageLockValidator prefix 파싱(`light_sensor:`/`registry:`/`flag:`) + SaveManager StateFlags 직렬화** |
 | **3-2** | **1구역 적 (서브 타입 + 고유 적)** | **✅ 완료** | **서브 타입 4종(`data/enemies/zone1/` — oak_sapling / moss_rock / light_flower / signpost_stone) + 고유 적 빛가루 포자(pollen_spore, 공중 호밍) + EnemyStatsData 확장(movement_profile / homing_turn_rate / homing_max_speed) + enemy_movement.gd `_calculate_airborne()` 분기(lerp 조향) + base_enemy.gd 중력 스킵(gravity_scale=0) + Stage1_*.tscn 7개 ext_resource 경로 치환 + 빛 꽃 spore_stats_path로 포자 연결(기존 split 인프라 100% 재사용) + 재분열 이중 가드(is_spore + death_behavior=none)** |
+| **3-3** | **1구역 보스 (거대 고목)** | **✅ 완료** | **거대 고목 보스 + AbilitySystem + 빛 대시 + ABILITY 잠금 (5f534ce)** |
+| **3-4** | **거점 (시작 마을 + 1-2 경계)** | **✅ 완료** | **BaseNpc/DialogueBox/checkpoint_base 리팩터 + 시작 마을 + 1-2 경계 (d85c2e0)** |
+| **3-5** | **월드맵 (시간 오버레이 + 땅거미 + 영역)** | **✅ 완료** | **zone_id 영역 그룹핑(D10) + 시간 오버레이 채도0(D11) + 땅거미 ⚠ 아이콘(D12) + zone_layout 분리 (167cde7)** |
+| **3-6 Pass 1** | **UI 기반 프레임워크 (placeholder)** | **✅ 완료** | **4분면 배치 + HP pip 5개 + 콤보 오브/도트 + 스킬 슬롯 완만한 오름 호 + 포션 병 + 시간 코어(궤도/일식/배지) (33ac495). `propagation_origin_changed` 시그널 신설** |
+| **3-6 Pass 2 §2.2** | **스킬 슬롯 원형 렌더 + 쿨다운 스윕** | **✅ 완료** | **skill_slot.gd 분리 + 링 2px/쿨다운 시계 스윕/이끼 배경/ready 펄스/flash/icon_path PNG fallback (ba721ad)** |
+| **3-6 Pass 2 §2.3** | **호흡/저체력 펄스** | **✅ 완료** | **HP pip 호흡(STOPPED 1.0s ±5%) + 저체력(<20%) 0.8s 붉은 맥동 + 자원 링 호흡(FLOWING 1.0s) + 저자원(<20%) 0.8s 금↔붉은 보간 맥동. `EventBus.time_state_changed` 구독, 조건부 queue_redraw로 상시 갱신 방지** |
 
 ### Phase 2 세부 작업 순서
 

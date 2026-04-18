@@ -20,8 +20,9 @@
 | **Phase 3-3 1구역 보스 구현** | **✅ 완료 (2026-04-18) — D4/D5 확정 + 3-3-a/b/c/d 구현 + 3-3-e 통합 QA. §5 참조** |
 | **Phase 3-4 거점 구현** | **✅ 완료 (2026-04-18) — D6 확정 + 3-4-a/b/c/d/e. §6 구현 결과 참조** |
 | **Phase 3-5 월드맵 구현** | **✅ 완료 (2026-04-18) — D10/D11/D12 확정 + 3-5-a/b/c/d. §7 구현 결과 참조** |
+| **Phase 3-6 UI Pass 2 §2.2/§2.3** | **✅ 완료 (2026-04-18) — §2.2는 ba721ad에서 선행, §2.3 호흡/저체력 펄스 구현. §8 구현 결과 참조** |
 
-**→ Phase 3-6 UI Pass 2 착수 가능 상태** (Pass 1은 선행 완료 — 33ac495)
+**→ Phase 3-7 1구역 아트 + 이펙트 착수 가능 상태** (§2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월)
 
 ---
 
@@ -322,15 +323,40 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 | 항목 | 현재 상태 | 3-6 목표 |
 |---|---|---|
-| 인게임 HUD | ✅ 시계/HP/시간자원/스킬/소모품/땅거미 | 미니맵 추가 |
+| 인게임 HUD (A/B 카테고리 Pass 1) | ✅ 33ac495 — 4분면 배치 + HP pip + 콤보 + 스킬 슬롯 + 포션 + 시간 코어 placeholder | 완료 |
+| 인게임 HUD (A-7 스킬 슬롯 Pass 2 §2.2) | ✅ ba721ad — 원형 링 + 쿨다운 스윕 + 이끼 배경 + ready 펄스 + icon_path fallback | 완료 |
+| 인게임 HUD (A-10 호흡/저체력 Pass 2 §2.3) | ✅ 2026-04-18 — HP pip 호흡(STOPPED 1.0s) + 저체력 맥동(0.8s 붉은) + 자원 링 호흡(FLOWING) + 저자원 맥동 | 완료 |
+| 인게임 HUD (B-6 일식 링 shader §2.1) | ⏸ 보류 — `draw_arc` placeholder가 STOPPED dim까지 동작. 체감 이상 시 진행 | 조건부 |
+| 인게임 HUD (회복 반딧불 파티클 §2.4) | ⏸ Phase 3-7 이월 — 에셋 의존 | Phase 3-7 |
+| 인게임 HUD 미니맵 | ❌ | 신규 구현 |
 | 타이틀 화면 | ❌ | 새 게임 / 이어하기 / 설정 |
 | 일시정지 메뉴 | ❌ | 재개 / 설정 / 타이틀로 |
-| 장비 관리 메뉴 | ✅ Tab 인벤토리 | 디자인 폴리싱 |
+| 장비 관리 메뉴 | ✅ Tab 인벤토리 (2-7) | 디자인 폴리싱 |
 | 스킬 관리 메뉴 | ❌ (장착은 되지만 UI 없음) | 4슬롯 장착/해제 + 스킬 상세 |
 | 맵 상세 패널 | ❌ | 월드맵 클릭 시 해당 맵 정보/입장 |
 
+### 구현 결과 (2026-04-18 Pass 2 §2.3)
+
+- **`src/ui/hud/combat_hud.gd`**
+  - `EventBus.time_state_changed` 구독 (`_time_state` 추적)
+  - `_process(delta)` 매 프레임 `_apply_pip_pulse()` 호출 — 채워진 pip에만 적용
+  - 우선순위: 저체력(<20%, 0.8s 붉은 맥동) > STOPPED 호흡(1.0s alpha ±5%) > 무처리
+  - 상수: `BREATH_PERIOD=1.0`, `BREATH_AMPLITUDE=0.05`, `LOW_HP_PERIOD=0.8`, `LOW_HP_THRESHOLD=0.2`, `LOW_HP_TINT=#E64646`
+- **`src/ui/hud/time_core_renderer.gd`**
+  - `_process(delta)` `_needs_animated_redraw()` 조건부 `queue_redraw()` — 상시 갱신 방지
+  - `_eclipse_fill_color()` 우선순위: 저자원 > STOPPED dim > FLOWING 호흡 > 기본
+  - 저자원: `COLOR_ECLIPSE_FULL.lerp(COLOR_LOW_RESOURCE_PULSE, k)` (0.8s sin)
+  - FLOWING: alpha ±5%, 1.0s 주기 — A-7/A-10/B-5 리듬 동조
+
 ### 알려진 제한 대응
 - **세이브 로드 시 초기 씬 1~2프레임 노출** (Phase 2-8a known issue) → **타이틀/로딩 화면 추가 시 자연 해결**
+
+### 인게임 미검증 (Pass 2 §2.3)
+
+- [ ] STOPPED 상태에서 HP pip 1.0s 은은한 호흡 체감 (±5%가 과하지/약하지 않은지)
+- [ ] HP <20%에서 붉은 맥동 위급감 적절 여부 (0.8s 주기)
+- [ ] FLOWING 중 자원 링 호흡이 시선 피로를 유발하지 않는지
+- [ ] 자원 <20%에서 금↔붉은 보간 맥동 대비 충분 여부
 
 ---
 
