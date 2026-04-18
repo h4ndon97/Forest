@@ -577,6 +577,7 @@ Aseprite에서 태그별로 내보내기:
 | 97 | 연결선 — 해금 | 8x8, 점선 타일 | `assets/ui/world_map/` | `line_unlocked.png` | 노드 간 연결선. 밝은 색 |
 | 98 | 연결선 — 잠금 | 8x8, 점선 타일 | `assets/ui/world_map/` | `line_locked.png` | 흐린 회색. 잠긴 경로 |
 | 99 | 분기 안내 아이콘 | 16x16 | `assets/ui/world_map/` | `icon_branch.png` | 분기점 표시. 선택 가능한 경로 안내 |
+| 99b | 땅거미 위치 아이콘 | 16x16, 2프레임 루프 | `assets/ui/world_map/` | `icon_dusk_spider.png` | Phase 3-5에서 ⚠ Label placeholder로 구현됨(D12). Phase 3-7에서 거미 실루엣으로 교체 — 노드 우측 상단 겹침 배치 |
 
 ### 제작 가이드
 

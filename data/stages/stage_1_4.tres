@@ -8,6 +8,7 @@ stage_id = "stage_1_4"
 display_name = "고목의 뜰"
 scene_path = "res://src/world/stages/Stage1_4.tscn"
 initial_hour = 15.0
+zone_id = "zone_1"
 adjacent_stages = Array[String](["stage_1_3", "stage_1_5", "stage_1_h"])
 lock_type = 0
 lock_requirement = ""

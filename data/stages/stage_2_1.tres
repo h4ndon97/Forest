@@ -8,6 +8,7 @@ stage_id = "stage_2_1"
 display_name = "2구역 입구 (스텁)"
 scene_path = "res://src/world/stages/Stage2_1.tscn"
 initial_hour = 16.0
+zone_id = "zone_2"
 adjacent_stages = Array[String](["border_checkpoint"])
 lock_type = 4
 lock_requirement = "light_dash"

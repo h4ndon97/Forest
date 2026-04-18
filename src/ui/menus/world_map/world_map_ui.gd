@@ -6,19 +6,29 @@ extends CanvasLayer
 ## pause를 사용하지 않음 — 시간 전파/애니메이션은 유지, 플레이어 입력만 차단.
 
 const GraphBuilderScript = preload("res://src/ui/menus/world_map/world_map_graph_builder.gd")
+const ZoneLayoutScript = preload("res://src/ui/menus/world_map/world_map_zone_layout.gd")
+const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
 const NODE_SPACING := Vector2(88, 0)
 const GRAPH_ORIGIN := Vector2(320, 180)
 const SELECTED_COLOR := Color(1.0, 1.0, 1.0)
+const ZONE_LABEL_Y := 222.0  # 노드 하단(180+24) 아래
+const ZONE_SEPARATOR_TOP := 150.0
+const ZONE_SEPARATOR_BOTTOM := 210.0
 
 var _visible: bool = false
 var _builder: Node
+var _zone_layout: Node
 var _bg: ColorRect
 var _title_label: Label
 var _hint_label: Label
 var _node_container: Control
 var _line_container: Control
 var _stage_nodes: Dictionary = {}  # stage_id -> PanelContainer
-var _selectable_ids: Array = []    # 이동 가능한 거점 ID 목록
+var _stage_positions: Dictionary = {}  # stage_id -> Vector2 (노드 중심 위치)
+var _spider_icons: Dictionary = {}  # stage_id -> Label
+var _spider_container: Control
+var _zone_container: Control
+var _selectable_ids: Array = []  # 이동 가능한 거점 ID 목록
 var _selected_index: int = 0
 
 
@@ -32,8 +42,19 @@ func _ready() -> void:
 	_builder.set_script(GraphBuilderScript)
 	add_child(_builder)
 
+	_zone_layout = Node.new()
+	_zone_layout.name = "ZoneLayout"
+	_zone_layout.set_script(ZoneLayoutScript)
+	add_child(_zone_layout)
+
 	_build_ui_frame()
 	EventBus.world_map_opened.connect(_on_open)
+	EventBus.time_flow_started.connect(_on_time_flow_changed)
+	EventBus.time_flow_stopped.connect(_on_time_flow_changed)
+	EventBus.current_hour_changed.connect(_on_current_hour_changed)
+	EventBus.dusk_spider_spawned.connect(_on_spider_state_changed)
+	EventBus.dusk_spider_arrived.connect(_on_spider_state_changed)
+	EventBus.dusk_spider_defeated.connect(_on_spider_state_changed)
 
 
 func _process(_delta: float) -> void:
@@ -56,6 +77,7 @@ func _process(_delta: float) -> void:
 
 
 # --- UI 구축 ---
+
 
 func _build_ui_frame() -> void:
 	_bg = ColorRect.new()
@@ -82,13 +104,17 @@ func _build_ui_frame() -> void:
 	_hint_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	add_child(_hint_label)
 
-	_line_container = Control.new()
-	_line_container.name = "Lines"
-	add_child(_line_container)
+	_line_container = _make_container("Lines")
+	_zone_container = _make_container("ZoneLabels")
+	_node_container = _make_container("Nodes")
+	_spider_container = _make_container("SpiderIcons")
 
-	_node_container = Control.new()
-	_node_container.name = "Nodes"
-	add_child(_node_container)
+
+func _make_container(container_name: String) -> Control:
+	var c := Control.new()
+	c.name = container_name
+	add_child(c)
+	return c
 
 
 func _rebuild_graph() -> void:
@@ -96,7 +122,13 @@ func _rebuild_graph() -> void:
 		child.queue_free()
 	for child in _line_container.get_children():
 		child.queue_free()
+	for child in _spider_container.get_children():
+		child.queue_free()
+	for child in _zone_container.get_children():
+		child.queue_free()
 	_stage_nodes.clear()
+	_stage_positions.clear()
+	_spider_icons.clear()
 	_selectable_ids.clear()
 
 	var all_ids: Array = StageSystem.get_all_stage_ids()
@@ -104,13 +136,12 @@ func _rebuild_graph() -> void:
 
 	var total: int = ordered.size()
 	var start_x: float = GRAPH_ORIGIN.x - (total - 1) * NODE_SPACING.x / 2.0
-	var positions: Dictionary = {}
 
 	for i in range(total):
 		var stage_id: String = ordered[i]
 		var pos := Vector2(start_x + i * NODE_SPACING.x, GRAPH_ORIGIN.y)
-		positions[stage_id] = pos
-		var panel: PanelContainer = _builder.create_stage_node(stage_id, pos)
+		_stage_positions[stage_id] = pos
+		var panel: PanelContainer = _builder.create_stage_node(stage_id, pos, _is_time_stopped())
 		if panel:
 			_node_container.add_child(panel)
 			_stage_nodes[stage_id] = panel
@@ -120,9 +151,9 @@ func _rebuild_graph() -> void:
 		if not data:
 			continue
 		for adj_id in data.adjacent_stages:
-			if positions.has(adj_id) and stage_id < adj_id:
+			if _stage_positions.has(adj_id) and stage_id < adj_id:
 				var line: Line2D = _builder.create_connection_line(
-					positions[stage_id], positions[adj_id]
+					_stage_positions[stage_id], _stage_positions[adj_id]
 				)
 				_line_container.add_child(line)
 
@@ -132,12 +163,22 @@ func _rebuild_graph() -> void:
 		if cp_id != current:
 			_selectable_ids.append(cp_id)
 
+	_refresh_spider_icons()
+	_zone_layout.build_overlay(
+		_zone_container,
+		ordered,
+		_stage_positions,
+		ZONE_LABEL_Y,
+		ZONE_SEPARATOR_TOP,
+		ZONE_SEPARATOR_BOTTOM
+	)
 	_selected_index = 0
 	_update_selection_highlight()
 	_update_hint_label()
 
 
 # --- 네비게이션 ---
+
 
 func _navigate(direction: int) -> void:
 	if _selectable_ids.is_empty():
@@ -155,10 +196,7 @@ func _update_selection_highlight() -> void:
 		var style: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
 		if style:
 			style.border_color = _builder.get_border_color(stage_id, data)
-			style.border_width_left = 2
-			style.border_width_right = 2
-			style.border_width_top = 2
-			style.border_width_bottom = 2
+			style.set_border_width_all(2)
 
 	if _selectable_ids.is_empty():
 		return
@@ -168,10 +206,7 @@ func _update_selection_highlight() -> void:
 		var style: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
 		if style:
 			style.border_color = SELECTED_COLOR
-			style.border_width_left = 3
-			style.border_width_right = 3
-			style.border_width_top = 3
-			style.border_width_bottom = 3
+			style.set_border_width_all(3)
 
 
 func _update_hint_label() -> void:
@@ -193,6 +228,7 @@ func _travel_to_selected() -> void:
 
 # --- 열기/닫기 ---
 
+
 func _on_open() -> void:
 	if _visible:
 		return
@@ -207,3 +243,53 @@ func _close() -> void:
 	_visible = false
 	visible = false
 	EventBus.world_map_closed.emit()
+
+
+# --- 시간 오버레이 갱신 (3-5-a) ---
+
+
+func _is_time_stopped() -> bool:
+	return TimeSystem.get_time_state() == TimeStateMachine.TimeState.STOPPED
+
+
+func _on_time_flow_changed(_hour: float) -> void:
+	if _visible:
+		_refresh_bg_colors()
+
+
+func _on_current_hour_changed(_hour: float) -> void:
+	if _visible:
+		_refresh_bg_colors()
+
+
+## 모든 노드의 배경색만 갱신한다(테두리/크기는 유지).
+func _refresh_bg_colors() -> void:
+	var stopped: bool = _is_time_stopped()
+	for stage_id in _stage_nodes:
+		var panel: PanelContainer = _stage_nodes[stage_id]
+		var style: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
+		if style:
+			style.bg_color = _builder.compute_node_bg_color(stage_id, stopped)
+
+
+# --- 땅거미 아이콘 갱신 (3-5-b) ---
+
+
+func _on_spider_state_changed(_arg) -> void:
+	if _visible:
+		_refresh_spider_icons()
+
+
+## 땅거미가 점유한 스테이지 위에 ⚠ 아이콘을 배치한다.
+func _refresh_spider_icons() -> void:
+	for child in _spider_container.get_children():
+		child.queue_free()
+	_spider_icons.clear()
+
+	var active: Array = DuskSpiderSystem.get_active_stages()
+	for stage_id in active:
+		if not _stage_positions.has(stage_id):
+			continue
+		var icon: Label = _builder.create_spider_icon(_stage_positions[stage_id])
+		_spider_container.add_child(icon)
+		_spider_icons[stage_id] = icon

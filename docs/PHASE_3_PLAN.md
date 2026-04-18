@@ -19,8 +19,9 @@
 | **Phase 3-2 1구역 적 구현** | **✅ 완료 (2026-04-18) — 서브 타입 4종(`data/enemies/zone1/`) + 빛가루 포자 + airborne_homing 이동 프로파일** |
 | **Phase 3-3 1구역 보스 구현** | **✅ 완료 (2026-04-18) — D4/D5 확정 + 3-3-a/b/c/d 구현 + 3-3-e 통합 QA. §5 참조** |
 | **Phase 3-4 거점 구현** | **✅ 완료 (2026-04-18) — D6 확정 + 3-4-a/b/c/d/e. §6 구현 결과 참조** |
+| **Phase 3-5 월드맵 구현** | **✅ 완료 (2026-04-18) — D10/D11/D12 확정 + 3-5-a/b/c/d. §7 구현 결과 참조** |
 
-**→ Phase 3-5 월드맵 착수 가능 상태**
+**→ Phase 3-6 UI Pass 2 착수 가능 상태** (Pass 1은 선행 완료 — 33ac495)
 
 ---
 
@@ -271,17 +272,47 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 ---
 
-## 7. 3-5 — 월드맵 (기본)
+## 7. 3-5 — 월드맵 (기본, ✅ 구현 완료 2026-04-18)
 
 현재 (Phase 2-8b) 상태 기반 확장:
 
 | 항목 | 상태 |
 |---|---|
-| 월드맵 UI (노드그래프, 거점 발견 추적, 패스트트래블) | ✅ |
+| 월드맵 UI (노드그래프, 거점 발견 추적, 패스트트래블) | ✅ 2-8b 완료 |
 | 1구역 영역 탑뷰 픽셀아트 | ⏳ Phase 3-7 아트와 병행 |
-| 시간 오버레이 (정지=회색, 낮=밝음, 밤=어둠 — 영역별 필터) | ⏳ Phase 3-5 |
-| 클리어 상태 시각화 (미클리어/절반/완전) | ⏳ Phase 3-5 |
-| 땅거미 위치 아이콘 | ⏳ Phase 3-5 |
+| 시간 오버레이 (정지=채도0, 낮=따뜻한 톤, 밤=차가운 톤) | ✅ 3-5-a 완료 |
+| 클리어 상태 시각화 (미클리어/절반/완전) | ✅ 2-8b + 3-5 폴리싱 |
+| 땅거미 위치 아이콘 (⚠ placeholder) | ✅ 3-5-b 완료 |
+| 영역(zone) 그룹핑 + 라벨 + 구분선 | ✅ 3-5-c 완료 |
+
+### D10/D11/D12 확정 (2026-04-18)
+
+| 번호 | 항목 | 결정 |
+|---|---|---|
+| **D10** | 영역 구분 방식 | `StageData.zone_id: String` 필드 신설 (vs prefix 파싱) — CLAUDE.md §2.4 원칙 + checkpoint 스테이지의 비규칙적 ID 수용 |
+| **D11** | 시간 정지 오버레이 톤 | **채도만 0** (vs 회색 덮기) — 클리어 상태 색의 명도 유지 |
+| **D12** | 땅거미 아이콘 | **단일 "⚠" 스타일 placeholder** (Phase 3-7에서 거미 실루엣으로 교체) |
+
+### 3-5 구현 결과
+
+| sub-phase | 신설/수정 | 검증 |
+|---|---|---|
+| **3-5-a 시간 오버레이** | `world_map_graph_builder.gd` +3 함수(compute_hour_tint, desaturate, compute_node_bg_color) + DAY_TINT/NIGHT_TINT/CHECKPOINT_TINT 상수. UI가 `time_flow_started/stopped` + `current_hour_changed` 구독해 `_refresh_bg_colors()`로 증분 갱신 | gdlint 0 / gdformat clean / 헤드리스 로드 |
+| **3-5-b 땅거미 아이콘** | `DuskSpiderSystem.get_active_stages() -> Array` 공개 API. `world_map_graph_builder.create_spider_icon()` 추가. UI가 `dusk_spider_spawned/arrived/defeated` 구독해 `_refresh_spider_icons()` 갱신 | — |
+| **3-5-c 영역 그룹핑** | `StageData.zone_id: String` 신규 필드 + 10개 .tres 마이그레이션(zone_1: start_village~border_checkpoint, zone_2: stage_2_1). `world_map_zone_layout.gd` 신설 — BFS 정렬 순서에서 zone_id 연속 구간 그룹핑, 라벨/세로 구분선 배치 | gdlint 0 |
+| **3-5-d QA** | 300줄 제한 준수를 위해 zone 레이아웃 로직 분리(world_map_zone_layout.gd=69줄, world_map_ui.gd=295줄, world_map_graph_builder.gd=230줄) | gdlint 0 / gdformat clean / 헤드리스 로드 성공 |
+
+### 미검증 (인게임 플레이테스트 필요)
+- 월드맵 열림 중 시간 흐름 시 hour 변화가 배경색에 실시간 반영되는지
+- 시간 정지 진입/해제 시 채도 0 필터 on/off 전환
+- 땅거미 스폰/이동/처치 시 ⚠ 아이콘 실시간 추가/이동/제거
+- 영역 라벨 위치(노드 하단 y=222)가 힌트 라벨과 겹치지 않는지
+- 거점 스테이지(start_village 등)에 시간 오버레이가 적절히 적용되는지 (현재 `CHECKPOINT_TINT` 고정)
+
+### 제한/향후 개선
+- 월드맵 노드 레이아웃이 1D 선형(BFS). Phase 3-7 아트 적용 시 2D 레이아웃 or 탑뷰 픽셀아트 기반 재설계 가능
+- test_* 스테이지들은 zone_id=""로 "기타" 처리 (라벨 없음)
+- 땅거미 TRACKING 중간 transition 시그널이 없어 `current_hour_changed` 폴링으로 간접 갱신
 
 ---
 
@@ -369,6 +400,9 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 | D7 | EFFECTS.md 디렉션 6가지 | 3-7 착수 전 |
 | D8 | UI 아트 팔레트/톤/모티프 | 3-7 착수 전 |
 | D9 | 사운드 제작 방식 | 3-8 착수 전 |
+| ~~D10~~ | ~~영역 구분 방식(zone_id vs prefix)~~ | ✅ 확정 (2026-04-18) — **zone_id 필드**, §7 참조 |
+| ~~D11~~ | ~~시간 정지 오버레이 톤(채도 0 vs 회색 덮기)~~ | ✅ 확정 (2026-04-18) — **채도 0**, §7 참조 |
+| ~~D12~~ | ~~땅거미 아이콘 스타일~~ | ✅ 확정 (2026-04-18) — **⚠ placeholder**, §7 참조 |
 
 ---
 

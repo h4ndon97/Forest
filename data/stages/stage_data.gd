@@ -16,6 +16,8 @@ enum LockType { NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY }
 @export var scene_path: String = ""
 ## 스테이지 초기 시각 (0.0~23.99). 첫 진입 시 이 시간으로 시작.
 @export var initial_hour: float = 12.0
+## 속한 구역 ID (월드맵 그룹핑용). 빈 문자열이면 "기타".
+@export var zone_id: String = ""
 
 @export_group("인접 스테이지")
 ## 인접 포탈로 연결된 스테이지 ID 목록

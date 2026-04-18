@@ -8,6 +8,7 @@ stage_id = "stage_1_3"
 display_name = "이끼 계곡"
 scene_path = "res://src/world/stages/Stage1_3.tscn"
 initial_hour = 20.0
+zone_id = "zone_1"
 adjacent_stages = Array[String](["stage_1_2", "stage_1_4"])
 lock_type = 1
 lock_requirement = ""

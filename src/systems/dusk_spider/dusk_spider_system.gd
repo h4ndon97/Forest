@@ -59,6 +59,19 @@ func get_active_count() -> int:
 	return count
 
 
+## 살아있는 땅거미가 현재 점유한 스테이지 ID 집합을 반환한다(월드맵 아이콘용).
+func get_active_stages() -> Array:
+	var stages: Array = []
+	for spider in _spiders:
+		if spider.state == DuskSpiderEntityScript.State.DEFEATED:
+			continue
+		var sid: String = spider.current_stage_id
+		if sid.is_empty() or sid in stages:
+			continue
+		stages.append(sid)
+	return stages
+
+
 ## 특정 스테이지에 도착한 땅거미가 있는지 확인한다.
 func has_arrived_at(stage_id: String) -> bool:
 	for spider in _spiders:

@@ -8,6 +8,7 @@ stage_id = "start_village"
 display_name = "시작 마을"
 scene_path = "res://src/world/checkpoints/StartVillage.tscn"
 initial_hour = 12.0
+zone_id = "zone_1"
 adjacent_stages = Array[String](["stage_1_1"])
 lock_type = 0
 lock_requirement = ""

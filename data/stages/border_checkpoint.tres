@@ -8,6 +8,7 @@ stage_id = "border_checkpoint"
 display_name = "1-2 경계"
 scene_path = "res://src/world/checkpoints/BorderCheckpoint.tscn"
 initial_hour = 14.0
+zone_id = "zone_1"
 adjacent_stages = Array[String](["stage_1_b", "stage_2_1"])
 lock_type = 0
 lock_requirement = ""
