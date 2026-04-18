@@ -38,3 +38,8 @@ extends Resource
 @export var time_cost: float = 5.0
 ## 히트박스 활성 시간
 @export var active_duration: float = 0.25
+
+# === 아트 ===
+@export_group("Art")
+## 스킬 아이콘 PNG 경로. 비어있으면 skill_icons.gd의 프로그래밍 드로잉 폴백.
+@export var icon_path: String = ""
