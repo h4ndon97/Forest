@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DialogueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/dialogues/dialogue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+dialogue_id = "shop_keeper_first_greeting"
+speaker = "상인"
+lines = Array[String](["어서 오게, 여행자.", "가진 걸 보여주지. 목숨값이라 여기고 골라."])

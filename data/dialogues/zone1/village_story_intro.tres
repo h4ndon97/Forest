@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="DialogueData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/dialogues/dialogue_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+dialogue_id = "village_story_intro"
+speaker = "촌장"
+lines = Array[String](["시간이 이상해… 숲이 잠들어 있는 것 같아.", "너라면 안쪽까지 갈 수 있을 거다. 제사장 가문의 후예니까.", "시간을 멈추고, 그림자를 이용하렴. 네 능력이다.", "선조의 기록이 숲 곳곳에 남아 있다더라."])

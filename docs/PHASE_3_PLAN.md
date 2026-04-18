@@ -18,8 +18,9 @@
 | **Phase 3-1 레벨 디자인 구현** | **✅ 완료 (2026-04-18) — 7 스테이지(.tres/.tscn/.gd) + HiddenRevealer + ENVIRONMENT α/β/γ 프레임워크** |
 | **Phase 3-2 1구역 적 구현** | **✅ 완료 (2026-04-18) — 서브 타입 4종(`data/enemies/zone1/`) + 빛가루 포자 + airborne_homing 이동 프로파일** |
 | **Phase 3-3 1구역 보스 구현** | **✅ 완료 (2026-04-18) — D4/D5 확정 + 3-3-a/b/c/d 구현 + 3-3-e 통합 QA. §5 참조** |
+| **Phase 3-4 거점 구현** | **✅ 완료 (2026-04-18) — D6 확정 + 3-4-a/b/c/d/e. §6 구현 결과 참조** |
 
-**→ Phase 3-4 거점 착수 가능 상태**
+**→ Phase 3-5 월드맵 착수 가능 상태**
 
 ---
 
@@ -214,21 +215,59 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 ---
 
-## 6. 3-4 — 거점
+## 6. 3-4 — 거점 (✅ 구현 완료 2026-04-18)
 
 ### 시작 마을 (1구역 입구, 마을형)
-- NPC 최소 2명 — **상인 (ShopKeeper)** + **스토리 NPC**
+- NPC 2명 — **상인 (ShopKeeper)** + **스토리 NPC (촌장)**
 - 세이브, 완전 회복, 월드맵 포탈, 상점, 스킬/장비 관리 UI 접근 지점
 - 스토리: 주인공의 출발점. 숲 진입 전 마지막 안전 구역
 
 ### 1-2 경계 간이형 거점
 - 오브젝트만 (NPC 없음)
 - 세이브, 완전 회복, 월드맵 포탈
-- 2구역 진입 직전 보급 지점
+- 보스 처치(stage_1_b) 이후 2구역 진입 직전 보급 지점
 
-### 결정 대기
-- **D6** 시작 마을 NPC 대화 흐름 (`STORY.md`와 연동)
-- 화폐 시스템 (DEVELOPMENT_PLAN 미결, Phase 5) — 1구역 상점은 당분간 "무조건 구매" 유지
+### D6 확정 (2026-04-18) — NPC 대화 흐름
+- **대화 시스템**: Autoload 아님. `DialogueBox` 씬(CanvasLayer) + `DialogueData` 리소스. 분기/변수/다국어 미지원(후속 리팩터)
+- **진행 키**: `interact`(F) 재사용. 시작 프레임 `call_deferred("_arm")`으로 input 겹침 방지
+- **입력 잠금 책임**: DialogueBox가 `player.set_physics_process(false)` 토글
+- **EventBus 시그널**: `dialogue_started(npc_id)` / `dialogue_finished(npc_id)`
+- **스토리 NPC 1명 (촌장)** — 4줄 도입 (`village_story_intro.tres`): 저주 현상 → 출발 동기 → 튜토리얼 힌트 → 선조 단서. 선조 진실 미언급(중반 반전 보존)
+- **상인 첫 방문** — 1회 인사 대화 후 상점 UI 오픈. 플래그 `shop_keeper.{shop_id}.greeted`를 StateFlags에 영속화. 재방문 시 바로 UI
+
+### 3-4 구현 결과
+
+| sub-phase | 신설/수정 | 검증 |
+|---|---|---|
+| **3-4-a 거점 베이스 리팩터** | `src/world/checkpoints/checkpoint_base.gd` (67줄) — stage_entered/spawn_point_set/카메라 제한/BG/Ground. 기존 `test_checkpoint.gd`/`test_checkpoint_2.gd` 제거. 두 .tscn은 스크립트 경로만 교체 + @export 값 주입 | gdlint 0 / gdformat unchanged / 헤드리스 로드 |
+| **3-4-b 대화 시스템 + BaseNpc** | `data/dialogues/dialogue_data.gd` (DialogueData 리소스) / `src/ui/common/dialogue/dialogue_box.gd` (120줄) / `src/entities/npcs/base/base_npc.gd` (110줄, ShopKeeper/StoryNpc 공통 접근 감지+HintLabel+interact) / EventBus 2개 시그널 추가 | — |
+| **3-4-c 시작 마을** | `StartVillage.tscn` + `start_village.tres` + `StoryNpc.tscn/story_npc.gd` + `village_story_intro.tres` + `shop_keeper_first_greeting.tres`. ShopKeeper BaseNpc로 이관 + 첫 방문 분기 로직 + StateFlags 연동. Stage1_1.tscn에 PortalLeft(→start_village) 추가 + stage_1_1.tres adjacent 갱신 | — |
+| **3-4-d 경계 거점** | `BorderCheckpoint.tscn`(베이스 직결) + `border_checkpoint.tres`. Stage1_B.tscn PortalRight(숨겨진) target 재배선(stage_2_1→border_checkpoint). Stage2_1.tscn PortalLeft target 재배선(stage_1_b→border_checkpoint). stage_1_b/stage_2_1 adjacent 갱신 | — |
+| **3-4-e 월드맵 등록 + QA** | 신규 `.tres` 2건은 StageSystem BFS로 자동 등록(별도 API 불필요). 본 §6 구현 결과 subsection + CORE_SYSTEMS §대화 시스템 추가 | gdlint 0 / gdformat 6 unchanged / 헤드리스 로드 |
+
+### 시나리오 루프 (신규)
+```
+[new game] start_village (회복+세이브+상인 첫 인사+촌장 대화)
+  ├─ PortalRight → stage_1_1 → ... → stage_1_6 → stage_1_b (보스)
+  │                                                   │
+  │                                                   └─ 보스 처치 시 PortalRight 공개
+  │                                                        │
+  │                                                        ▼
+  │                                                  border_checkpoint (회복+세이브)
+  │                                                        │
+  │                                                        ├─ PortalRight → stage_2_1 (ABILITY=light_dash 필요)
+  │                                                        └─ PortalLeft  → stage_1_b (복귀)
+  └─ 월드맵 포탈 → 패스트트래블 (발견된 거점)
+```
+
+### 미검증 (인게임 플레이테스트 필요)
+- 상인 첫 방문 대화→상점 UI 오픈 체감 흐름
+- StateFlags 저장/로드 후 재방문 시 대화 스킵 지속
+- 대화 중 이동/공격 입력이 완전 차단되는지
+- border_checkpoint에서 stage_2_1 진입 시 ABILITY 잠금 메시지 노출
+
+### 결정 보류 → Phase 5
+- 화폐 시스템 — 1구역 상점은 당분간 "무조건 구매" 유지
 
 ---
 
@@ -326,7 +365,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 | ~~D3~~ | ~~1구역 고유 적 (3안 중 1)~~ | ✅ 확정 (2026-04-18) — **C 빛가루 포자**, §4 참조 |
 | ~~D4~~ | ~~1구역 보스 컨셉 (3안 중 1)~~ | ✅ 확정 (2026-04-18) — **A 거대 고목**, §5 참조 |
 | ~~D5~~ | ~~1구역 보스 보상 강화 이동 (빛 대시 확정 여부)~~ | ✅ 확정 (2026-04-18) — **빛 대시**, §5 참조 |
-| D6 | 시작 마을 NPC 대화 흐름 | 3-4 착수 시 |
+| D6 | 시작 마을 NPC 대화 흐름 | ✅ 확정 (2026-04-18) — §6 참조 |
 | D7 | EFFECTS.md 디렉션 6가지 | 3-7 착수 전 |
 | D8 | UI 아트 팔레트/톤/모티프 | 3-7 착수 전 |
 | D9 | 사운드 제작 방식 | 3-8 착수 전 |

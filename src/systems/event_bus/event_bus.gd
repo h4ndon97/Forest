@@ -142,3 +142,7 @@ signal boss_weak_point_exposed(boss_id: String, exposed: bool)
 
 # === 능력 시스템 (Phase 3-3-d) ===
 signal ability_unlocked(ability_id: String)
+
+# === 대화 시스템 (Phase 3-4) ===
+signal dialogue_started(npc_id: String)
+signal dialogue_finished(npc_id: String)

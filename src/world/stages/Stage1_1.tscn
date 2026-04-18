@@ -74,6 +74,11 @@ position = Vector2(656, 180)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WallRight"]
 shape = SubResource("wall_shape")
 
+[node name="PortalLeft" parent="." instance=ExtResource("portal")]
+position = Vector2(32, 300)
+target_stage_id = "start_village"
+direction = "left"
+
 [node name="PortalRight" parent="." instance=ExtResource("portal")]
 position = Vector2(608, 140)
 target_stage_id = "stage_1_2"

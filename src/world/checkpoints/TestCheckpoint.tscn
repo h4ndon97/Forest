@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://src/world/checkpoints/test_checkpoint.gd" id="stage_script"]
+[ext_resource type="Script" path="res://src/world/checkpoints/checkpoint_base.gd" id="stage_script"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/portal/WorldMapPortal.tscn" id="world_map_portal"]
 [ext_resource type="PackedScene" path="res://src/entities/npcs/shop_keeper/ShopKeeper.tscn" id="shop_keeper"]
@@ -13,6 +13,10 @@ size = Vector2(32, 360)
 
 [node name="TestCheckpoint" type="Node2D"]
 script = ExtResource("stage_script")
+stage_id = "test_checkpoint"
+spawn_point = Vector2(320, 320)
+bg_path = "res://assets/backgrounds/bg_test_checkpoint.png"
+ground_tile_path = "res://assets/tiles/tile_ground_test.png"
 
 [node name="Floor" type="StaticBody2D" parent="."]
 position = Vector2(320, 344)

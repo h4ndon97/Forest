@@ -353,6 +353,38 @@
 
 ---
 
+## 7. 거점·NPC·대화 시스템 (Phase 3-4)
+
+### 거점 (Checkpoint)
+- `CheckpointBase` 스크립트(`src/world/checkpoints/checkpoint_base.gd`)가 모든 거점 씬의 공통 베이스.
+  - `@export`: `stage_id` / `spawn_point` / `bg_path` / `ground_tile_path`
+  - `_ready`에서 `stage_entered`/`spawn_point_set` emit + 카메라 640×360 limit + BG/Ground fallback 적용
+  - `StageData.is_checkpoint=true` 시 StageSystem이 자동으로 완전 회복·세이브·월드맵 discovery 처리 (별도 등록 API 없음)
+- **거점 목록 (1구역)**:
+  - `StartVillage` (`start_village`) — 시작 마을. ShopKeeper + StoryNpc(촌장) 배치. stage_1_1 좌측과 연결
+  - `BorderCheckpoint` (`border_checkpoint`) — 1↔2구역 경계. NPC 없음, 오브젝트만. stage_1_b ↔ stage_2_1 사이
+
+### NPC (BaseNpc)
+- `src/entities/npcs/base/base_npc.gd` — Area2D 공통 베이스
+  - 플레이어 body_entered/exited 감지 + HintLabel on/off
+  - `Input.is_action_just_pressed("interact")` → 가상 메서드 `npc_interacted()` 호출
+  - `set_interaction_blocked(bool)` — 대화/UI 진행 중 재입력 방지
+- **파생 클래스**:
+  - `ShopKeeper` — 첫 방문 시 `first_greeting: DialogueData` 재생 → `shop_opened` emit. 이후 바로 UI. 플래그 `shop_keeper.{shop_id}.greeted`를 `StateFlags`에 영속화
+  - `StoryNpc` — `dialogue: DialogueData`를 매번 재생 (스킵 없음)
+
+### 대화 시스템 (Dialogue)
+- **Autoload 아님**. 재사용 UI `DialogueBox`(CanvasLayer, `src/ui/common/dialogue/dialogue_box.gd`)를 NPC가 런타임 인스턴스화해 `current_scene.add_child` 후 `queue_free`
+- **데이터**: `DialogueData` 리소스 (`data/dialogues/dialogue_data.gd`) — `dialogue_id` / `speaker` / `lines: Array[String]`. 구역별 서브폴더 (`data/dialogues/zone1/`)
+- **진행 키**: `interact`(F) 재사용. start 시 `call_deferred("_arm")`으로 첫 프레임 input 겹침 방지
+- **입력 잠금**: DialogueBox가 `player.set_physics_process(false)` 토글 (종료 시 복원). 플레이어 스크립트는 대화 인지 책임 없음
+- **EventBus 시그널**:
+  - `dialogue_started(npc_id: String)`
+  - `dialogue_finished(npc_id: String)` — NPC가 구독해 후속 동작 트리거 (예: 상인이 첫 인사 후 상점 오픈)
+- **미지원 (후속 리팩터)**: 분기 / 변수 / 다국어 / 타이핑 효과(Phase 3-7로 묶음)
+
+---
+
 ## 시스템 간 상호작용
 
 ```

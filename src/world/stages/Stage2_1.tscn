@@ -28,7 +28,7 @@ color = Color(0.18, 0.16, 0.28, 1)
 
 [node name="PortalLeft" parent="." instance=ExtResource("portal")]
 position = Vector2(32, 180)
-target_stage_id = "stage_1_b"
+target_stage_id = "border_checkpoint"
 direction = "left"
 
 [node name="StubLabel" type="Label" parent="."]

@@ -270,8 +270,8 @@ Aseprite에서 태그별로 내보내기:
 - placeholder 색상: `#CCB266` (황금/탄색)
 
 **적용 방법**:
-- `test_checkpoint.gd`에 fallback 로직 이미 포함 (배경/바닥 타일)
-- 휴식 마커는 현재 ColorRect — 아트 적용 시 `TestCheckpoint.tscn`의 RestMarker를 Sprite2D로 교체
+- `checkpoint_base.gd`에 fallback 로직 포함 (배경/바닥 타일 @export 경로 자동 적용)
+- 휴식 마커는 현재 ColorRect — 아트 적용 시 거점 씬의 RestMarker를 Sprite2D로 교체
 
 **기존 에셋 재사용**:
 - 바닥 타일 (`tile_ground_test.png`)은 기존 에셋 공유

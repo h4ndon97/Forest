@@ -92,7 +92,7 @@ lens_data = ExtResource("lens_data_basic")
 
 [node name="PortalRight" parent="." instance=ExtResource("portal")]
 position = Vector2(928, 180)
-target_stage_id = "stage_2_1"
+target_stage_id = "border_checkpoint"
 direction = "right"
 visible = false
 process_mode = 4

@@ -518,16 +518,22 @@ Phase 6  출시
   - 재분열 가드: `is_spore=true` + `death_behavior="none"` 이중
   - 테스트 스테이지(`TestStage*.tscn`)는 베이스 `.tres` 유지 (회귀 테스트용)
 
-#### 3-3. 1구역 보스
-- [ ] 보스 설계 (거대 오브젝트 괴물화, 2페이즈)
-- [ ] 보스 맵 설계
-- [ ] 보스 처치 보상 (잠금 해제 능력 + 스토리 + 강화)
+#### 3-3. 1구역 보스 ✅ 완료 (2026-04-18)
+- [x] 보스 설계 (거대 고목 Ancient Oakheart, 2페이즈)
+- [x] 보스 맵 설계 (stage_1_b 보스 아레나 + 숨겨진 2구역 포탈)
+- [x] 보스 처치 보상 (빛 대시 능력 해금 + 성장 포인트 + 스토리 플래그 + 2구역 포탈 공개)
 - **의존성**: 3-2
+- **상세**: `docs/PHASE_3_PLAN.md` §5
 
-#### 3-4. 거점: 시작 마을
-- [ ] 시작점 마을형 거점 (NPC, 상인)
-- [ ] 1-2 경계 간이형 거점
+#### 3-4. 거점 ✅ 완료 (2026-04-18)
+- [x] 시작점 마을형 거점 (StartVillage, 상인 + 스토리 NPC 촌장)
+- [x] 1-2 경계 간이형 거점 (BorderCheckpoint, stage_1_b ↔ stage_2_1 사이)
+- [x] 거점 베이스 리팩터 — `checkpoint_base.gd` 공통 베이스 (기존 `test_checkpoint*.gd` 제거)
+- [x] 대화 시스템 (노드 단위) — `DialogueBox` + `DialogueData` 리소스
+- [x] NPC 공통 베이스 (`BaseNpc`) + ShopKeeper/StoryNpc 파생
+- [x] 상인 첫 방문 대화 1회 분기 (StateFlags 영속화)
 - **의존성**: 3-1
+- **상세**: `docs/PHASE_3_PLAN.md` §6, `docs/CORE_SYSTEMS.md` §7
 
 #### 3-5. 월드맵 (기본)
 - [ ] 1구역 영역 표시
