@@ -12,8 +12,9 @@ const ARCH_RADIUS_OUTER: float = 24.0
 const ARCH_RADIUS_MID: float = 20.0
 const ARCH_THICKNESS: float = 8.0
 
-const Y_TOP: float = -PORTAL_HEIGHT * 0.5
-const Y_BOTTOM: float = PORTAL_HEIGHT * 0.5
+# Node2D 원점 = 포탈 바닥(지면 접지점). 포탈은 원점에서 위로 뻗는다.
+const Y_BOTTOM: float = 0.0
+const Y_TOP: float = -PORTAL_HEIGHT
 const Y_PILLAR_TOP: float = Y_BOTTOM - PILLAR_HEIGHT
 
 const COLOR_STONE_BASE := Color(0.420, 0.400, 0.376, 1.0)

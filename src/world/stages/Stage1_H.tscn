@@ -65,7 +65,7 @@ position = Vector2(656, 180)
 shape = SubResource("wall_shape")
 
 [node name="PortalReturn" parent="." instance=ExtResource("portal")]
-position = Vector2(32, 300)
+position = Vector2(32, 328)
 target_stage_id = "stage_1_4"
 direction = "left"
 

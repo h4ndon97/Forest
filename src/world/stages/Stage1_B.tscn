@@ -59,7 +59,7 @@ position = Vector2(480, -8)
 shape = SubResource("ceiling_shape")
 
 [node name="PortalLeft" parent="." instance=ExtResource("portal")]
-position = Vector2(32, 180)
+position = Vector2(32, 328)
 target_stage_id = "stage_1_6"
 direction = "left"
 
@@ -91,7 +91,7 @@ position = Vector2(720, 296)
 lens_data = ExtResource("lens_data_basic")
 
 [node name="PortalRight" parent="." instance=ExtResource("portal")]
-position = Vector2(928, 180)
+position = Vector2(928, 328)
 target_stage_id = "border_checkpoint"
 direction = "right"
 visible = false

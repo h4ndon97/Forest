@@ -27,7 +27,7 @@ offset_bottom = 16.0
 color = Color(0.18, 0.16, 0.28, 1)
 
 [node name="PortalLeft" parent="." instance=ExtResource("portal")]
-position = Vector2(32, 180)
+position = Vector2(32, 328)
 target_stage_id = "border_checkpoint"
 direction = "left"
 

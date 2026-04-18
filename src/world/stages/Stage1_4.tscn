@@ -97,19 +97,19 @@ position = Vector2(656, 180)
 shape = SubResource("wall_shape")
 
 [node name="PortalLeft" parent="." instance=ExtResource("portal")]
-position = Vector2(32, 300)
+position = Vector2(32, 328)
 target_stage_id = "stage_1_3"
 direction = "left"
 
 [node name="PortalRight" parent="." instance=ExtResource("portal")]
-position = Vector2(608, 300)
+position = Vector2(608, 328)
 target_stage_id = "stage_1_5"
 direction = "right"
 
 [node name="PortalHidden" parent="." instance=ExtResource("portal")]
 visible = false
 process_mode = 4
-position = Vector2(320, 124)
+position = Vector2(320, 152)
 target_stage_id = "stage_1_h"
 direction = "right"
 
