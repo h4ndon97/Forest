@@ -16,6 +16,8 @@ var _affected_enemies: Dictionary = {}
 @onready var _projection_zone: Area2D = $ShadowProjectionZone
 @onready var _projection_collision: CollisionShape2D = $ShadowProjectionZone/CollisionShape2D
 @onready var _projection_visual: ColorRect = $ShadowProjectionZone/ProjectionVisual
+@onready var _player_detect_collision: CollisionShape2D = (
+		$ShadowProjectionZone/PlayerShadowDetectZone/CollisionShape2D)
 @onready var _highlight_node_local: Node2D = $Highlight
 @onready var _prompt_node_local: Node2D = $Prompt
 
@@ -85,6 +87,8 @@ func _setup_projection_visual() -> void:
 	if _projection_collision and _projection_collision.shape is RectangleShape2D:
 		(_projection_collision.shape as RectangleShape2D).size = size
 		_projection_collision.position = Vector2(size.x * 0.5, 0)
+	if _player_detect_collision:
+		_player_detect_collision.position = Vector2(size.x * 0.5, 0)
 
 
 func _on_shadow_params_changed(_direction: Vector2, _scale: float, _intensity: float) -> void:

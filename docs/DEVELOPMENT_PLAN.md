@@ -481,11 +481,18 @@ Phase 6  출시
 
 ### 마일스톤
 
-#### 3-1. 1구역 레벨 디자인
-- [ ] 6개 스테이지 레벨 설계 (지형, 적 배치, 환경 오브젝트)
-- [ ] 추가조작 스테이지 1개
-- [ ] 자연 경계 (강/개울 → 2구역 경계)
+#### 3-1. 1구역 레벨 디자인 ✅ 완료 (2026-04-18)
+- [x] 6개 일반 스테이지 레벨 설계 + 추가조작 1 (1-1 ~ 1-6 + 1-H)
+- [x] 환경 오브젝트 배치 — 거울/차폐물/렌즈/반사 바닥 모든 Tier 1 유형 재사용
+- [x] 잠금 유형 분포 — NONE 3(1-1, 1-2, 1-4) / LIGHT 1(1-3) / PURIFY 1(1-5) / ENVIRONMENT 1(1-6)
+- [x] ENVIRONMENT 잠금 프레임워크 3종 선구현 — α `LightSensor` / β `EnvironmentStateRegistry` / γ `StateFlagPersistence` Autoload
+- [x] `HiddenRevealer` 컴포넌트 — 4조건(LIGHT_SENSOR/REFLECTION/PURIFICATION/SHADOW_COVER), 2액션(QUEUE_FREE/SET_VISIBLE), StateFlags 영속화
+- [x] 환경 오브젝트 확장 — Cover `PlayerShadowDetectZone`, Lens FocusZone layer=128 승격, ReflectiveFloor `LightEmitterZone`
+- [x] EventBus 신규 시그널 — `light_sensor_toggled` / `environment_combo_changed` / `hidden_revealed` / `state_flag_changed`
+- [x] SaveManager StateFlags 직렬화
+- [ ] 자연 경계 시각화(강/개울 → 2구역 경계) — 아트 리소스와 함께 Phase 3-7에서 마감
 - **의존성**: Phase 2 완료
+- **상세**: `docs/PHASE_3_PLAN.md` §3, `docs/PHASE_3_1_COMPONENT_DESIGN.md`
 
 #### 3-2. 1구역 적
 - [ ] 나무/바위/꽃/돌기둥 서브 타입 (1구역 버전)
@@ -730,7 +737,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 2 완료 — 2-5d 반사 바닥 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 3-1 1구역 레벨 디자인 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -757,6 +764,7 @@ Phase 6 (출시)
 | **2-5b** | **환경 오브젝트 — 차폐물** | **✅ 완료** | **CoverData(move_step=16, 투영 96×32, 강도 0.9) + STOPPED 중 밀기(±64) + ShadowProjectionZone(mask 4) + 영역 내 적 강도 상시 override(max 병합, _process 재적용) + 낮=태양방향/밤=등불반대 투영 방향 회전 + 이탈 시 per-object 강도 복원** |
 | **2-5c** | **환경 오브젝트 — 렌즈** | **✅ 완료** | **LensData(4프리셋, 빔 160/focus 48×24, intensity 0.1) + STOPPED 중 회전(거울 패턴) + FocusZone(mask 4, RotationPivot 자식) + 영역 내 적 강도 상시 override(min 병합, Cover 대칭, _process 재적용) + environment_influence_zone 시그널 확장 재사용** |
 | **2-5d** | **환경 오브젝트 — 반사 바닥** | **✅ 완료** | **ReflectiveFloorData(reflect_multiplier=0.5, body 192×32 수면 청록) + 정적/비상호작용(can_interact=false) + InfluenceZone(mask 4, environment_influence_zone 공용) + 영역 내 적 baseline × 0.5 상시 override(multiplier 방식, Cover/Lens와 다른 축) + _process 재적용 + TestStage 배치** |
+| **3-1** | **1구역 레벨 디자인** | **✅ 완료** | **7 스테이지(1-1~1-6 + 1-H) .tres/.tscn/.gd + ENVIRONMENT 잠금 3종 프레임워크(α LightSensor / β EnvironmentStateRegistry / γ StateFlagPersistence Autoload) + HiddenRevealer 컴포넌트(4조건/2액션/StateFlags 영속화) + Cover `PlayerShadowDetectZone` + Lens FocusZone layer=128 승격 + ReflectiveFloor `LightEmitterZone` + EventBus 4시그널 신설 + StageLockValidator prefix 파싱(`light_sensor:`/`registry:`/`flag:`) + SaveManager StateFlags 직렬화** |
 
 ### Phase 2 세부 작업 순서
 
@@ -826,3 +834,8 @@ Phase 6 (출시)
 - [x] Phase 1-1 구현에 대한 Code Reviewer / QA 에이전트 실행 → max_air_jumps 하드코딩 수정 완료
 - [x] Phase 1-3 구현에 대한 Code Reviewer / QA 에이전트 실행 → resource_changed 시그널 연결 등 3건 수정 완료
 - [x] Phase 2 진입 시 base_enemy.gd set_deferred 버그 수정 (monitoring/monitorable 시그널 중 직접 변경 → set_deferred)
+- [x] Phase 2 완료 후 전반 점검 (CLI 3종 + 에이전트 3인 + 시나리오 검증) — 2026-04-18
+  - `43dd449` fix: 밤 등불 토글 시 적 강도 즉시 반영 (enemy_system._on_lantern_toggled — per-object/전역 강도 모드 즉시 전환)
+  - `822327c` fix: 땅거미 시간 전파 rate 반영 (DuskSpiderSystem — flow_rate_changed/pause/resume 수신, effective_delta 적용)
+- [x] Phase 3 진입 전 설계 문서 갱신 6건 — 2026-04-18 (SKILLS.md, BOSSES.md, WORLD_DESIGN.md, ENEMIES.md, COMBAT.md, DEVELOPMENT_PLAN.md)
+- [x] Phase 3 진입 노트 작성 — 2026-04-18 (`docs/PHASE_3_PLAN.md`)

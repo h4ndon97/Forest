@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_1_h"
+display_name = "숨겨진 등불대"
+scene_path = "res://src/world/stages/Stage1_H.tscn"
+initial_hour = 23.0
+adjacent_stages = Array[String](["stage_1_4"])
+lock_type = 0
+lock_requirement = ""
+total_enemies = 2
+total_residues = 2
+is_checkpoint = false

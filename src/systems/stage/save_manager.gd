@@ -32,6 +32,9 @@ func collect_data(
 		data["growth"] = GrowthSystem.get_save_data()
 	if InventorySystem and InventorySystem.has_method("get_save_data"):
 		data["inventory"] = InventorySystem.get_save_data()
+	var state_flags_node: Node = _get_state_flags()
+	if state_flags_node != null:
+		data["state_flags"] = state_flags_node.get_save_data()
 	return data
 
 
@@ -54,7 +57,18 @@ func apply_data(data: Dictionary) -> Dictionary:
 	var inv_data: Dictionary = data.get("inventory", {})
 	if not inv_data.is_empty() and InventorySystem and InventorySystem.has_method("load_save_data"):
 		InventorySystem.load_save_data(inv_data)
+	var flags_data: Dictionary = data.get("state_flags", {})
+	var state_flags_node: Node = _get_state_flags()
+	if state_flags_node != null:
+		state_flags_node.load_save_data(flags_data)
 	return result
+
+
+func _get_state_flags() -> Node:
+	if Engine.get_main_loop() == null:
+		return null
+	var root: Node = (Engine.get_main_loop() as SceneTree).root
+	return root.get_node_or_null("StateFlags")
 
 
 ## 게임 상태를 디스크에 저장한다.

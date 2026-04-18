@@ -57,6 +57,16 @@ offset_right = 96.0
 offset_bottom = 16.0
 color = Color(0.05, 0.05, 0.1, 0.35)
 
+[node name="PlayerShadowDetectZone" type="Area2D" parent="ShadowProjectionZone"]
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ShadowProjectionZone/PlayerShadowDetectZone"]
+position = Vector2(48, 0)
+shape = SubResource("projection_shape")
+
 [node name="Highlight" type="Node2D" parent="."]
 script = ExtResource("4")
 

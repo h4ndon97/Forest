@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_1_5"
+display_name = "부서진 사당"
+scene_path = "res://src/world/stages/Stage1_5.tscn"
+initial_hour = 22.0
+adjacent_stages = Array[String](["stage_1_4", "stage_1_6"])
+lock_type = 2
+lock_requirement = "stage_1_2"
+total_enemies = 4
+total_residues = 4
+is_checkpoint = false

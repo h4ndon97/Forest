@@ -4,6 +4,10 @@
 > 레퍼런스 게임 조사, Godot 4.x 구현 기법, 프로젝트 맞춤 추천, 구현 로드맵을 포함한다.
 >
 > **관련 문서**: COMBAT.md (전투), ART_PIPELINE.md (아트 규격), ART_RESOURCE_LIST.md (에셋 목록), CORE_SYSTEMS.md (시간/그림자 시스템)
+>
+> **UI 이펙트 상위 문서**: [art_specs/ui_design_master.md](art_specs/ui_design_master.md) 섹션 H (피드백·트랜지션) 참조.
+> 본 문서는 구현 기법/Pass 구성/에셋을, 상위 문서는 UI 카테고리 간 정합성과 컨셉 방향을 담당한다.
+> 두 문서 간 모순 발견 시 상위 문서의 컨셉 결정이 우선.
 
 ---
 

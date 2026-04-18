@@ -121,3 +121,11 @@ signal enemy_drop_requested(position: Vector2, enemy_name: String)
 signal environment_interacted(object_id: int, state_index: int)
 signal environment_split_triggered(object_id: int, enemy_ids: Array)
 signal environment_blocked_shadow(cover_id: int, caster_id: int, blocked: bool)
+
+# === 환경 센서/상태 (Phase 3-1) ===
+signal light_sensor_toggled(sensor_id: String, is_on: bool)
+signal environment_combo_changed(combo_key: String, satisfied: bool)
+signal hidden_revealed(stage_id: String, revealer_name: String)
+
+# === 상태 플래그 (Phase 3-1) ===
+signal state_flag_changed(flag_id: String, value: bool)

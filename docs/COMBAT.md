@@ -300,8 +300,13 @@ data/combat/
 - 빛/그림자 테마와 연결된 강화 (예: 빛 대시, 그림자 점프 등)
 - 강화된 이동이 스테이지 잠금 구간 통과에 활용됨
 
+### 현재 구현 상태 (2026-04-18)
+- ✅ 기본 이동 3종 (달리기 / 2단 점프 / 대시) — Phase 1-1 완료
+- ✅ ABILITY 잠금 프레임워크: StageSystem LockValidator (Phase 2-4c) — 실제 능력 0개 → 검증 항상 통과
+- ⏳ 강화 이동 해금: **Phase 3-3** 1구역 보스 보상부터 순차 추가, Phase 4-A~4-D 각 구역 보스에 분배
+
 ### 미결 사항
-- [ ] 강화 이동의 구체적 종류 및 해금 순서
+- [ ] 강화 이동의 구체적 종류 및 해금 순서 (Phase 3-3부터 누적 확정)
 - [ ] 이동공격 연계 방식
 - [ ] 대시 속성 (무적 프레임 유무, 거리 등 — 프로토타입으로 결정)
 
@@ -381,6 +386,18 @@ GDD에서 확정된 환경 오브젝트:
 - **투영 방향 갱신**: `EventBus.shadow_params_changed` 수신 시 회전만 갱신 (밤+등불 OFF면 각도 0으로 사실상 비활성)
 - **BlockMode 자리 확보**: `BlockMode.REMOVE / BOTH` enum 정의. Phase 2-5b 구현 범위는 CREATE만, 나머지는 후속 Phase에서 오브젝트 배치 규격과 함께 결정
 - **재사용 인프라**: 거울과 동일한 `environment_object.gd` 베이스 + `environment_prompt.gd` + `environment_highlight.gd` 공유. 투영 영역만 전용 `shadow_projection_zone.gd` 브리지 사용
+
+### 숨김 경로 & ENVIRONMENT 잠금 연동 (Phase 3-1 완료)
+전투/환경 조작의 결과가 **맵 구조(숨김 경로, 잠금 해제)** 와도 맞물린다.
+
+- **HiddenRevealer** (`src/entities/objects/environment/hidden_revealer/`): 환경 상태 4조건 중 하나가 충족되면 대상 노드를 드러내는(visible/free) 공용 컴포넌트.
+  - `LIGHT_SENSOR`: 렌즈 빔이 센서에 닿으면 숨김 포탈/보상 노출 (예: 1-4 → 1-H 입구)
+  - `REFLECTION`: 반사 바닥 위 등불 + 센서 점등 조합 (예: 1-3 장신구)
+  - `PURIFICATION`: 잔류 정화 위치가 조건과 일치하면 드러남 (예: 1-5 비문)
+  - `SHADOW_COVER`: 플레이어가 차폐물 그림자 안에 `require_sustained_seconds` 동안 머물면 드러남 (예: 1-2 틈새)
+- **LightSensor** (`src/entities/objects/environment/light_sensor/`): 렌즈 FocusZone/반사 바닥 방출 영역이 layer 128로 승격된 것을 mask 128로 감지. 동일 컴포넌트가 HiddenRevealer 소스 및 ENVIRONMENT α 잠금 validator로 동시 기능.
+- **Cover 확장**: `ShadowProjectionZone`의 자식으로 `PlayerShadowDetectZone` (Area2D, layer 0 / mask 2) 추가. 부모 투영 영역의 회전을 상속하여 "플레이어가 차폐물 그림자 안에 위치"를 감지 — SHADOW_COVER 소스.
+- **전투 외 용도의 확장**: 환경 오브젝트가 "적 약화/강화"에서 "맵 구조 변형"까지 범위를 확장 — 탐색 밀도와 환경 조작의 동기를 중첩시킴.
 
 ### 미결 사항
 - [ ] 오브젝트 배치 밀도 및 활용 빈도

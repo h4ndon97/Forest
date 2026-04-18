@@ -45,15 +45,22 @@
 - 스토리 진행과 연결 — 깊은 구역일수록 그림자 왕가의 흔적 등 반영
 - 세부 연출 → 월드 디자인/스토리 세션에서 구체화
 
-### 구현 상태 (Phase 2-8b 완료)
-- **구현 완료**: StageSystem Autoload, StageRegistry, StageClearTracker, StageTransition, StagePortal, StageLockValidator, TimePropagation, SaveManager, WorldMapUI(독립 Autoload), WorldMapPortal, WorldMapGraphBuilder
+### 구현 상태 (Phase 3-1 완료)
+- **구현 완료**: StageSystem Autoload, StageRegistry, StageClearTracker, StageTransition, StagePortal, StageLockValidator, TimePropagation, SaveManager, WorldMapUI(독립 Autoload), WorldMapPortal, WorldMapGraphBuilder, **StateFlags Autoload(StateFlagPersistence)**, **EnvironmentStateRegistry(씬 로컬)**, **LightSensor 컴포넌트**, **HiddenRevealer 컴포넌트**
 - **StageData Resource**: stage_id, display_name, scene_path, initial_hour, adjacent_stages, lock_type, lock_requirement, total_enemies, total_residues, is_checkpoint
 - **ClearState enum**: UNCLEARED → HALF_CLEARED(적 전멸) → FULLY_CLEARED(잔류 정화)
 - **LockType enum**: NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY
 - **잠금 프레임워크**: StageLockValidator 컴포넌트가 유형별 검증 수행. 거부 시 stage_access_denied 시그널 발신.
 - **빛 잠금(LIGHT)**: EventBus.lantern_toggled로 등불 상태 추적 → 등불 ON 시 통과, OFF 시 거부
 - **정화 잠금(PURIFY)**: stage_clear_updated 추적 → 대상 스테이지 FULLY_CLEARED 시 통과. lock_requirement로 특정 스테이지 지정 가능.
-- **미구현 잠금**: ENVIRONMENT/ABILITY는 프레임워크만 준비 (항상 거부 → Phase 3에서 구현)
+- **환경 잠금(ENVIRONMENT)** (Phase 3-1 구현 완료): lock_requirement에 prefix로 분기
+  - `light_sensor:<sensor_id>` (α) — LightSensor 컴포넌트 점등 상태. 1-6 '빛의 공터' 진입 잠금에 사용 (`sensor_1_6_entry` 센서는 1-5에 배치)
+  - `registry:<combo_key>` (β) — EnvironmentStateRegistry의 CombinationRule 충족. 2~5구역 앵커 예약
+  - `flag:<flag_id>` (γ) — StateFlags(영속 글로벌 플래그) 세트. 2~5구역 앵커 예약
+- **숨김 프레임워크**: `HiddenRevealer` 컴포넌트 — 4조건(LIGHT_SENSOR/REFLECTION/PURIFICATION/SHADOW_COVER), 2액션(QUEUE_FREE/SET_VISIBLE). SET_VISIBLE은 `process_mode`도 복원(비활성 포탈 재활성화). StateFlags에 플래그 기록하여 재진입 시 즉시 복원.
+- **환경 오브젝트 확장 (Phase 3-1)**: Cover `ShadowProjectionZone/PlayerShadowDetectZone`(layer=0 mask=2, 그림자 회전 따라감) + Lens `FocusZone` 승격(collision_layer=128 monitorable=true, 빛 빔 방출) + ReflectiveFloor `LightEmitterZone`(layer=128, 낮 또는 등불 ON 시 monitorable 활성)
+- **미구현 잠금**:
+  - **ABILITY**: 프레임워크만 준비, Phase 3-3 1구역 보스 보상부터 순차 구현
 - **스테이지 전환**: StagePortal(Area2D, 윗방향키 입력) → EventBus → StageTransition(페이드 + Player 보존/재삽입)
 - **적 처치 유지**: 처치된 적 이름을 ClearTracker에 기록, 재진입 시 stage_enemies_sync_requested로 제거
 - **스테이지별 독립 시간**: StageData.initial_hour로 초기 시각 설정, 전환 시 저장/복원, 시간 상태 STOPPED 초기화

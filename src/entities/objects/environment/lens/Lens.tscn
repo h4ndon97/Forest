@@ -29,10 +29,10 @@ color = Color(1, 0.92, 0.35, 0.22)
 polygon = PackedVector2Array(0, -12, 112, -12, 160, -12, 160, 12, 112, 12, 0, 12)
 
 [node name="FocusZone" type="Area2D" parent="RotationPivot"]
-collision_layer = 0
+collision_layer = 128
 collision_mask = 4
 monitoring = true
-monitorable = false
+monitorable = true
 script = ExtResource("2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RotationPivot/FocusZone"]

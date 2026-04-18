@@ -12,6 +12,8 @@ var _affected_enemies: Dictionary = {}
 @onready var _influence_zone: Area2D = $InfluenceZone
 @onready var _floor_collision: CollisionShape2D = $InfluenceZone/CollisionShape2D
 @onready var _floor_visual: ColorRect = $InfluenceZone/FloorVisual
+@onready var _light_emitter_zone: Area2D = $LightEmitterZone
+@onready var _emitter_collision: CollisionShape2D = $LightEmitterZone/CollisionShape2D
 
 
 func _ready() -> void:
@@ -25,6 +27,12 @@ func _ready() -> void:
 
 	_influence_zone.enemy_entered.connect(_on_enemy_entered)
 	_influence_zone.enemy_exited.connect(_on_enemy_exited)
+
+	# REFLECTION 빛 방출: 낮이거나 등불 ON일 때만 monitorable (센서 감지 가능).
+	if _light_emitter_zone != null:
+		EventBus.day_night_changed.connect(_on_day_night_changed_for_emitter)
+		EventBus.lantern_toggled.connect(_on_lantern_toggled_for_emitter)
+		_refresh_emitter_state()
 
 
 func _process(_delta: float) -> void:
@@ -46,6 +54,23 @@ func _setup_visual() -> void:
 		_floor_visual.size = size
 		_floor_visual.position = -size * 0.5
 		_floor_visual.color = reflective_floor_data.body_color
+	if _emitter_collision and _emitter_collision.shape is RectangleShape2D:
+		(_emitter_collision.shape as RectangleShape2D).size = size
+
+
+func _refresh_emitter_state() -> void:
+	if _light_emitter_zone == null:
+		return
+	var emitting: bool = ShadowSystem.is_day_mode() or ShadowSystem.is_lantern_active()
+	_light_emitter_zone.monitorable = emitting
+
+
+func _on_day_night_changed_for_emitter(_is_day: bool) -> void:
+	_refresh_emitter_state()
+
+
+func _on_lantern_toggled_for_emitter(_is_on: bool, _pos: Vector2) -> void:
+	_refresh_emitter_state()
 
 
 func _on_enemy_entered(enemy: Node) -> void:

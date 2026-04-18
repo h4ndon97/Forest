@@ -303,6 +303,11 @@
 - **다른 환경 오브젝트와 중첩**: 별도 병합 없음 — 프레임 내 마지막 `_process` 실행이 승리. Phase 5 밸런싱 시 재검토.
 - **콜리전 구조**: InfluenceZone(Area2D mask 4) { CollisionShape2D + FloorVisual }. Highlight/Prompt/InteractionArea/StaticBody 생략 (비상호작용 + 플레이어는 기존 Floor 위로 걸음).
 
+### 센서/드러내기 레이어 (Phase 3-1 완료)
+- **LightSensor (`src/entities/objects/environment/light_sensor/`)**: Area2D (layer 64 SENSOR / mask 128 LIGHT_BEAM). 렌즈 FocusZone 또는 반사 바닥의 방출 영역이 mask 128로 승격되면 겹침으로 점등. `EventBus.light_sensor_toggled(sensor_id, is_on)` 발신. ENVIRONMENT α validator 역할을 겸함 (별도 validator 없이 `StageLockValidator`가 직접 구독).
+- **HiddenRevealer (`src/entities/objects/environment/hidden_revealer/`)**: 4가지 조건(LIGHT_SENSOR / REFLECTION / PURIFICATION / SHADOW_COVER) 중 하나 충족 시 `target_node_path` 대상을 드러냄. `SET_VISIBLE` 액션은 `visible=true` 외에 `process_mode=INHERIT`도 복원하여 숨김 포탈의 Area2D 신호를 재활성화. 드러낸 후 `StateFlags`에 `hidden_revealer.<stage_id>.<node_name>` 플래그를 기록 → 재진입 시 즉시 `force_reveal()`.
+- **Cover.ShadowProjectionZone의 플레이어 감지 확장**: `PlayerShadowDetectZone`(자식 Area2D, layer 0 / mask 2)을 추가. 부모(투영 영역) 회전을 상속받아 "플레이어가 차폐물 그림자 안에 있음"을 감지 — SHADOW_COVER 조건의 소스.
+
 ### 미결 사항
 - [ ] 차폐물 `BlockMode.REMOVE / BOTH` (현재 CREATE만 구현)
 - [ ] 거울/차폐물/렌즈/반사 바닥 전용 아트 리소스 (현재 ColorRect/Polygon2D fallback)

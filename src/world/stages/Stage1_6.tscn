@@ -1,0 +1,117 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="PackedScene" path="res://src/entities/player/Player.tscn" id="1"]
+[ext_resource type="Script" path="res://src/world/stages/stage_1_6.gd" id="stage_script"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/base/BaseEnemy.tscn" id="enemy_base"]
+[ext_resource type="Resource" path="res://data/enemies/tree_enemy.tres" id="tree_stats"]
+[ext_resource type="Resource" path="res://data/enemies/rock_enemy.tres" id="rock_stats"]
+[ext_resource type="Resource" path="res://data/enemies/flower_enemy.tres" id="flower_stats"]
+[ext_resource type="Resource" path="res://data/enemies/pillar_enemy.tres" id="pillar_stats"]
+[ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
+[ext_resource type="PackedScene" path="res://src/entities/objects/environment/lens/Lens.tscn" id="lens_scene"]
+[ext_resource type="Resource" path="res://data/environment/lens_basic.tres" id="lens_data_basic"]
+
+[sub_resource type="RectangleShape2D" id="floor_shape"]
+size = Vector2(640, 32)
+
+[sub_resource type="RectangleShape2D" id="platform_shape"]
+size = Vector2(192, 16)
+
+[sub_resource type="RectangleShape2D" id="wall_shape"]
+size = Vector2(32, 360)
+
+[node name="Stage1_6" type="Node2D"]
+script = ExtResource("stage_script")
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(80, 320)
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(320, 344)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("floor_shape")
+
+[node name="FloorSprite" type="ColorRect" parent="Floor"]
+offset_left = -320.0
+offset_top = -16.0
+offset_right = 320.0
+offset_bottom = 16.0
+color = Color(0.4, 0.55, 0.3, 1)
+
+[node name="Platform1" type="StaticBody2D" parent="."]
+position = Vector2(200, 248)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
+shape = SubResource("platform_shape")
+
+[node name="PlatformSprite" type="ColorRect" parent="Platform1"]
+offset_left = -96.0
+offset_top = -8.0
+offset_right = 96.0
+offset_bottom = 8.0
+color = Color(0.42, 0.36, 0.24, 1)
+
+[node name="Platform2" type="StaticBody2D" parent="."]
+position = Vector2(440, 196)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
+shape = SubResource("platform_shape")
+
+[node name="PlatformSprite" type="ColorRect" parent="Platform2"]
+offset_left = -96.0
+offset_top = -8.0
+offset_right = 96.0
+offset_bottom = 8.0
+color = Color(0.42, 0.36, 0.24, 1)
+
+[node name="WallLeft" type="StaticBody2D" parent="."]
+position = Vector2(-16, 180)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallLeft"]
+shape = SubResource("wall_shape")
+
+[node name="WallRight" type="StaticBody2D" parent="."]
+position = Vector2(656, 180)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallRight"]
+shape = SubResource("wall_shape")
+
+[node name="PortalLeft" parent="." instance=ExtResource("portal")]
+position = Vector2(32, 300)
+target_stage_id = "stage_1_5"
+direction = "left"
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="TreeEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(280, 320)
+stats_data = ExtResource("tree_stats")
+
+[node name="RockEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(440, 320)
+stats_data = ExtResource("rock_stats")
+
+[node name="FlowerEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(200, 216)
+stats_data = ExtResource("flower_stats")
+
+[node name="PillarEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(440, 164)
+stats_data = ExtResource("pillar_stats")
+
+[node name="Lens1" parent="." instance=ExtResource("lens_scene")]
+position = Vector2(160, 296)
+lens_data = ExtResource("lens_data_basic")
+
+[node name="Lens2" parent="." instance=ExtResource("lens_scene")]
+position = Vector2(520, 296)
+lens_data = ExtResource("lens_data_basic")
+
+[node name="BG" type="ColorRect" parent="."]
+z_index = -10
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 740.0
+offset_bottom = 460.0
+color = Color(0.2, 0.28, 0.18, 1)
