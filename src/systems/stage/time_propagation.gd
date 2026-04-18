@@ -17,6 +17,7 @@ var _flowing_stages: Dictionary = {}      # stage_id -> rate (독립 흐름 중)
 var _ts_flowing: bool = false             # TimeSystem FLOWING 상태 추적
 var _is_auto_resuming: bool = false       # 자동 재개 플래그 (rebuild 스킵)
 var _paused: bool = false                 # 전환 애니메이션 일시정지
+var _is_current_origin: bool = false      # 현재 스테이지 원점 여부 (시그널 중복 발행 방지)
 
 
 func setup(registry: Node, stage_hours: Dictionary, config: PropagationConfigData) -> void:
@@ -68,9 +69,11 @@ func notify_stage_entered(stage_id: String) -> bool:
 			_is_auto_resuming = true
 			EventBus.time_flow_resume_requested.emit(hour, rate)
 			return true
-		else:
-			# 이미 FLOWING 중 — rate만 갱신
-			_emit_player_rate()
+		# 이미 FLOWING 중 — rate만 갱신
+		_emit_player_rate()
+	else:
+		# 현재 스테이지가 전파 대상 아님 → 원점 플래그 해제
+		_update_origin_flag()
 
 	return false
 
@@ -100,6 +103,7 @@ func _on_flow_stopped(_current_hour: float) -> void:
 	_ts_flowing = false
 	# 현재 스테이지만 흐름 중단 — 다른 스테이지는 계속 흐른다
 	_flowing_stages.erase(_current_stage_id)
+	_update_origin_flag()
 
 
 func _on_flow_paused() -> void:
@@ -144,6 +148,19 @@ func _rebuild_rate_map() -> void:
 func _emit_player_rate() -> void:
 	var rate: float = _flowing_stages.get(_current_stage_id, 1.0)
 	EventBus.flow_rate_changed.emit(rate)
+	_update_origin_flag()
+
+
+## 현재 스테이지의 원점 여부를 재계산하고, 변경 시에만 시그널을 발행한다.
+func _update_origin_flag() -> void:
+	var new_origin: bool = (
+		not _origin_stage_id.is_empty()
+		and _current_stage_id == _origin_stage_id
+		and _flowing_stages.has(_current_stage_id)
+	)
+	if new_origin != _is_current_origin:
+		_is_current_origin = new_origin
+		EventBus.propagation_origin_changed.emit(new_origin)
 
 
 ## 시각을 0.0~24.0 범위로 래핑한다.

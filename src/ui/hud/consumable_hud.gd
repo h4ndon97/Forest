@@ -3,11 +3,18 @@ extends CanvasLayer
 ## 소모품 슬롯 HUD.
 ## HP 회복(1번), 시간자원 회복(2번) 2슬롯 표시.
 
-const SLOT_SIZE := 20
 const SLOT_COUNT := 2
+const BOTTLE_SIZE := Vector2(24, 32)
 
-const COLOR_HP := Color(0.8, 0.2, 0.2, 0.9)
-const COLOR_TIME := Color(0.2, 0.5, 0.9, 0.9)
+# 좌하단 각진 병 배치 (ui_design_master.md §A-5, 640×360 기준, 병 top-left)
+const BOTTLE_COORDS: Array[Vector2] = [
+	Vector2(16, 312),  # HP 병
+	Vector2(48, 312),  # Time 병
+]
+
+# 플레이어 HUD 빛/그림자 축 (feedback_ui_dual_axis): HP=불씨 금 / Time=달 보라
+const COLOR_HP := Color(0.949, 0.8, 0.4, 0.9)          # #F2CC66
+const COLOR_TIME := Color(0.545, 0.184, 0.776, 0.9)    # #8B2FC6
 const COLOR_EMPTY := Color(0.5, 0.5, 0.5, 0.3)
 const COLOR_FLASH := Color(1.0, 1.0, 1.0, 1.0)
 
@@ -36,52 +43,48 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _build_ui() -> void:
-	var margin := MarginContainer.new()
-	margin.name = "MarginContainer"
-	margin.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	margin.grow_horizontal = Control.GROW_DIRECTION_END
-	margin.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	add_child(margin)
-
-	var container := HBoxContainer.new()
-	container.name = "SlotContainer"
-	container.add_theme_constant_override("separation", 4)
-	margin.add_child(container)
+	var root := Control.new()
+	root.name = "BottleRoot"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root)
 
 	for i in range(SLOT_COUNT):
-		container.add_child(_create_slot(i))
+		var bottle := _create_slot(i)
+		bottle.position = BOTTLE_COORDS[i]
+		root.add_child(bottle)
 
 
 func _create_slot(index: int) -> Control:
 	var panel := Control.new()
-	panel.name = "Slot_%d" % index
-	panel.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE + 10)
+	panel.name = "Bottle_%d" % index
+	panel.custom_minimum_size = BOTTLE_SIZE
 
 	var bg := ColorRect.new()
 	bg.name = "Background"
 	bg.color = SLOT_COLORS[index]
-	bg.size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	bg.size = BOTTLE_SIZE
 	panel.add_child(bg)
 	_slot_backgrounds.append(bg)
 
+	# 키 레이블 '1'/'2': 병 중앙 (Pass 1 placeholder)
 	var key_label := Label.new()
 	key_label.name = "KeyLabel"
 	key_label.text = KEY_LABELS[index]
 	key_label.add_theme_font_size_override("font_size", 8)
 	key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	key_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	key_label.size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	key_label.size = BOTTLE_SIZE
 	panel.add_child(key_label)
 
+	# 수량 숫자: 우측 상단 (spec: x+16, y-4, 8×8)
 	var count_label := Label.new()
 	count_label.name = "CountLabel"
 	count_label.text = "0"
 	count_label.add_theme_font_size_override("font_size", 7)
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_label.position = Vector2(0, SLOT_SIZE)
-	count_label.size = Vector2(SLOT_SIZE, 10)
+	count_label.position = Vector2(16, -4)
+	count_label.size = Vector2(12, 10)
 	panel.add_child(count_label)
 	_count_labels.append(count_label)
 

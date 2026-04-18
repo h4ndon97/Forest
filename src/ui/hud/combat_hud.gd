@@ -1,23 +1,40 @@
 extends CanvasLayer
 
-## 전투 HUD — HP 게이지 + 콤보 인디케이터 + 사망 오버레이.
+## 전투 HUD — 좌상단 클러스터 (속성 오브 + 콤보 도트 + HP 불씨 pip + 상태이상 배지).
 ## EventBus 시그널만 수신하여 갱신한다.
+## ui_design_master.md §A-5/A-6 / UI_IMPLEMENTATION_PLAN.md §1.1.
 
-const COMBO_COLOR_NORMAL := Color(0.8, 0.8, 0.8, 0.3)
-const COMBO_COLOR_ACTIVE := Color(1.0, 1.0, 1.0, 1.0)
-const COMBO_COLOR_FINISH := Color(1.0, 0.85, 0.3, 1.0)
+const MAX_HP_DEFAULT: float = 100.0
+const HP_PER_PIP: float = 20.0
 
-@onready var hp_bar: ProgressBar = $MarginContainer/VBoxContainer/HpBar
-@onready var hp_label: Label = $MarginContainer/VBoxContainer/HpLabel
-@onready var combo_container: HBoxContainer = $MarginContainer/VBoxContainer/ComboContainer
+# 콤보 도트 색
+const DOT_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 1.0)       # #4A4A50
+const DOT_COLOR_ACTIVE := Color(0.95, 0.95, 0.95, 1.0)
+const DOT_COLOR_FINISH := Color(0.949, 0.8, 0.4, 1.0)       # 금색 피니시
 
-var _combo_indicators: Array[ColorRect] = []
+# HP pip 색 (횃불 불씨)
+const PIP_COLOR_FULL := Color(0.949, 0.8, 0.4, 1.0)          # #F2CC66
+const PIP_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 0.6)        # dim
+
+# 속성 오브 색 (A-6)
+const ORB_COLOR_NEUTRAL := Color(0.541, 0.541, 0.565, 0.9)   # #8A8A90
+const ORB_COLOR_LIGHT := Color(0.949, 0.8, 0.4, 1.0)         # #F2CC66
+const ORB_COLOR_SHADOW := Color(0.545, 0.184, 0.776, 1.0)    # #8B2FC6
+const ORB_COLOR_HYBRID := Color(0.8, 0.5, 0.6, 1.0)          # placeholder (Pass 2: pulse)
+
+var _combo_dots: Array[ColorRect] = []
+var _hp_pips: Array[ColorRect] = []
+var _max_hp: float = MAX_HP_DEFAULT
+var _current_hp: float = MAX_HP_DEFAULT
 var _death_overlay: ColorRect
 var _death_label: Label
 var _death_tween: Tween
 var _clear_tween: Tween
 var _recovery_tween: Tween
-var _prev_hp_bar_value: float = 100.0
+
+@onready var combo_orb: ColorRect = $MarginContainer/Cluster/ComboOrb
+@onready var combo_dots_container: HBoxContainer = $MarginContainer/Cluster/ComboDots
+@onready var hp_pips_container: HBoxContainer = $MarginContainer/Cluster/HpPips
 
 
 func _ready() -> void:
@@ -30,15 +47,17 @@ func _ready() -> void:
 	EventBus.checkpoint_entered.connect(_on_checkpoint_respawned)
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
 
-	_setup_combo_indicators()
+	_collect_children()
 	_create_death_overlay()
 
 
-func _setup_combo_indicators() -> void:
-	for child in combo_container.get_children():
+func _collect_children() -> void:
+	for child in combo_dots_container.get_children():
 		if child is ColorRect:
-			_combo_indicators.append(child)
-			child.color = COMBO_COLOR_NORMAL
+			_combo_dots.append(child)
+	for child in hp_pips_container.get_children():
+		if child is ColorRect:
+			_hp_pips.append(child)
 
 
 func _create_death_overlay() -> void:
@@ -62,46 +81,58 @@ func _create_death_overlay() -> void:
 	_death_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
-# === HP ===
+# === HP pip ===
 
 func _on_health_changed(current_hp: float, max_hp: float) -> void:
-	hp_label.text = "%d / %d" % [int(current_hp), int(max_hp)]
+	_max_hp = max_hp if max_hp > 0.0 else MAX_HP_DEFAULT
+	_current_hp = current_hp
 	if _recovery_tween and _recovery_tween.is_running():
 		return
-	_prev_hp_bar_value = hp_bar.value
-	if max_hp > 0.0:
-		hp_bar.value = current_hp / max_hp * 100.0
+	_apply_pip_state()
+
+
+func _apply_pip_state() -> void:
+	var filled_count: int = int(ceil(_current_hp / HP_PER_PIP))
+	filled_count = clamp(filled_count, 0, _hp_pips.size())
+	for i in _hp_pips.size():
+		_hp_pips[i].color = PIP_COLOR_FULL if i < filled_count else PIP_COLOR_EMPTY
 
 
 func _on_full_recovery() -> void:
 	if _recovery_tween:
 		_recovery_tween.kill()
-	var start_value: float = _prev_hp_bar_value
-	hp_bar.value = start_value
-	_recovery_tween = create_tween()
-	_recovery_tween.tween_property(hp_bar, "value", 100.0, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	# Pass 1 placeholder — 즉시 전체 점등. Pass 2에서 순차 점등 애니메이션 추가.
+	_current_hp = _max_hp
+	_apply_pip_state()
 
 
 # === 콤보 ===
 
 func _on_combo_hit_landed(hit_number: int) -> void:
-	if hit_number < 1 or hit_number > _combo_indicators.size():
+	if hit_number < 1 or hit_number > _combo_dots.size():
 		return
-	var indicator: ColorRect = _combo_indicators[hit_number - 1]
-	if hit_number >= _combo_indicators.size():
-		indicator.color = COMBO_COLOR_FINISH
-	else:
-		indicator.color = COMBO_COLOR_ACTIVE
+	for i in _combo_dots.size():
+		_combo_dots[i].color = DOT_COLOR_ACTIVE if i < hit_number else DOT_COLOR_EMPTY
 
 
-func _on_combo_finished(_attribute: String) -> void:
-	if _combo_indicators.size() > 0:
-		_combo_indicators[_combo_indicators.size() - 1].color = COMBO_COLOR_FINISH
+func _on_combo_finished(attribute: String) -> void:
+	for dot in _combo_dots:
+		dot.color = DOT_COLOR_FINISH
+	combo_orb.color = _orb_color_for(attribute)
 
 
 func _on_combo_resetted() -> void:
-	for indicator in _combo_indicators:
-		indicator.color = COMBO_COLOR_NORMAL
+	for dot in _combo_dots:
+		dot.color = DOT_COLOR_EMPTY
+	combo_orb.color = ORB_COLOR_NEUTRAL
+
+
+func _orb_color_for(attribute: String) -> Color:
+	match attribute:
+		"light": return ORB_COLOR_LIGHT
+		"shadow": return ORB_COLOR_SHADOW
+		"hybrid": return ORB_COLOR_HYBRID
+		_: return ORB_COLOR_NEUTRAL
 
 
 # === 사망/리스폰 ===
@@ -115,10 +146,8 @@ func _on_player_died() -> void:
 		_death_tween.kill()
 	_death_tween = create_tween()
 
-	# 화면 어두워짐
 	_death_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0.6), 0.5)
 
-	# 텍스트 페이드인
 	_death_tween.tween_callback(func():
 		_death_label.text = "..."
 		_death_label.add_theme_color_override("font_color", Color(0.8, 0.2, 0.2, 0))

@@ -6,7 +6,17 @@ extends CanvasLayer
 const SkillData = preload("res://data/skills/skill_data.gd")
 
 const MAX_SLOTS := 4
-const SLOT_SIZE := 20
+const SLOT_SIZE := 32
+
+# 완만한 오름 호 좌표 (ui_design_master.md §A-5, 640×360 기준, 슬롯 top-left)
+# 2026-04-18 개정 1: +44 shift (우측 여백 8px 정렬)
+# 2026-04-18 개정 2: -14 shift (Q 슬롯 y=330+32=362로 하단 2px 클립 해결, 하단 여유 확보)
+const SLOT_COORDS: Array[Vector2] = [
+	Vector2(486, 316),  # Q
+	Vector2(524, 311),  # W
+	Vector2(562, 305),  # E
+	Vector2(600, 298),  # R
+]
 
 const COLOR_EMPTY := Color(0.5, 0.5, 0.5, 0.3)
 const COLOR_LIGHT := Color(1.0, 0.9, 0.4, 0.9)
@@ -15,7 +25,7 @@ const COLOR_HYBRID := Color(0.3, 0.8, 0.8, 0.9)
 const COLOR_COOLDOWN := Color(0.1, 0.1, 0.1, 0.6)
 const COLOR_FLASH := Color(1.0, 1.0, 1.0, 1.0)
 
-const KEY_LABELS := ["U", "I", "O", "P"]
+const KEY_LABELS := ["U", "I", "K", "L"]
 
 var _slot_backgrounds: Array[ColorRect] = []
 var _cooldown_overlays: Array[ColorRect] = []
@@ -52,25 +62,16 @@ func _process(_delta: float) -> void:
 
 
 func _build_ui() -> void:
-	var margin := MarginContainer.new()
-	margin.name = "MarginContainer"
-	margin.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	margin.add_theme_constant_override("margin_left", 0)
-	margin.add_theme_constant_override("margin_top", 0)
-	margin.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	margin.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	add_child(margin)
-
-	var container := HBoxContainer.new()
-	container.name = "SlotContainer"
-	container.add_theme_constant_override("separation", 4)
-	margin.add_child(container)
+	var root := Control.new()
+	root.name = "SlotRoot"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(root)
 
 	for i in range(MAX_SLOTS):
 		var slot := _create_slot(i)
-		container.add_child(slot)
+		slot.position = SLOT_COORDS[i]
+		root.add_child(slot)
 
 
 func _create_slot(index: int) -> Control:

@@ -46,6 +46,7 @@ signal stage_access_denied(stage_id: String, lock_type: int, reason: String)
 
 # === 시간 전파 ===
 signal flow_rate_changed(rate: float)
+signal propagation_origin_changed(is_origin: bool)
 signal time_flow_paused
 signal time_flow_resumed
 signal time_hour_sync_requested(hour: float)
@@ -129,3 +130,12 @@ signal hidden_revealed(stage_id: String, revealer_name: String)
 
 # === 상태 플래그 (Phase 3-1) ===
 signal state_flag_changed(flag_id: String, value: bool)
+
+# === 보스 시스템 (Phase 3-3) ===
+signal boss_spawned(boss_id: String)
+signal boss_intro_started(boss_id: String)
+signal boss_intro_finished(boss_id: String)
+signal boss_phase_changed(boss_id: String, from_phase: int, to_phase: int)
+signal boss_defeated(boss_id: String)
+signal boss_arena_triggered(boss_id: String)
+signal boss_weak_point_exposed(boss_id: String, exposed: bool)
