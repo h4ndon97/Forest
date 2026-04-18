@@ -1,0 +1,26 @@
+[gd_resource type="Theme" load_steps=6 format=3 uid="uid://ct7n8mxpfgqr1"]
+
+[ext_resource type="FontFile" uid="uid://pmnlbwjjd8tc" path="res://assets/fonts/galmuri/Galmuri11.ttf" id="1_galmuri11"]
+[ext_resource type="FontFile" uid="uid://dg15uwpmfj7kq" path="res://assets/fonts/galmuri/Galmuri14.ttf" id="2_galmuri14"]
+[ext_resource type="FontFile" uid="uid://dmm4ay3hmbq6o" path="res://assets/fonts/mulmaru/Mulmaru.ttf" id="3_mulmaru"]
+
+[sub_resource type="FontVariation" id="FontVariation_default"]
+base_font = ExtResource("1_galmuri11")
+fallbacks = Array[Font]([ExtResource("3_mulmaru")])
+
+[sub_resource type="FontVariation" id="FontVariation_hud"]
+base_font = ExtResource("2_galmuri14")
+fallbacks = Array[Font]([ExtResource("3_mulmaru")])
+
+[resource]
+default_font = SubResource("FontVariation_default")
+default_font_size = 12
+Label/font_sizes/font_size = 12
+Label/fonts/font = SubResource("FontVariation_default")
+Button/font_sizes/font_size = 12
+Button/fonts/font = SubResource("FontVariation_default")
+RichTextLabel/fonts/normal_font = SubResource("FontVariation_default")
+RichTextLabel/font_sizes/normal_font_size = 12
+HudLabel/base_type = &"Label"
+HudLabel/fonts/font = SubResource("FontVariation_hud")
+HudLabel/font_sizes/font_size = 15

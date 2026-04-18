@@ -48,6 +48,10 @@ window/stretch/mode="canvas_items"
 window/snap_2d_transforms_to_pixel=true
 window/snap_2d_vertices_to_pixel=true
 
+[gui]
+
+theme/custom="res://data/themes/main_theme.tres"
+
 [input]
 
 move_up={
