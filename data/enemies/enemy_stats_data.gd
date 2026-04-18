@@ -74,3 +74,11 @@ extends Resource
 @export var spore_spread_radius: float = 16.0
 ## 분열체 여부 (재분열 방지)
 @export var is_spore: bool = false
+
+@export_group("이동 프로파일")
+## 이동 방식 (ground / airborne_homing)
+@export_enum("ground", "airborne_homing") var movement_profile: String = "ground"
+## airborne_homing: 조향 속도 (rad/s 근사, lerp factor로 사용)
+@export var homing_turn_rate: float = 3.0
+## airborne_homing: 최대 이동 속도 (px/s)
+@export var homing_max_speed: float = 60.0

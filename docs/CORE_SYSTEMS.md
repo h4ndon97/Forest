@@ -225,7 +225,7 @@
 
 ---
 
-## 4. 환경 오브젝트 (Environment Objects)
+## 5. 환경 오브젝트 (Environment Objects)
 
 ### 기본 규칙
 - 시간 정지 상태(STOPPED)에서만 수동 조작 가능 (Phase 2-5a 확정)

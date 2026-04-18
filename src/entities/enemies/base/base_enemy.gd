@@ -79,15 +79,22 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# 중력은 항상 적용 (DORMANT에서도 바닥에 서 있어야 함)
-	if not is_on_floor():
-		var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
-		velocity.y += gravity * stats_data.gravity_scale * delta
-	else:
-		velocity.y = 0.0
+	# 공중 적(gravity_scale=0): 중력/floor snap 스킵, velocity는 movement_comp가 전적으로 관리
+	var is_airborne: bool = stats_data != null and stats_data.gravity_scale == 0.0
+
+	if not is_airborne:
+		# 중력은 항상 적용 (DORMANT에서도 바닥에 서 있어야 함)
+		if not is_on_floor():
+			var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
+			velocity.y += gravity * stats_data.gravity_scale * delta
+		else:
+			velocity.y = 0.0
 
 	if not state_machine.is_active():
-		velocity.x = 0.0
+		if is_airborne:
+			velocity = Vector2.ZERO
+		else:
+			velocity.x = 0.0
 		move_and_slide()
 		return
 

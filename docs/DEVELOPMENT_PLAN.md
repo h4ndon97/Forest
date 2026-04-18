@@ -494,10 +494,29 @@ Phase 6  출시
 - **의존성**: Phase 2 완료
 - **상세**: `docs/PHASE_3_PLAN.md` §3, `docs/PHASE_3_1_COMPONENT_DESIGN.md`
 
-#### 3-2. 1구역 적
-- [ ] 나무/바위/꽃/돌기둥 서브 타입 (1구역 버전)
-- [ ] 1구역 고유 적 1종
+#### 3-2. 1구역 적 ✅ 완료 (2026-04-18)
+- [x] 나무/바위/꽃/돌기둥 서브 타입 (1구역 버전) — 어린 참나무 / 이끼 바위 / 빛 꽃 / 이정표 돌
+- [x] 1구역 고유 적 1종 — 빛가루 포자 (공중 호밍, 빛 꽃 분열체로 스폰)
+- [x] 공중 적 이동 프로파일 프레임워크 — `movement_profile` enum (ground / airborne_homing) + 중력 스킵 분기
 - **의존성**: 3-1
+- **상세**: `docs/PHASE_3_PLAN.md` §4, `docs/ENEMIES.md` §2
+- **구현 파일** (3-2):
+  - `data/enemies/zone1/oak_sapling.tres` — 어린 참나무 (HP 90, ATK 9, 히트박스 40×24, 범위 축소)
+  - `data/enemies/zone1/moss_rock.tres` — 이끼 바위 (HP 130, hurt_resistance_chance 0.3→0.6, 경직 완화)
+  - `data/enemies/zone1/light_flower.tres` — 빛 꽃 (HP 45, spore_count 2→3, spore_stats_path → pollen_spore)
+  - `data/enemies/zone1/signpost_stone.tres` — 이정표 돌 (projectile_speed 200→140, telegraph 0.4→0.6)
+  - `data/enemies/zone1/pollen_spore.tres` — 빛가루 포자 (HP 18, gravity_scale 0, movement_profile "airborne_homing", homing_turn_rate 3.5, homing_max_speed 55)
+- **수정 파일** (3-2):
+  - `data/enemies/enemy_stats_data.gd` — +3 필드 (movement_profile, homing_turn_rate, homing_max_speed)
+  - `src/entities/enemies/base/enemy_movement.gd` — `_calculate_airborne()` 분기 (lerp 조향)
+  - `src/entities/enemies/base/base_enemy.gd` — `gravity_scale==0` 시 중력/floor snap 스킵
+  - `src/world/stages/Stage1_1.tscn` ~ `Stage1_6.tscn` + `Stage1_H.tscn` — `ext_resource` 경로를 `zone1/*.tres`로 교체 (7 씬)
+  - `docs/ENEMIES.md` §2 — 서브 타입 + 고유 적 + 확장 필드 명세 추가
+- **설계 결정**:
+  - 빛가루 포자는 빛 꽃의 `spore_stats_path` 슬롯으로 연결 → 기존 `death_behavior_split` 인프라 100% 재사용, 별도 스폰 경로 없음
+  - 공중 적은 데이터 전용 분기 (런타임 스크립트 스왑 회피, 컴포넌트 스크립트 일관성 유지)
+  - 재분열 가드: `is_spore=true` + `death_behavior="none"` 이중
+  - 테스트 스테이지(`TestStage*.tscn`)는 베이스 `.tres` 유지 (회귀 테스트용)
 
 #### 3-3. 1구역 보스
 - [ ] 보스 설계 (거대 오브젝트 괴물화, 2페이즈)
@@ -737,7 +756,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 3-1 1구역 레벨 디자인 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 3-2 1구역 적 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -765,6 +784,7 @@ Phase 6 (출시)
 | **2-5c** | **환경 오브젝트 — 렌즈** | **✅ 완료** | **LensData(4프리셋, 빔 160/focus 48×24, intensity 0.1) + STOPPED 중 회전(거울 패턴) + FocusZone(mask 4, RotationPivot 자식) + 영역 내 적 강도 상시 override(min 병합, Cover 대칭, _process 재적용) + environment_influence_zone 시그널 확장 재사용** |
 | **2-5d** | **환경 오브젝트 — 반사 바닥** | **✅ 완료** | **ReflectiveFloorData(reflect_multiplier=0.5, body 192×32 수면 청록) + 정적/비상호작용(can_interact=false) + InfluenceZone(mask 4, environment_influence_zone 공용) + 영역 내 적 baseline × 0.5 상시 override(multiplier 방식, Cover/Lens와 다른 축) + _process 재적용 + TestStage 배치** |
 | **3-1** | **1구역 레벨 디자인** | **✅ 완료** | **7 스테이지(1-1~1-6 + 1-H) .tres/.tscn/.gd + ENVIRONMENT 잠금 3종 프레임워크(α LightSensor / β EnvironmentStateRegistry / γ StateFlagPersistence Autoload) + HiddenRevealer 컴포넌트(4조건/2액션/StateFlags 영속화) + Cover `PlayerShadowDetectZone` + Lens FocusZone layer=128 승격 + ReflectiveFloor `LightEmitterZone` + EventBus 4시그널 신설 + StageLockValidator prefix 파싱(`light_sensor:`/`registry:`/`flag:`) + SaveManager StateFlags 직렬화** |
+| **3-2** | **1구역 적 (서브 타입 + 고유 적)** | **✅ 완료** | **서브 타입 4종(`data/enemies/zone1/` — oak_sapling / moss_rock / light_flower / signpost_stone) + 고유 적 빛가루 포자(pollen_spore, 공중 호밍) + EnemyStatsData 확장(movement_profile / homing_turn_rate / homing_max_speed) + enemy_movement.gd `_calculate_airborne()` 분기(lerp 조향) + base_enemy.gd 중력 스킵(gravity_scale=0) + Stage1_*.tscn 7개 ext_resource 경로 치환 + 빛 꽃 spore_stats_path로 포자 연결(기존 split 인프라 100% 재사용) + 재분열 이중 가드(is_spore + death_behavior=none)** |
 
 ### Phase 2 세부 작업 순서
 
@@ -839,3 +859,5 @@ Phase 6 (출시)
   - `822327c` fix: 땅거미 시간 전파 rate 반영 (DuskSpiderSystem — flow_rate_changed/pause/resume 수신, effective_delta 적용)
 - [x] Phase 3 진입 전 설계 문서 갱신 6건 — 2026-04-18 (SKILLS.md, BOSSES.md, WORLD_DESIGN.md, ENEMIES.md, COMBAT.md, DEVELOPMENT_PLAN.md)
 - [x] Phase 3 진입 노트 작성 — 2026-04-18 (`docs/PHASE_3_PLAN.md`)
+- [x] Phase 3-2 1구역 적 구현 완료 — 2026-04-18 (서브 타입 4종 + 빛가루 포자 + EnemyStatsData airborne 필드 확장)
+- [x] Phase 3-2 파급 문서 갱신 — 2026-04-18 (GDD.md §4.4/§6.2/§17, CORE_SYSTEMS.md 섹션 번호, ENEMIES.md §2)

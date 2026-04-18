@@ -87,13 +87,42 @@
   - 재분열 가드 통과 시에만 분열, 원본 1체는 `queue_free()`
 - **EventBus**: `enemy_split_spawned(position, count)` 시그널을 사망 분열/외부 트리거 모두 발신
 
+### 1구역 서브 타입 + 고유 적 (Phase 3-2 완료)
+
+**서브 타입 4종** — `data/enemies/zone1/`
+
+| 베이스 | 1구역 서브 타입 | 주요 델타 |
+|---|---|---|
+| 나무 | **어린 참나무** (`oak_sapling.tres`) | HP 120→90, 공격력 12→9, 히트박스 50x28→40x24, attack_range 50→42 |
+| 바위 | **이끼 바위** (`moss_rock.tres`) | HP 160→130, 공격력 8→7, `hurt_resistance_chance` 0.3→0.6 (경직 완화, 도입용), `damage_reduction_flat=3` 유지 |
+| 꽃 | **빛 꽃** (`light_flower.tres`) | HP 60→45, 공격력 6→5, `spore_count` 2→3, `spore_stats_path`를 `pollen_spore.tres`로 연결 (고유 적과 병합), `spread_radius` 20→24 |
+| 돌기둥 | **이정표 돌** (`signpost_stone.tres`) | HP 80→70, `projectile_speed` 200→140, `projectile_telegraph` 0.4→0.6, `attack_cooldown` 2.5→2.8 |
+
+- 모든 Phase 3-1 스테이지 씬(`Stage1_1.tscn` ~ `Stage1_6.tscn`, `Stage1_H.tscn`)의 `ext_resource` 경로가 서브 타입 `.tres`로 교체됨. 테스트 스테이지(`TestStage*.tscn`)는 베이스 `.tres`를 유지 (회귀 테스트용).
+
+**구역 고유 적 — 빛가루 포자** (`pollen_spore.tres`)
+
+- 빛 꽃의 분열체 슬롯을 통해 스폰 (`death_behavior="split"` 인프라 재사용, 별도 스폰 경로 없음).
+- `is_spore=true` + `death_behavior="none"` 이중 가드로 재분열 차단.
+- **공중 호밍 적**: `movement_profile="airborne_homing"`, `gravity_scale=0`, `homing_turn_rate=3.5`, `homing_max_speed=55`. 기본 중력/floor snap 스킵 (`base_enemy._physics_process` 분기).
+- CHASE에서 `desired = (target - pos).normalized() * max_speed` 방향으로 `lerp(vel, desired, turn_rate * delta)` 조향. X/Y 모두 movement_comp가 관리.
+- HP 18 / 공격력 3 / 접촉 멜리 히트박스 18x14 — 약하지만 추격이 멈추지 않음.
+- `leaves_residue=false` — 잔류 마커 미생성 (분열체 규칙 유지).
+
+**`EnemyStatsData` 확장 필드 (Phase 3-2)**
+
+| 필드 | 기본값 | 용도 |
+|---|---|---|
+| `movement_profile` | `"ground"` | `"ground"` / `"airborne_homing"` 분기 |
+| `homing_turn_rate` | 3.0 | airborne의 조향 lerp factor (rad/s 근사) |
+| `homing_max_speed` | 60.0 | airborne의 최대 이동 속도 (px/s) |
+
 ### 미결 사항
-- **스케줄**: 서브 타입 + 구역 고유 적 설계는 각 구역 Phase 진입 시 확정 — 1구역 서브 타입/고유 적은 **Phase 3-2**, 2~5구역은 Phase 4-A/B/C/D 각 진입 시.
-- [ ] 구역별 서브 타입 목록
-- [ ] 각 서브 타입별 공격 패턴
-- [ ] 구역 고유 오브젝트 및 신규 적 종류
-- [ ] 서브 타입/구역 고유 적의 그림자 반응 수치
-- [ ] Phase 5 밸런싱: 나무 히트박스 크기, 바위 방어 수치, 돌기둥 투사체 속도/선딜, 꽃 분열체 개수/HP
+- **스케줄**: 서브 타입 + 구역 고유 적 설계는 각 구역 Phase 진입 시 확정 — 1구역 ✅ (Phase 3-2), 2~5구역은 Phase 4-A/B/C/D 각 진입 시.
+- [x] 1구역 서브 타입 목록 + 공격 패턴 + 고유 적 + 그림자 반응 수치
+- [ ] 2~5구역 서브 타입 목록
+- [ ] 2~5구역 고유 오브젝트 및 신규 적 종류
+- [ ] Phase 5 밸런싱: 나무 히트박스 크기, 바위 방어 수치, 돌기둥 투사체 속도/선딜, 꽃 분열체 개수/HP, 빛가루 포자 조향/최대 속도
 
 ---
 
