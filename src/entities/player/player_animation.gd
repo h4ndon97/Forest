@@ -14,6 +14,7 @@ const STATE_ANIM_MAP := {
 	State.JUMP: "jump",
 	State.FALL: "fall",
 	State.DASH: "dash",
+	State.LIGHT_DASH: "light_dash",
 }
 
 ## 리소스 미존재 시 대체 애니메이션
@@ -21,6 +22,7 @@ const FALLBACK_MAP := {
 	"jump": "run",
 	"fall": "run",
 	"dash": "run",
+	"light_dash": "dash",
 }
 
 ## 동적 로드 대상 (파일 존재 시 자동 등록)
@@ -28,6 +30,7 @@ const DYNAMIC_ANIM_PATHS := {
 	"jump": "res://assets/sprites/player/player_jump.png",
 	"fall": "res://assets/sprites/player/player_fall.png",
 	"dash": "res://assets/sprites/player/player_dash.png",
+	"light_dash": "res://assets/sprites/player/player_light_dash.png",
 }
 
 var _sprite: AnimatedSprite2D

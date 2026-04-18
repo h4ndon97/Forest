@@ -30,7 +30,7 @@ func validate(data: StageData) -> Dictionary:
 		StageData.LockType.ENVIRONMENT:
 			return _validate_environment(data)
 		StageData.LockType.ABILITY:
-			return _locked_not_implemented(data, "특수 능력이 필요합니다")
+			return _validate_ability(data)
 		_:
 			return {"accessible": true, "lock_type": data.lock_type, "reason": ""}
 
@@ -104,6 +104,28 @@ func _check_environment_condition(prefix: String, value: String, data: StageData
 		"accessible": false,
 		"lock_type": data.lock_type,
 		"reason": locked_reason,
+	}
+
+
+## ABILITY 잠금 — lock_requirement에 능력 ID(예: "light_dash") 직접 기재.
+## AbilitySystem.has(id)가 true면 통과.
+func _validate_ability(data: StageData) -> Dictionary:
+	var req: String = data.lock_requirement
+	if req.is_empty():
+		return _locked_not_implemented(data, "특수 능력이 필요합니다")
+	if not has_node("/root/AbilitySystem"):
+		return _locked_not_implemented(data, "특수 능력이 필요합니다")
+	var ability_sys: Node = get_node("/root/AbilitySystem")
+	if ability_sys.has(req):
+		return {"accessible": true, "lock_type": data.lock_type, "reason": ""}
+	var ability_data: AbilityData = ability_sys.get_data(req)
+	var name_str: String = req
+	if ability_data and not ability_data.display_name.is_empty():
+		name_str = ability_data.display_name
+	return {
+		"accessible": false,
+		"lock_type": data.lock_type,
+		"reason": "특수 능력 '%s'이(가) 필요합니다" % name_str,
 	}
 
 

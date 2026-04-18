@@ -1,0 +1,50 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://src/entities/player/Player.tscn" id="1"]
+[ext_resource type="Script" path="res://src/world/stages/stage_2_1.gd" id="stage_script"]
+[ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
+
+[sub_resource type="RectangleShape2D" id="floor_shape"]
+size = Vector2(640, 32)
+
+[node name="Stage2_1" type="Node2D"]
+script = ExtResource("stage_script")
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(80, 320)
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(320, 344)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("floor_shape")
+
+[node name="FloorSprite" type="ColorRect" parent="Floor"]
+offset_left = -320.0
+offset_top = -16.0
+offset_right = 320.0
+offset_bottom = 16.0
+color = Color(0.18, 0.16, 0.28, 1)
+
+[node name="PortalLeft" parent="." instance=ExtResource("portal")]
+position = Vector2(32, 180)
+target_stage_id = "stage_1_b"
+direction = "left"
+
+[node name="StubLabel" type="Label" parent="."]
+offset_left = 200.0
+offset_top = 140.0
+offset_right = 440.0
+offset_bottom = 200.0
+text = "2-1 입구 (스텁)
+빛 대시 도달 확인"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BG" type="ColorRect" parent="."]
+z_index = -10
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 740.0
+offset_bottom = 460.0
+color = Color(0.1, 0.08, 0.18, 1)

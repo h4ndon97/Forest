@@ -85,6 +85,19 @@ func is_knocked_back() -> bool:
 	return _is_knocked_back
 
 
+## 외부 시스템(빛 대시 등)이 일정 시간 동안 무적을 부여할 때 사용.
+## 진행 중인 무적 시간보다 더 긴 시간만 갱신.
+func set_invulnerable(duration: float) -> void:
+	if duration <= 0.0:
+		return
+	if _is_invincible and _invincible_timer.time_left >= duration:
+		return
+	_is_invincible = true
+	_invincible_timer.stop()
+	_invincible_timer.wait_time = duration
+	_invincible_timer.start()
+
+
 func _create_invincible_timer() -> void:
 	_invincible_timer = Timer.new()
 	_invincible_timer.name = "InvincibleTimer"
@@ -105,6 +118,8 @@ func _create_knockback_timer() -> void:
 
 func _start_invincibility() -> void:
 	_is_invincible = true
+	# set_invulnerable()이 wait_time을 덮어쓸 수 있으므로 매번 기본값 복원
+	_invincible_timer.wait_time = _config.invincible_duration
 	_invincible_timer.start()
 
 

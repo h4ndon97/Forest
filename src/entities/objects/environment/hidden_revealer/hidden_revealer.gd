@@ -95,6 +95,16 @@ func _connect_source() -> void:
 				(_source as Area2D).body_exited.connect(_on_cover_body_exited)
 			else:
 				push_warning("HiddenRevealer: SHADOW_COVER 소스가 Area2D가 아님 (%s)" % name)
+		HiddenRevealerData.RevealCondition.FLAG:
+			if data.trigger_flag_id.is_empty():
+				push_warning("HiddenRevealer: FLAG 조건에 trigger_flag_id가 비어있음 (%s)" % name)
+				return
+			# 이미 켜져 있으면 즉시 reveal
+			var flags: Node = _get_state_flags()
+			if flags != null and flags.has_flag(data.trigger_flag_id):
+				_trigger_reveal()
+				return
+			EventBus.state_flag_changed.connect(_on_state_flag_changed)
 
 
 func _on_light_sensor_activated(_sensor_id: String) -> void:
@@ -118,6 +128,13 @@ func _on_cover_body_exited(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_inside_cover = false
 		_sustain_timer = 0.0
+
+
+func _on_state_flag_changed(flag_id: String, value: bool) -> void:
+	if _revealed or not value:
+		return
+	if flag_id == data.trigger_flag_id:
+		_trigger_reveal()
 
 
 func _trigger_reveal() -> void:

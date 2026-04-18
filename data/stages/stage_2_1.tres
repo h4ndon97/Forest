@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_2_1"
+display_name = "2구역 입구 (스텁)"
+scene_path = "res://src/world/stages/Stage2_1.tscn"
+initial_hour = 16.0
+adjacent_stages = Array[String](["stage_1_b"])
+lock_type = 4
+lock_requirement = "light_dash"
+total_enemies = 0
+total_residues = 0
+is_checkpoint = false

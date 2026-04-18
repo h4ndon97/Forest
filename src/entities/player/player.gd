@@ -23,6 +23,9 @@ var _death_tween: Tween
 @onready var coyote_timer: Timer = $CoyoteTimer
 @onready var dash_duration_timer: Timer = $DashDurationTimer
 @onready var dash_cooldown_timer: Timer = $DashCooldownTimer
+@onready var light_dash_duration_timer: Timer = $LightDashDurationTimer
+@onready var light_dash_cooldown_timer: Timer = $LightDashCooldownTimer
+@onready var light_dash: Node = $LightDash
 
 
 func _ready() -> void:
@@ -32,10 +35,18 @@ func _ready() -> void:
 
 	movement.setup(stats, combat_config.attack_movement_factor)
 	animation_controller.setup(animated_sprite)
-	state_machine.setup(coyote_timer, dash_duration_timer, dash_cooldown_timer, stats.max_air_jumps)
+	state_machine.setup(
+		coyote_timer,
+		dash_duration_timer,
+		dash_cooldown_timer,
+		light_dash_duration_timer,
+		light_dash_cooldown_timer,
+		stats.max_air_jumps
+	)
 	combo.setup(self, combat_config)
 	health.setup(self, combat_config)
 	skill.setup(self)
+	light_dash.setup(self)
 
 	# 타이머 설정
 	coyote_timer.wait_time = stats.coyote_time
@@ -44,6 +55,10 @@ func _ready() -> void:
 	dash_duration_timer.one_shot = true
 	dash_cooldown_timer.wait_time = stats.dash_cooldown
 	dash_cooldown_timer.one_shot = true
+	light_dash_duration_timer.wait_time = stats.light_dash_duration
+	light_dash_duration_timer.one_shot = true
+	light_dash_cooldown_timer.wait_time = stats.light_dash_cooldown
+	light_dash_cooldown_timer.one_shot = true
 
 	# 시그널 연결
 	state_machine.state_changed.connect(_on_state_changed)

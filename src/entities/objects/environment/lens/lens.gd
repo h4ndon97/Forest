@@ -130,6 +130,7 @@ func _on_enemy_entered(enemy: Node) -> void:
 	_affected_enemies[id] = enemy
 	_apply_override(enemy)
 	EventBus.environment_blocked_shadow.emit(get_instance_id(), id, true)
+	_emit_boss_weak_point(enemy, true)
 
 
 func _on_enemy_exited(enemy: Node) -> void:
@@ -141,6 +142,15 @@ func _on_enemy_exited(enemy: Node) -> void:
 	_affected_enemies.erase(id)
 	_restore_intensity(enemy)
 	EventBus.environment_blocked_shadow.emit(get_instance_id(), id, false)
+	_emit_boss_weak_point(enemy, false)
+
+
+func _emit_boss_weak_point(enemy: Node, exposed: bool) -> void:
+	if not enemy.is_in_group("bosses"):
+		return
+	if not "boss_data" in enemy or enemy.boss_data == null:
+		return
+	EventBus.boss_weak_point_exposed.emit(enemy.boss_data.boss_id, exposed)
 
 
 func _apply_override(enemy: Node) -> void:

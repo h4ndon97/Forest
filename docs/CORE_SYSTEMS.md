@@ -303,15 +303,53 @@
 - **다른 환경 오브젝트와 중첩**: 별도 병합 없음 — 프레임 내 마지막 `_process` 실행이 승리. Phase 5 밸런싱 시 재검토.
 - **콜리전 구조**: InfluenceZone(Area2D mask 4) { CollisionShape2D + FloorVisual }. Highlight/Prompt/InteractionArea/StaticBody 생략 (비상호작용 + 플레이어는 기존 Floor 위로 걸음).
 
-### 센서/드러내기 레이어 (Phase 3-1 완료)
+### 센서/드러내기 레이어 (Phase 3-1 + 3-3-d 확장 완료)
 - **LightSensor (`src/entities/objects/environment/light_sensor/`)**: Area2D (layer 64 SENSOR / mask 128 LIGHT_BEAM). 렌즈 FocusZone 또는 반사 바닥의 방출 영역이 mask 128로 승격되면 겹침으로 점등. `EventBus.light_sensor_toggled(sensor_id, is_on)` 발신. ENVIRONMENT α validator 역할을 겸함 (별도 validator 없이 `StageLockValidator`가 직접 구독).
-- **HiddenRevealer (`src/entities/objects/environment/hidden_revealer/`)**: 4가지 조건(LIGHT_SENSOR / REFLECTION / PURIFICATION / SHADOW_COVER) 중 하나 충족 시 `target_node_path` 대상을 드러냄. `SET_VISIBLE` 액션은 `visible=true` 외에 `process_mode=INHERIT`도 복원하여 숨김 포탈의 Area2D 신호를 재활성화. 드러낸 후 `StateFlags`에 `hidden_revealer.<stage_id>.<node_name>` 플래그를 기록 → 재진입 시 즉시 `force_reveal()`.
+- **HiddenRevealer (`src/entities/objects/environment/hidden_revealer/`)**: **5가지 조건(LIGHT_SENSOR / REFLECTION / PURIFICATION / SHADOW_COVER / FLAG)** 중 하나 충족 시 `target_node_path` 대상을 드러냄. `SET_VISIBLE` 액션은 `visible=true` 외에 `process_mode=INHERIT`도 복원하여 숨김 포탈의 Area2D 신호를 재활성화. 드러낸 후 `StateFlags`에 `hidden_revealer.<stage_id>.<node_name>` 플래그를 기록 → 재진입 시 즉시 `force_reveal()`.
+  - **FLAG 조건 (Phase 3-3-d 추가)**: `trigger_flag_id`에 지정된 StateFlag가 true가 되면 reveal. `EventBus.state_flag_changed` 구독. 보스 처치 보상(스토리 플래그)이 다음 구역 진입 포탈을 노출하는 경로로 사용됨.
 - **Cover.ShadowProjectionZone의 플레이어 감지 확장**: `PlayerShadowDetectZone`(자식 Area2D, layer 0 / mask 2)을 추가. 부모(투영 영역) 회전을 상속받아 "플레이어가 차폐물 그림자 안에 있음"을 감지 — SHADOW_COVER 조건의 소스.
 
 ### 미결 사항
 - [ ] 차폐물 `BlockMode.REMOVE / BOTH` (현재 CREATE만 구현)
 - [ ] 거울/차폐물/렌즈/반사 바닥 전용 아트 리소스 (현재 ColorRect/Polygon2D fallback)
 - [ ] 키맵 재조정 시 `interact_environment` 액션 최종 키 결정
+
+---
+
+## 6. 영구 능력 시스템 (Ability)
+
+### 기본 규칙
+- 보스 처치 시 영구적으로 해금되는 이동/탐색 능력. 스킬 포인트와 **완전히 분리**된 별도 축 (SKILLS.md §5.3 참조).
+- 각 능력은 특정 스테이지의 **ABILITY 잠금**을 통과시키는 키 역할을 겸함. 메트로배니아 진행 구조의 핵심.
+- 세이브/로드는 `AbilitySystem.get_save_data` / `load_save_data`로 영구 보존.
+
+### 구현 상태 (Phase 3-3-d 완료)
+
+- **`AbilitySystem` Autoload** (`src/systems/ability/ability_system.gd`) — 능력 보유(`_owned: Dictionary`) 및 보스 보상 분배를 단일 책임으로 처리
+  - `has(ability_id) -> bool` — 보유 여부 조회 (`stage_lock_validator`, `player_state_machine`이 사용)
+  - `unlock(ability_id, source)` — 신규 해금 시 `EventBus.ability_unlocked` 발신 + `AbilityData.unlock_story_flag` 설정
+  - `get_data(ability_id) -> AbilityData` — 표시명/아이콘 조회
+  - `get_all_owned()`, `get_save_data()`, `load_save_data()`
+- **`AbilityData` Resource** (`data/abilities/ability_data.gd`) — id / display_name / description / category / icon_path / unlock_story_flag
+  - `_ready`에서 `data/abilities/*.tres`를 자동 스캔하여 등록
+- **1구역 첫 능력**: `data/abilities/light_dash.tres` (id="light_dash", category="dash")
+- **보스 보상 분배** (§BOSSES.md §3 참조):
+  - `EventBus.boss_defeated` 수신 → `BossStatsData`의 5가지 보상 필드 자동 분배
+  - 스캔은 `data/bosses/**/*.tres` 재귀 (신규 구역 추가 시 별도 등록 불필요)
+- **ABILITY 잠금 게이트** (`StageLockValidator._validate_ability`):
+  - `StageData.lock_requirement`에 ability_id 직접 기재 (예: `lock_requirement = "light_dash"`)
+  - `AbilitySystem.has(req)`로 통과 여부 판정, 실패 시 `AbilityData.display_name`을 사유 메시지에 포함
+- **플레이어 조작 통합** (빛 대시 기준):
+  - `PlayerStateMachine.State.LIGHT_DASH` — 일반 `DASH`와 병렬 상태. `_check_dash_inputs`에서 light_dash가 보유 시 일반 dash보다 우선
+  - `PlayerLightDash` 컴포넌트 — 상태 진입 시 `player_health.set_invulnerable(iframe)` 호출
+  - `PlayerStatsData`: `light_dash_speed`, `light_dash_duration`, `light_dash_cooldown`, `light_dash_iframe`
+  - `player_health.set_invulnerable(duration)` — 기존 `_invincible_timer`를 공유. 진행 중 무적보다 긴 시간만 덮어씀. `_start_invincibility`는 매번 `_config.invincible_duration`으로 `wait_time`을 복원하여 일반 피격 i-frame이 영구 변경되지 않도록 보장.
+  - InputMap `light_dash` = **O키** (skill_3가 K를 점유하므로 우측 클러스터 내 미사용 키 선정)
+
+### 미결 사항
+- [ ] 2~5구역 능력 후보 목록 확정 (빛/그림자 테마 배분)
+- [ ] 능력별 UI 아이콘 (Phase 3-7)
+- [ ] 해금 연출 / 튜토리얼 (Phase 3-6~3-7)
 
 ---
 

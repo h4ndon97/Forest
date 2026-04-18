@@ -8,6 +8,7 @@ var jump_pressed: bool = false
 var jump_held: bool = false
 var jump_released: bool = false
 var dash_pressed: bool = false
+var light_dash_pressed: bool = false
 var attack_pressed: bool = false
 var lantern_pressed: bool = false
 var skill_1_pressed: bool = false
@@ -22,6 +23,7 @@ func update() -> void:
 	jump_held = Input.is_action_pressed("jump")
 	jump_released = Input.is_action_just_released("jump")
 	dash_pressed = Input.is_action_just_pressed("dash")
+	light_dash_pressed = Input.is_action_just_pressed("light_dash")
 	attack_pressed = Input.is_action_just_pressed("attack")
 	lantern_pressed = Input.is_action_just_pressed("lantern")
 	skill_1_pressed = Input.is_action_just_pressed("skill_1")

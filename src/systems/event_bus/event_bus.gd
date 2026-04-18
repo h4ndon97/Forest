@@ -139,3 +139,6 @@ signal boss_phase_changed(boss_id: String, from_phase: int, to_phase: int)
 signal boss_defeated(boss_id: String)
 signal boss_arena_triggered(boss_id: String)
 signal boss_weak_point_exposed(boss_id: String, exposed: bool)
+
+# === 능력 시스템 (Phase 3-3-d) ===
+signal ability_unlocked(ability_id: String)

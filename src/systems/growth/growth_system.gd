@@ -47,6 +47,16 @@ func is_hybrid_unlocked() -> bool:
 	return _tracker.is_hybrid_unlocked()
 
 
+# === Public API: 포인트 획득 ===
+
+
+## 외부 시스템(보스 보상 등)이 강화 포인트를 지급할 때 사용.
+func earn_growth_points(amount: int, source: String) -> void:
+	if amount <= 0:
+		return
+	_tracker.earn_growth_points(amount, source)
+
+
 # === Public API: 투자 ===
 
 

@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "그림자 뿌리"
+enemy_type = "tree"
+base_hp = 35.0
+base_attack = 6.0
+attack_range = 36.0
+attack_cooldown = 1.4
+base_speed = 0.0
+patrol_speed = 0.0
+detect_range = 110.0
+lose_range = 180.0
+min_intensity = 0.5
+max_intensity = 1.5
+collision_width = 18.0
+collision_height = 24.0
+gravity_scale = 1.0
+leaves_residue = false
+attack_behavior = "melee"
+death_behavior = "none"
+hitbox_size = Vector2(34.0, 18.0)
+hitbox_offset = Vector2(22.0, -9.0)
+hitbox_active_duration = 0.3
+damage_reduction_flat = 0.0
+hurt_resistance_chance = 0.0
+projectile_scene_path = ""
+projectile_speed = 0.0
+projectile_lifetime = 0.0
+projectile_telegraph = 0.0
+spore_stats_path = ""
+spore_count = 0
+spore_spread_radius = 0.0
+is_spore = false
+movement_profile = "ground"
+homing_turn_rate = 0.0
+homing_max_speed = 0.0

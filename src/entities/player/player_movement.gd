@@ -56,8 +56,11 @@ func calculate_velocity(
 		State.DASH:
 			velocity = Vector2(facing_direction * stats.dash_speed, 0.0)
 
-	# 공격 중 수평 이동 감속 (DASH 제외)
-	if is_attacking and current_state != State.DASH:
+		State.LIGHT_DASH:
+			velocity = Vector2(facing_direction * stats.light_dash_speed, 0.0)
+
+	# 공격 중 수평 이동 감속 (DASH/LIGHT_DASH 제외)
+	if is_attacking and current_state != State.DASH and current_state != State.LIGHT_DASH:
 		velocity.x *= _attack_movement_factor
 
 	# 바닥에 서 있을 때 중력 리셋

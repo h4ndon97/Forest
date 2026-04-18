@@ -3,8 +3,8 @@
 > 이 문서는 구역별 보스의 구조, 전투 방식, 보상을 정의한다.
 > 전투 시스템(COMBAT.md), 적 시스템(ENEMIES.md), 핵심 로직(CORE_SYSTEMS.md) 위에서 설계된다.
 
-> **현재 구현 상태 (2026-04-18)**: 구현 0/5. 상세 설계는 각 구역 Phase 진입 시 확정.
-> - 1구역 보스 → **Phase 3-3** (1구역 버티컬 슬라이스)
+> **현재 구현 상태 (2026-04-18)**: 구현 1/5 (1구역 — **거대 고목**, Phase 3-3 완료).
+> - 1구역 보스 → **Phase 3-3 완료** — `ancient_oakheart.tres` / 2페이즈 / 약점 lens_focus / 보상 빛 대시
 > - 2~4구역 보스 → Phase 4-A / 4-B / 4-C
 > - 5구역 최종 보스 → Phase 4-D
 
@@ -70,3 +70,25 @@
 | **강화 보상** | 성장 | 대량 강화 포인트, 고유 장비/장신구 |
 
 - 다음 구역 해금은 기본으로 포함
+
+### 구현 상태 (Phase 3-3-d 완료)
+
+- **`AbilitySystem` Autoload** (`src/systems/ability/ability_system.gd`) — 영구 능력 보유 + 보스 보상 분배를 단일 책임으로 처리
+- **`AbilityData` Resource** (`data/abilities/*.tres`) — 능력 ID/표시명/카테고리/해금 스토리 플래그
+- **`BossStatsData` 보상 필드** (3-3-d 추가): `reward_ability_id`, `reward_growth_points`, `reward_item_ids`, `reward_story_flag`, `reward_next_zone_flag`
+- **분배 루프**: `EventBus.boss_defeated` → `AbilitySystem._dispatch_reward(BossStatsData)` →
+  1. `AbilitySystem.unlock(ability_id)` → `EventBus.ability_unlocked`
+  2. `GrowthSystem.earn_growth_points(amount, "boss:...")`
+  3. `StateFlags.set_flag(story_flag, true)` → `EventBus.state_flag_changed`
+  4. `StateFlags.set_flag(next_zone_flag, true)` (다음 구역 해금)
+  5. `EventBus.item_acquired.emit(item_id)` per 아이템 → `InventorySystem` 수신
+- **ABILITY 잠금과 연동**: `stage_lock_validator._validate_ability`가 `AbilitySystem.has(ability_id)`로 스테이지 접근 검증. `lock_requirement`는 ability_id 문자열을 직접 사용.
+- **숨김 포탈 연동**: 스토리 플래그가 set되면 `HiddenRevealer(FLAG)`가 구독하여 다음 구역 진입 포탈을 노출 (1구역 `Stage1_B` → `stage_2_1`).
+
+### 1구역 보스 — 거대 고목 (Ancient Oakheart)
+
+- **데이터**: `data/bosses/zone1/ancient_oakheart.tres` — HP 600 / ATK 15 / 접근 범위 130 / 2페이즈
+- **페이즈 1**: 근접 가지 휘두르기 (광역) — `phase_1_branch_sweep.tres`
+- **페이즈 2**: 그림자 뿌리 + 원거리 포자 투사체 (3-2 빛가루 포자 인프라 재사용) — `phase_2_branch_storm.tres`
+- **약점**: 오프셋 (0, -56), 반경 22, 배율 2.5배, 트리거 소스 `lens_focus`
+- **보상**: `reward_ability_id="light_dash"` / `reward_growth_points=5` / `reward_story_flag="story.zone1.oakheart_defeated"` / `reward_next_zone_flag="stage_progress.zone2_unlocked"`

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "light_dash"
+display_name = "빛 대시"
+description = "짧은 무적과 함께 빠르게 전진한다. 빛의 잔상이 따라온다."
+category = "dash"
+icon_path = ""
+unlock_story_flag = ""
