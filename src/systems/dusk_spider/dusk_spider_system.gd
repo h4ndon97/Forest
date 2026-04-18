@@ -17,6 +17,8 @@ var _spiders: Array = []  # Array[DuskSpiderEntity]
 var _next_id: int = 0
 var _player_stage_id: String = ""
 var _is_flowing: bool = false
+var _flow_paused: bool = false
+var _flow_rate: float = 1.0
 var _last_closest_distance: int = -1
 
 
@@ -28,14 +30,15 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not _is_flowing or _spiders.is_empty():
+	if not _is_flowing or _flow_paused or _spiders.is_empty():
 		return
 
+	var effective_delta: float = delta * _flow_rate
 	for spider in _spiders:
 		if spider.state != DuskSpiderEntityScript.State.TRACKING:
 			continue
 
-		var arrived: bool = spider.advance(delta, _config.seconds_per_map)
+		var arrived: bool = spider.advance(effective_delta, _config.seconds_per_map)
 		if arrived:
 			_on_spider_arrived(spider)
 		else:
@@ -85,6 +88,21 @@ func _connect_signals() -> void:
 	EventBus.time_flow_stopped.connect(_on_time_flow_stopped)
 	EventBus.stage_entered.connect(_on_stage_entered)
 	EventBus.dusk_spider_defeated.connect(_on_combat_spider_defeated)
+	EventBus.flow_rate_changed.connect(_on_flow_rate_changed)
+	EventBus.time_flow_paused.connect(_on_flow_paused)
+	EventBus.time_flow_resumed.connect(_on_flow_resumed)
+
+
+func _on_flow_rate_changed(rate: float) -> void:
+	_flow_rate = rate
+
+
+func _on_flow_paused() -> void:
+	_flow_paused = true
+
+
+func _on_flow_resumed() -> void:
+	_flow_paused = false
 
 
 func _on_time_flow_started(_current_hour: float) -> void:
