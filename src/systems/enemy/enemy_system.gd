@@ -125,6 +125,12 @@ func _on_day_night_changed(is_day: bool) -> void:
 
 func _on_lantern_toggled(is_on: bool, _pos: Vector2) -> void:
 	_lantern_on = is_on
+	if not _enemies_active or not _is_night:
+		return
+	if is_on:
+		_update_per_object_intensity()
+	else:
+		_registry.update_all_intensity(_current_intensity)
 
 
 func _on_activation_timeout() -> void:
