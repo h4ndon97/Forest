@@ -1,33 +1,40 @@
 extends Node2D
 
-## 스테이지 포탈 세로 빛 기둥 프로그래밍 아트.
+## 스테이지 포탈 아치형 벽돌 구조물 + 덩굴 프로그래밍 아트.
+## 폭 48 × 높이 75, Node2D 원점 중심.
 ## portals_checkpoints.md §2 준수.
-## sprite_path가 설정되고 리소스 존재 시 Sprite2D로 폴백 전환.
 
-const PILLAR_HEIGHT: float = 360.0
-const PILLAR_HALF: float = 180.0
-const AURA_WIDTH: float = 32.0
-const MID_WIDTH: float = 16.0
-const CORE_WIDTH: float = 2.0
-const BOTTOM_FADE: float = 80.0
+const PORTAL_WIDTH: float = 48.0
+const PORTAL_HEIGHT: float = 75.0
+const WALL_THICKNESS: float = 8.0
+const PILLAR_HEIGHT: float = 50.0
+const ARCH_RADIUS_OUTER: float = 24.0
+const ARCH_RADIUS_MID: float = 20.0
+const ARCH_THICKNESS: float = 8.0
 
-const COLOR_AURA := Color(0.949, 0.8, 0.4, 0.15)
-const COLOR_MID := Color(0.949, 0.8, 0.4, 0.45)
-const COLOR_CORE := Color(1.0, 0.957, 0.8, 0.9)
+const Y_TOP: float = -PORTAL_HEIGHT * 0.5
+const Y_BOTTOM: float = PORTAL_HEIGHT * 0.5
+const Y_PILLAR_TOP: float = Y_BOTTOM - PILLAR_HEIGHT
 
-const PULSE_PERIOD: float = 2.4
-const PULSE_AMPLITUDE: float = 0.15
-const NEAR_PULSE_PERIOD: float = 1.2
-const NEAR_CORE_SCALE: float = 1.5
+const COLOR_STONE_BASE := Color(0.420, 0.400, 0.376, 1.0)
+const COLOR_STONE_HIGHLIGHT := Color(0.541, 0.522, 0.498, 1.0)
+const COLOR_STONE_SHADOW := Color(0.290, 0.271, 0.247, 1.0)
+const COLOR_MORTAR := Color(0.165, 0.145, 0.125, 1.0)
+const COLOR_VINE := Color(0.290, 0.353, 0.188, 1.0)
+const COLOR_LEAF := Color(0.420, 0.561, 0.290, 1.0)
+const COLOR_PORTAL_GLOW := Color(0.949, 0.8, 0.4, 0.35)
+const COLOR_PORTAL_CORE := Color(1.0, 0.957, 0.8, 0.25)
 
-const PARTICLE_COUNT: int = 4
-const PARTICLE_PERIOD: float = 3.2
+const GLOW_PERIOD: float = 2.4
+const NEAR_LERP_SPEED: float = 3.0
+const NEAR_GLOW_BOOST: float = 1.4
 
 @export var sprite_path: String = ""
 
 var player_nearby: bool = false
 
 var _t: float = 0.0
+var _near_mix: float = 0.0
 var _sprite: Sprite2D
 
 
@@ -37,6 +44,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	var target: float = 1.0 if player_nearby else 0.0
+	_near_mix = move_toward(_near_mix, target, delta * NEAR_LERP_SPEED)
 	if _sprite == null or not _sprite.visible:
 		queue_redraw()
 
@@ -45,53 +54,142 @@ func _draw() -> void:
 	if _sprite != null and _sprite.visible:
 		return
 
-	var pulse_period: float = NEAR_PULSE_PERIOD if player_nearby else PULSE_PERIOD
-	var pulse: float = 0.5 + 0.5 * sin(_t * TAU / pulse_period)
-	var core_w: float = CORE_WIDTH * (NEAR_CORE_SCALE if player_nearby else 1.0)
-	var core_alpha_mul: float = lerpf(1.0 - PULSE_AMPLITUDE, 1.0, pulse)
-
-	_draw_vertical_band(AURA_WIDTH, COLOR_AURA, 1.0)
-	_draw_vertical_band(MID_WIDTH, COLOR_MID, 1.0)
-	_draw_vertical_band(core_w, COLOR_CORE, core_alpha_mul)
-
-	_draw_particles()
+	_draw_portal_interior()
+	_draw_pillars()
+	_draw_arch_top()
+	_draw_stone_edges()
+	_draw_vines()
 
 
-func _draw_vertical_band(width: float, color: Color, alpha_mul: float) -> void:
-	var half: float = width * 0.5
-	var segments: int = 18
-	for i in segments:
-		var t0: float = float(i) / segments
-		var t1: float = float(i + 1) / segments
-		var y0: float = -PILLAR_HALF + t0 * PILLAR_HEIGHT
-		var y1: float = -PILLAR_HALF + t1 * PILLAR_HEIGHT
-		var fade: float = _fade_for_y((y0 + y1) * 0.5)
-		var c: Color = color
-		c.a *= fade * alpha_mul
-		draw_rect(Rect2(-half, y0, width, y1 - y0), c, true)
+func _draw_portal_interior() -> void:
+	var pulse: float = 0.5 + 0.5 * sin(_t * TAU / GLOW_PERIOD)
+	var base_intensity: float = lerpf(0.7, 1.0, pulse)
+	var near_boost: float = lerpf(1.0, NEAR_GLOW_BOOST, _near_mix)
+	var intensity: float = base_intensity * near_boost
+	var center := Vector2(0, (Y_PILLAR_TOP + Y_BOTTOM) * 0.5)
+
+	var halo: Color = COLOR_PORTAL_GLOW
+	halo.a *= intensity * 0.4
+	draw_circle(center, 18.0, halo)
+
+	var mid: Color = COLOR_PORTAL_GLOW
+	mid.a *= intensity
+	draw_circle(center, 12.0, mid)
+
+	var core: Color = COLOR_PORTAL_CORE
+	core.a *= intensity
+	draw_circle(center, 6.0, core)
 
 
-func _fade_for_y(y: float) -> float:
-	var from_bottom: float = PILLAR_HALF - y
-	if from_bottom < BOTTOM_FADE:
-		return clampf(from_bottom / BOTTOM_FADE, 0.0, 1.0)
-	var from_top: float = y + PILLAR_HALF
-	if from_top < 24.0:
-		return clampf(from_top / 24.0, 0.0, 1.0)
-	return 1.0
+func _draw_pillars() -> void:
+	_draw_one_pillar(-PORTAL_WIDTH * 0.5)
+	_draw_one_pillar(PORTAL_WIDTH * 0.5 - WALL_THICKNESS)
 
 
-func _draw_particles() -> void:
-	for i in PARTICLE_COUNT:
-		var phase: float = float(i) / PARTICLE_COUNT
-		var tt: float = fmod(_t / PARTICLE_PERIOD + phase, 1.0)
-		var y: float = PILLAR_HALF - 40.0 - tt * (PILLAR_HEIGHT - 80.0)
-		var alpha_env: float = sin(tt * PI)
-		var x: float = sin((tt + phase) * TAU) * 3.0
-		var r: float = 1.0 + 0.5 * sin((tt + phase) * TAU * 2.0)
-		var c: Color = COLOR_CORE
-		c.a *= alpha_env
-		draw_circle(Vector2(x, y), r, c)
+func _draw_one_pillar(x_left: float) -> void:
+	draw_rect(Rect2(x_left, Y_PILLAR_TOP, WALL_THICKNESS, PILLAR_HEIGHT), COLOR_STONE_BASE, true)
+	var course_count: int = 5
+	var course_h: float = PILLAR_HEIGHT / float(course_count)
+	for i in range(1, course_count):
+		var y: float = Y_PILLAR_TOP + i * course_h
+		draw_line(
+			Vector2(x_left, y),
+			Vector2(x_left + WALL_THICKNESS, y),
+			COLOR_MORTAR,
+			1.0
+		)
+
+
+func _draw_arch_top() -> void:
+	var center := Vector2(0, Y_PILLAR_TOP)
+	draw_arc(center, ARCH_RADIUS_MID, PI, TAU, 28, COLOR_STONE_BASE, ARCH_THICKNESS, false)
+	var mortar_count: int = 5
+	for i in range(1, mortar_count + 1):
+		var t: float = float(i) / float(mortar_count + 1)
+		var a: float = lerpf(PI, TAU, t)
+		var p0: Vector2 = center + Vector2(cos(a), sin(a)) * (ARCH_RADIUS_MID - ARCH_THICKNESS * 0.5)
+		var p1: Vector2 = center + Vector2(cos(a), sin(a)) * (ARCH_RADIUS_MID + ARCH_THICKNESS * 0.5)
+		draw_line(p0, p1, COLOR_MORTAR, 1.0)
+
+
+func _draw_stone_edges() -> void:
+	var hl_w: float = 1.0
+	draw_rect(
+		Rect2(-PORTAL_WIDTH * 0.5, Y_PILLAR_TOP, hl_w, PILLAR_HEIGHT),
+		COLOR_STONE_HIGHLIGHT,
+		true
+	)
+	draw_rect(
+		Rect2(PORTAL_WIDTH * 0.5 - hl_w, Y_PILLAR_TOP, hl_w, PILLAR_HEIGHT),
+		COLOR_STONE_SHADOW,
+		true
+	)
+	var center := Vector2(0, Y_PILLAR_TOP)
+	draw_arc(
+		center,
+		ARCH_RADIUS_MID + ARCH_THICKNESS * 0.5 - 0.5,
+		PI + 0.15,
+		PI + 1.0,
+		10,
+		COLOR_STONE_HIGHLIGHT,
+		1.0,
+		false
+	)
+
+
+func _draw_vines() -> void:
+	_draw_vine_segment(
+		Vector2(-PORTAL_WIDTH * 0.5 - 2, Y_BOTTOM),
+		Vector2(-PORTAL_WIDTH * 0.5 - 2, Y_PILLAR_TOP),
+		4
+	)
+	_draw_vine_segment(
+		Vector2(PORTAL_WIDTH * 0.5 + 2, Y_BOTTOM),
+		Vector2(PORTAL_WIDTH * 0.5 + 2, Y_PILLAR_TOP),
+		4
+	)
+	_draw_arch_vine()
+
+
+func _draw_vine_segment(start: Vector2, end_p: Vector2, leaf_count: int) -> void:
+	var direction: Vector2 = end_p - start
+	if direction.length() < 1.0:
+		return
+	var normal: Vector2 = direction.rotated(PI * 0.5).normalized()
+	var segments: int = 12
+	var points := PackedVector2Array()
+	for i in range(segments + 1):
+		var t: float = float(i) / float(segments)
+		var wobble: float = sin(t * PI * 3.0) * 2.0
+		points.append(start.lerp(end_p, t) + normal * wobble)
+	draw_polyline(points, COLOR_VINE, 1.5, false)
+
+	for i in range(leaf_count):
+		var t2: float = float(i + 1) / float(leaf_count + 1)
+		var wobble2: float = sin(t2 * PI * 3.0) * 2.0
+		var leaf_pos: Vector2 = start.lerp(end_p, t2) + normal * (wobble2 + 1.5)
+		draw_circle(leaf_pos, 1.8, COLOR_LEAF)
+
+
+func _draw_arch_vine() -> void:
+	var center := Vector2(0, Y_PILLAR_TOP)
+	var base_r: float = ARCH_RADIUS_OUTER + 1.0
+	var segments: int = 20
+	var points := PackedVector2Array()
+	for i in range(segments + 1):
+		var t: float = float(i) / float(segments)
+		var a: float = lerpf(PI, TAU, t)
+		var wobble: float = sin(t * PI * 4.0) * 1.5
+		var r: float = base_r + wobble
+		points.append(center + Vector2(cos(a), sin(a)) * r)
+	draw_polyline(points, COLOR_VINE, 1.5, false)
+
+	var leaf_count: int = 4
+	for i in range(leaf_count):
+		var t: float = float(i + 1) / float(leaf_count + 1)
+		var a: float = lerpf(PI, TAU, t)
+		var pos: Vector2 = center + Vector2(cos(a), sin(a)) * (base_r + 2.5)
+		draw_circle(pos, 1.8, COLOR_LEAF)
 
 
 func set_player_nearby(value: bool) -> void:
