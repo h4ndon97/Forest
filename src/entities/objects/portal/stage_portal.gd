@@ -28,11 +28,19 @@ func _process(_delta: float) -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_in_area = true
+		_notify_visual(true)
 
 
 func _on_body_exited(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_in_area = false
+		_notify_visual(false)
+
+
+func _notify_visual(nearby: bool) -> void:
+	var visual := get_node_or_null("PortalVisual")
+	if visual and visual.has_method("set_player_nearby"):
+		visual.set_player_nearby(nearby)
 
 
 func _activate() -> void:

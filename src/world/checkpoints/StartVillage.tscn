@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://src/world/checkpoints/checkpoint_base.gd" id="stage_script"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://src/entities/npcs/story_npc/StoryNpc.tscn" id="story_npc"]
 [ext_resource type="Resource" path="res://data/dialogues/zone1/village_story_intro.tres" id="village_intro"]
 [ext_resource type="Resource" path="res://data/dialogues/zone1/shop_keeper_first_greeting.tres" id="shop_greeting"]
+[ext_resource type="Script" path="res://src/world/checkpoints/rest_marker_visual.gd" id="rest_marker_visual"]
 
 [sub_resource type="RectangleShape2D" id="floor_shape"]
 size = Vector2(640, 32)
@@ -54,12 +55,9 @@ direction = "right"
 [node name="WorldMapPortal" parent="." instance=ExtResource("world_map_portal")]
 position = Vector2(320, 304)
 
-[node name="RestMarker" type="ColorRect" parent="."]
-offset_left = 296.0
-offset_top = 288.0
-offset_right = 344.0
-offset_bottom = 328.0
-color = Color(0.8, 0.7, 0.4, 1)
+[node name="RestMarker" type="Node2D" parent="."]
+position = Vector2(320, 308)
+script = ExtResource("rest_marker_visual")
 
 [node name="StoryNpc" parent="." instance=ExtResource("story_npc")]
 position = Vector2(200, 312)
