@@ -300,7 +300,7 @@ Phase 6  출시
 - [x] **2-5a 거울/수정 (빛 분산 → 분열)** ✅
 - [x] **2-5b 차폐물 (빛 차단 → 그림자 투영 영역 강도 override)** ✅
 - [x] **2-5c 렌즈 (빛 집중 → 그림자 극도 축소, min 병합 override)** ✅
-- [ ] 2-5d 반사 바닥 (이중 약화, 정적/비상호작용)
+- [x] **2-5d 반사 바닥 (이중 약화, 정적/비상호작용)** ✅
 - [x] 수동 조작 (시간 정지 중만, STOPPED 게이팅 — Phase 2-5a 베이스에서 확정)
 - **의존성**: Phase 1 완료
 - **2-5a 구현 파일**:
@@ -342,6 +342,14 @@ Phase 6  출시
   - `src/entities/objects/environment/base/environment_influence_zone.gd` — enemy_entered/exited 시그널 추가 (lens 스트림 처리용, mirror는 영향 없음)
   - `src/world/stages/TestStage.tscn` — Lens1 인스턴스 배치 (200, 296)
 - **2-5c 오버라이드 대칭**: 차폐물=max() 병합(강화), 렌즈=min() 병합(약화). focus_intensity=0.1(극도 약화)
+- **2-5d 구현 파일**:
+  - `data/environment/reflective_floor_data.gd` — ReflectiveFloorData (reflect_multiplier=0.5, body_size=(192,32), body_color 수면 청록)
+  - `data/environment/reflective_floor_basic.tres` — 기본 반사 바닥 인스턴스 (can_interact=false)
+  - `src/entities/objects/environment/reflective_floor/reflective_floor.gd` — 영역 내 적 강도 baseline × 0.5 상시 override, _process 매 프레임 재적용, EventBus 발신
+  - `src/entities/objects/environment/reflective_floor/ReflectiveFloor.tscn` — InfluenceZone(Area2D mask 4, environment_influence_zone 공용) + FloorVisual. Highlight/Prompt/InteractionArea/StaticBody 생략
+- **2-5d 수정 파일**:
+  - `src/world/stages/TestStage.tscn` — ReflectiveFloor1 인스턴스 배치 (540, 312)
+- **2-5d 오버라이드 축**: Cover=max(고정 강화), Lens=min(고정 약화), **반사 바닥=multiplier(baseline × 0.5 이중 약화)**. 다른 환경 오브젝트와 중첩 시 프레임 내 마지막 _process 실행이 승리(별도 병합 없음).
 
 #### 2-6. 성장 시스템 ✅
 - [x] 강화 포인트 획득 (처치/클리어)
@@ -722,7 +730,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 2 진행 중 — 2-5b 차폐물 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 2 완료 — 2-5d 반사 바닥 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -748,6 +756,7 @@ Phase 6 (출시)
 | **2-5a** | **환경 오브젝트 — 거울** | **✅ 완료** | **EnvironmentObjectData 베이스 + MirrorData(4프리셋, 60°/128px 부채꼴) + STOPPED 게이팅 + FLOWING 진입 시 분열 + split_spawner 공용화 + BaseEnemy.trigger_split() + shard_spore_enemy.tres 폴백 + EventBus 3시그널 + interact_environment(E키)** |
 | **2-5b** | **환경 오브젝트 — 차폐물** | **✅ 완료** | **CoverData(move_step=16, 투영 96×32, 강도 0.9) + STOPPED 중 밀기(±64) + ShadowProjectionZone(mask 4) + 영역 내 적 강도 상시 override(max 병합, _process 재적용) + 낮=태양방향/밤=등불반대 투영 방향 회전 + 이탈 시 per-object 강도 복원** |
 | **2-5c** | **환경 오브젝트 — 렌즈** | **✅ 완료** | **LensData(4프리셋, 빔 160/focus 48×24, intensity 0.1) + STOPPED 중 회전(거울 패턴) + FocusZone(mask 4, RotationPivot 자식) + 영역 내 적 강도 상시 override(min 병합, Cover 대칭, _process 재적용) + environment_influence_zone 시그널 확장 재사용** |
+| **2-5d** | **환경 오브젝트 — 반사 바닥** | **✅ 완료** | **ReflectiveFloorData(reflect_multiplier=0.5, body 192×32 수면 청록) + 정적/비상호작용(can_interact=false) + InfluenceZone(mask 4, environment_influence_zone 공용) + 영역 내 적 baseline × 0.5 상시 override(multiplier 방식, Cover/Lens와 다른 축) + _process 재적용 + TestStage 배치** |
 
 ### Phase 2 세부 작업 순서
 

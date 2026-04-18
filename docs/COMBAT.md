@@ -316,7 +316,7 @@ GDD에서 확정된 환경 오브젝트:
 | 거울/수정 | 빛 분산 → 그림자 분열 | 강한 적 1체 → 약한 적(그림자 파편) 다수로 분할 | **Phase 2-5a 완료** |
 | 렌즈(볼록) | 빛 집중 → 특정 그림자 극도로 축소 | 다수 중 하나만 골라 약화 | **Phase 2-5c 완료** |
 | 차폐물(기둥, 벽) | 빛 차단 → 그림자 강제 생성/제거 | 투영 영역 내 적 강도 override (현재 CREATE만) | **Phase 2-5b 완료** |
-| 반사 바닥(물, 얼음) | 아래에서도 빛 → 그림자 이중 약화 | 특정 지형 위에서 유리한 전투 | Phase 2-5d |
+| 반사 바닥(물, 얼음) | 아래에서도 빛 → 그림자 이중 약화 | 특정 지형 위에서 유리한 전투 | **Phase 2-5d 완료** |
 
 ### 상호작용 방식 (확정 — Phase 2-5a 베이스에서 구현됨)
 - **수동 조작** — 시간 정지 상태(STOPPED)에서만 가능, 시간 흐름(FLOWING) 중에는 고정
@@ -353,6 +353,21 @@ GDD에서 확정된 환경 오브젝트:
 - **차폐물과의 차이**: 투영 방향이 빛 방향과 독립 (렌즈는 프리셋 회전으로만 결정, 빛 각도 무관). 본체 물리 차단 없음 (광학 장치 특성).
 - **재사용 인프라**: `environment_object.gd` 베이스 + `environment_influence_zone.gd`(enemy_entered/exited 시그널 추가) + `environment_prompt.gd` + `environment_highlight.gd` 공유
 
+### 반사 바닥 활용 메커니즘 (Phase 2-5d)
+- **목적**: 특정 지형 위에서 전투를 벌이면 그림자가 "아래에서 올라온 빛"으로 추가 약화 → 지형 자체가 플레이어 유리 조건. 차폐물/렌즈가 "플레이어가 세팅"이라면 반사 바닥은 "지형이 상시 제공".
+- **흐름**:
+  1. 정적/비상호작용 — `can_interact=false`, STOPPED 게이팅 없음, 회전/이동 없음
+  2. 영역에 들어간 적의 그림자 강도가 `baseline × reflect_multiplier(0.5)`로 상시 override — "이중 약화"
+  3. 영역 이탈 시 낮/밤 상태에 맞는 원래 강도로 복원
+- **override 구조 (Cover/Lens와 다른 축)**:
+  - Cover: `maxf(현재, 0.9)` 고정 강화 / Lens: `minf(현재, 0.1)` 고정 약화
+  - **반사 바닥**: `clampf(baseline × 0.5, 0, 1)` — **multiplier 방식**. "이미 약한 그림자도 절반으로, 강한 그림자도 절반으로"
+  - baseline: 낮=`EnemySystem.get_current_intensity()` / 밤+등불 ON=`ShadowSystem.get_intensity_at(enemy.global_position)`
+  - `_process`에서 매 프레임 재적용 (다른 환경 오브젝트와 동일 패턴)
+- **다른 환경 오브젝트와 중첩**: 별도 병합 체계 없음 — 각자 `_process`가 독립 override 하므로 프레임 내 마지막 실행이 승리. 스테이지 디자인 책임으로 중첩 회피 (Phase 5 밸런싱 시 재검토).
+- **플레이어 미영향**: 영역 Area2D는 mask 4(적만). 본체 StaticBody2D 없음 — 플레이어는 기존 Floor 위로 걷고, 시각적으로만 반사 바닥을 통과.
+- **재사용 인프라**: `environment_object.gd` 베이스 + `environment_influence_zone.gd`(렌즈와 공용). Highlight/Prompt 노드 생략(비상호작용).
+
 ### 차폐물 활용 메커니즘 (Phase 2-5b)
 - **목적**: 전투 중 적의 그림자 강도를 국소적으로 강제 → "낮에 짧은 그림자/밤에 긴 그림자" 같은 불리 지점을 플레이어가 연출 → 전투 난이도/피니시 속성 타이밍 조정
 - **흐름**:
@@ -386,7 +401,7 @@ GDD에서 확정된 환경 오브젝트:
 | 환경 오브젝트 전투 활용 — 거울 | ✅ Phase 2-5a 완료 | EnvironmentObject 베이스 + Mirror + 분열 트리거 |
 | 환경 오브젝트 전투 활용 — 차폐물 | ✅ Phase 2-5b 완료 | CoverData + ShadowProjectionZone + 강도 override(CREATE) + 매 프레임 재적용 |
 | 환경 오브젝트 전투 활용 — 렌즈 | ✅ Phase 2-5c 완료 | LensData + FocusZone + 강도 override(min 병합, focus_intensity=0.1) + 4프리셋 회전 |
-| 환경 오브젝트 전투 활용 — 반사 바닥 | 미구현 | Phase 2-5d |
+| 환경 오브젝트 전투 활용 — 반사 바닥 | ✅ Phase 2-5d 완료 | ReflectiveFloorData + InfluenceZone + baseline × reflect_multiplier(0.5, 이중 약화) + 정적/비상호작용 + _process 재적용 |
 | HP 성장 곡선 | 미결 | 밸런싱 단계에서 결정 |
 | **힛 플래시 (피격 시 화이트 플래시)** | 미구현 → Phase 3-7 Pass 2 | 전 Damageable 공통 shader. 피니시 속성별 색상 분기 (EFFECTS.md 선택지 #2) |
 | **힛스톱 (피격 시 프리즈)** | 미구현 → Phase 3-7 Pass 2 | `Engine.time_scale` + 약/중/강/피니시 3~4단계. CombatSystem API로 노출 |

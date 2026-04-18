@@ -286,10 +286,26 @@
 - **콜리전 구조**: InteractionArea(layer 32) + RotationPivot { BeamVisual + FocusZone(mask 4) + LensBody + LensBorder } + Highlight + Prompt
 - **본체 물리**: 없음 — 렌즈는 빛을 집중하는 광학 장치이므로 플레이어/적을 물리적으로 차단하지 않음 (차폐물과의 차이점)
 
+### 반사 바닥 (Phase 2-5d 완료)
+- **컨셉**: 정적/비상호작용 지형. 영역 내 적 그림자 강도를 baseline의 절반으로 상시 축소 (이중 약화).
+- **Resource 데이터 (`ReflectiveFloorData`)**:
+  - `reflect_multiplier: float = 0.5` — baseline에 곱하는 계수 (0.5 = 이중 약화)
+  - `body_size: Vector2 = (192, 32)` — 가로 긴 수면 영역 fallback
+  - `body_color: Color = (0.165, 0.29, 0.353, 0.65)` — 수면 청록 반투명
+  - 베이스 `can_interact = false`, `interaction_radius = 0.0` (플레이어 상호작용 타겟 제외)
+- **영역 감지**: `environment_influence_zone` 재사용 (Area2D layer 0 / mask 4). `enemy_entered/exited` 시그널로 스트림 추적.
+- **강도 override (multiplier 방식, Cover/Lens와 다른 축)**:
+  - 영역 진입: `enemy.update_intensity(clampf(baseline × 0.5, 0, 1))` — 곱셈으로 "이미 약한 그림자도 절반으로, 강한 그림자도 절반으로"
+  - baseline: 낮=`EnemySystem.get_current_intensity()` / 밤+등불 ON=`ShadowSystem.get_intensity_at(enemy.global_position)`
+  - 매 프레임 재적용(`_process` → `_reapply_override_to_all`): EnemySystem 브로드캐스트 무효화
+  - 영역 이탈: baseline 값으로 복원
+  - `EventBus.environment_blocked_shadow(floor_id, enemy_id, blocked)` 발신 (시그널 시그니처 재사용)
+- **다른 환경 오브젝트와 중첩**: 별도 병합 없음 — 프레임 내 마지막 `_process` 실행이 승리. Phase 5 밸런싱 시 재검토.
+- **콜리전 구조**: InfluenceZone(Area2D mask 4) { CollisionShape2D + FloorVisual }. Highlight/Prompt/InteractionArea/StaticBody 생략 (비상호작용 + 플레이어는 기존 Floor 위로 걸음).
+
 ### 미결 사항
-- [ ] 반사 바닥 (Reflective Floor) — Phase 2-5d (정적, 비상호작용)
 - [ ] 차폐물 `BlockMode.REMOVE / BOTH` (현재 CREATE만 구현)
-- [ ] 거울/차폐물/렌즈 전용 아트 리소스 (현재 ColorRect/Polygon2D fallback)
+- [ ] 거울/차폐물/렌즈/반사 바닥 전용 아트 리소스 (현재 ColorRect/Polygon2D fallback)
 - [ ] 키맵 재조정 시 `interact_environment` 액션 최종 키 결정
 
 ---

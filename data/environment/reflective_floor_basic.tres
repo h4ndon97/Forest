@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ReflectiveFloorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/reflective_floor_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "반사 바닥"
+prompt_text = ""
+can_interact = false
+interaction_radius = 0.0
+influence_radius = 0.0
+sprite_path = ""
+reflect_multiplier = 0.5
+body_size = Vector2(192, 32)
+body_color = Color(0.165, 0.29, 0.353, 0.65)

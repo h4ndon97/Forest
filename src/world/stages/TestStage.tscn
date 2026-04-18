@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="PackedScene" path="res://src/entities/player/Player.tscn" id="1"]
 [ext_resource type="Script" path="res://src/world/stages/test_stage.gd" id="stage_script"]
@@ -12,6 +12,8 @@
 [ext_resource type="Resource" path="res://data/environment/cover_basic.tres" id="cover_data_basic"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/environment/lens/Lens.tscn" id="lens_scene"]
 [ext_resource type="Resource" path="res://data/environment/lens_basic.tres" id="lens_data_basic"]
+[ext_resource type="PackedScene" path="res://src/entities/objects/environment/reflective_floor/ReflectiveFloor.tscn" id="reflective_floor_scene"]
+[ext_resource type="Resource" path="res://data/environment/reflective_floor_basic.tres" id="reflective_floor_data_basic"]
 
 [sub_resource type="RectangleShape2D" id="floor_shape"]
 size = Vector2(640, 32)
@@ -127,6 +129,10 @@ cover_data = ExtResource("cover_data_basic")
 [node name="Lens1" parent="." instance=ExtResource("lens_scene")]
 position = Vector2(200, 296)
 lens_data = ExtResource("lens_data_basic")
+
+[node name="ReflectiveFloor1" parent="." instance=ExtResource("reflective_floor_scene")]
+position = Vector2(540, 312)
+reflective_floor_data = ExtResource("reflective_floor_data_basic")
 
 [node name="BG" type="ColorRect" parent="."]
 z_index = -10
