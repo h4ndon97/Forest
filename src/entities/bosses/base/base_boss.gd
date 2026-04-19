@@ -152,7 +152,7 @@ func apply_player_hit(
 	if final_damage <= 0.0:
 		return
 	_play_hit_feedback(is_finish, is_weak_point, finish_attribute)
-	_spawn_damage_number(final_damage, is_finish or is_weak_point)
+	_spawn_damage_number(final_damage, is_finish, is_weak_point, finish_attribute)
 	EventBus.damage_dealt.emit(boss_id, final_damage)
 
 
@@ -260,9 +260,11 @@ func _setup_hp_bar() -> void:
 		_hp_bar_node.setup(boss_data.display_name)
 
 
-func _spawn_damage_number(amount: float, is_finish: bool) -> void:
+func _spawn_damage_number(
+	amount: float, is_finish: bool, is_critical: bool = false, attribute: String = ""
+) -> void:
 	var dmg_num: Node2D = Node2D.new()
 	dmg_num.set_script(DamageNumberScript)
 	dmg_num.global_position = global_position + Vector2(0, -64)
 	get_parent().add_child(dmg_num)
-	dmg_num.setup(amount, is_finish)
+	dmg_num.setup(amount, is_finish, is_critical, attribute)

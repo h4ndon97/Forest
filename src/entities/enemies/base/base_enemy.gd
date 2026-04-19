@@ -257,13 +257,13 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 			EffectsSystem.request_shake(EffectsSystem.PRESET_LIGHT)
 			EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
 		take_damage(damage)
-		_spawn_damage_number(damage, is_finish)
+		_spawn_damage_number(damage, is_finish, attribute)
 		EventBus.damage_dealt.emit(enemy_id, damage)
 
 
-func _spawn_damage_number(amount: float, is_finish: bool) -> void:
+func _spawn_damage_number(amount: float, is_finish: bool, attribute: String = "") -> void:
 	var dmg_num := Node2D.new()
 	dmg_num.set_script(DamageNumberScript)
 	dmg_num.global_position = global_position + Vector2(0, -28)
 	get_parent().add_child(dmg_num)
-	dmg_num.setup(amount, is_finish)
+	dmg_num.setup(amount, is_finish, false, attribute)
