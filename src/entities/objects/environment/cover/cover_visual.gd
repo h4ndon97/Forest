@@ -1,11 +1,13 @@
 extends Node2D
 
-## 차폐물 교보재 아트 - 석판 기둥 + 균열 + 이끼.
-## 원점 = 차폐물 중심. 크기는 부모가 configure()로 전달.
+## 차폐물 교보재 아트 - 고대 룬 코어 + 부유 파편 4.
+## 스프라이트 모드: cover_rune.png 로드 시 활성. 각 파츠가 위상차 bob + 회전.
+## Fallback: 스프라이트 부재 시 _draw로 단일 석판 교보재.
 
 const WIDTH_DEFAULT: float = 24.0
 const HEIGHT_DEFAULT: float = 64.0
 
+# Fallback — 기존 교보재 색상
 const COLOR_STONE_BASE := Color(0.40, 0.38, 0.35, 1.0)
 const COLOR_STONE_HIGHLIGHT := Color(0.52, 0.50, 0.46, 1.0)
 const COLOR_STONE_SHADOW := Color(0.24, 0.22, 0.20, 1.0)
@@ -13,23 +15,177 @@ const COLOR_CRACK := Color(0.14, 0.13, 0.12, 1.0)
 const COLOR_MOSS_DARK := Color(0.20, 0.34, 0.18, 1.0)
 const COLOR_MOSS_LIGHT := Color(0.36, 0.52, 0.28, 1.0)
 
-@export var sprite_path: String = ""
+# 룬 발광 (형광 하늘색)
+const GLOW_COLOR := Color(0.48, 0.87, 1.0, 1.0)
+const GLOW_ALPHA_BASE: float = 0.30
+const GLOW_ALPHA_AMP: float = 0.25
+const GLOW_PERIOD: float = 2.8
+const GLOW_SCALE: float = 1.18
+
+# 모션 — 룬
+const RUNE_AMP: float = 1.0
+const RUNE_PERIOD: float = 3.6
+
+# 모션 — 파편 (pos, amp, period, phase, rot_amp, rot_period)
+const FRAG1_POS := Vector2(-5.0, -22.0)
+const FRAG1_AMP: float = 2.5
+const FRAG1_PERIOD: float = 2.2
+const FRAG1_PHASE: float = 0.0
+const FRAG1_ROT_AMP: float = 0.03
+const FRAG1_ROT_PERIOD: float = 3.1
+
+const FRAG2_POS := Vector2(4.0, 22.0)
+const FRAG2_AMP: float = 2.5
+const FRAG2_PERIOD: float = 2.4
+const FRAG2_PHASE: float = PI
+const FRAG2_ROT_AMP: float = 0.04
+const FRAG2_ROT_PERIOD: float = 2.9
+
+const FRAG3_POS := Vector2(-7.0, 6.0)
+const FRAG3_AMP: float = 1.8
+const FRAG3_PERIOD: float = 2.8
+const FRAG3_PHASE: float = PI / 3.0
+const FRAG3_ROT_AMP: float = 0.025
+const FRAG3_ROT_PERIOD: float = 3.4
+
+const FRAG4_POS := Vector2(7.0, -8.0)
+const FRAG4_AMP: float = 2.0
+const FRAG4_PERIOD: float = 2.6
+const FRAG4_PHASE: float = PI * 1.4
+const FRAG4_ROT_AMP: float = 0.03
+const FRAG4_ROT_PERIOD: float = 3.2
+
+const SPRITE_DIR := "res://assets/sprites/objects/cover/"
+
+@export var sprite_path_rune: String = SPRITE_DIR + "cover_rune.png"
+@export var sprite_path_fragment_1: String = SPRITE_DIR + "cover_fragment_1.png"
+@export var sprite_path_fragment_2: String = SPRITE_DIR + "cover_fragment_2.png"
+@export var sprite_path_fragment_3: String = SPRITE_DIR + "cover_fragment_3.png"
+@export var sprite_path_fragment_4: String = SPRITE_DIR + "cover_fragment_4.png"
 
 var _size: Vector2 = Vector2(WIDTH_DEFAULT, HEIGHT_DEFAULT)
-var _sprite: Sprite2D
+var _t: float = 0.0
+var _sprite_mode: bool = false
+
+var _rune_anchor: Node2D
+var _rune_glow: Sprite2D
+var _frag1_anchor: Node2D
+var _frag2_anchor: Node2D
+var _frag3_anchor: Node2D
+var _frag4_anchor: Node2D
 
 
 func _ready() -> void:
-	_setup_sprite_fallback()
+	_try_enter_sprite_mode()
+	if not _sprite_mode:
+		set_process(false)
 
 
 func configure(size: Vector2) -> void:
 	_size = size
-	queue_redraw()
+	if not _sprite_mode:
+		queue_redraw()
+
+
+func _process(delta: float) -> void:
+	_t += delta
+	_update_rune()
+	_update_fragment(_frag1_anchor, FRAG1_POS, FRAG1_AMP, FRAG1_PERIOD, FRAG1_PHASE,
+			FRAG1_ROT_AMP, FRAG1_ROT_PERIOD)
+	_update_fragment(_frag2_anchor, FRAG2_POS, FRAG2_AMP, FRAG2_PERIOD, FRAG2_PHASE,
+			FRAG2_ROT_AMP, FRAG2_ROT_PERIOD)
+	_update_fragment(_frag3_anchor, FRAG3_POS, FRAG3_AMP, FRAG3_PERIOD, FRAG3_PHASE,
+			FRAG3_ROT_AMP, FRAG3_ROT_PERIOD)
+	_update_fragment(_frag4_anchor, FRAG4_POS, FRAG4_AMP, FRAG4_PERIOD, FRAG4_PHASE,
+			FRAG4_ROT_AMP, FRAG4_ROT_PERIOD)
+
+
+func _update_rune() -> void:
+	if _rune_anchor == null:
+		return
+	var phase: float = _t * TAU / RUNE_PERIOD
+	_rune_anchor.position = Vector2(0.0, sin(phase) * RUNE_AMP)
+	if _rune_glow != null:
+		var glow_phase: float = _t * TAU / GLOW_PERIOD
+		var alpha: float = GLOW_ALPHA_BASE + GLOW_ALPHA_AMP * sin(glow_phase)
+		_rune_glow.modulate.a = clampf(alpha, 0.0, 1.0)
+
+
+func _update_fragment(anchor: Node2D, base_pos: Vector2, amp: float,
+		period: float, phase: float, rot_amp: float, rot_period: float) -> void:
+	if anchor == null:
+		return
+	var bob_phase: float = _t * TAU / period + phase
+	anchor.position = base_pos + Vector2(0.0, sin(bob_phase) * amp)
+	var rot_phase: float = _t * TAU / rot_period + phase * 0.5
+	anchor.rotation = sin(rot_phase) * rot_amp
+
+
+# --- Sprite mode setup ---
+
+
+func _try_enter_sprite_mode() -> void:
+	var rune_tex: Texture2D = _load_tex(sprite_path_rune)
+	if rune_tex == null:
+		return
+	_sprite_mode = true
+	_build_rune(rune_tex)
+	_frag1_anchor = _build_fragment(FRAG1_POS, sprite_path_fragment_1)
+	_frag2_anchor = _build_fragment(FRAG2_POS, sprite_path_fragment_2)
+	_frag3_anchor = _build_fragment(FRAG3_POS, sprite_path_fragment_3)
+	_frag4_anchor = _build_fragment(FRAG4_POS, sprite_path_fragment_4)
+
+
+func _load_tex(path: String) -> Texture2D:
+	if path == "" or not ResourceLoader.exists(path):
+		return null
+	return load(path) as Texture2D
+
+
+func _build_rune(tex: Texture2D) -> void:
+	_rune_anchor = Node2D.new()
+	_rune_anchor.name = "RuneAnchor"
+	add_child(_rune_anchor)
+
+	_rune_glow = Sprite2D.new()
+	_rune_glow.name = "RuneGlow"
+	_rune_glow.texture = tex
+	_rune_glow.centered = true
+	_rune_glow.scale = Vector2(GLOW_SCALE, GLOW_SCALE)
+	_rune_glow.modulate = Color(GLOW_COLOR.r, GLOW_COLOR.g, GLOW_COLOR.b, 0.0)
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_rune_glow.material = mat
+	_rune_anchor.add_child(_rune_glow)
+
+	var rune_sprite := Sprite2D.new()
+	rune_sprite.name = "RuneSprite"
+	rune_sprite.texture = tex
+	rune_sprite.centered = true
+	_rune_anchor.add_child(rune_sprite)
+
+
+func _build_fragment(base_pos: Vector2, path: String) -> Node2D:
+	var anchor := Node2D.new()
+	anchor.name = "FragmentAnchor"
+	anchor.position = base_pos
+	add_child(anchor)
+	var tex: Texture2D = _load_tex(path)
+	if tex == null:
+		return anchor
+	var spr := Sprite2D.new()
+	spr.name = "FragmentSprite"
+	spr.texture = tex
+	spr.centered = true
+	anchor.add_child(spr)
+	return anchor
+
+
+# --- Fallback _draw (스프라이트 부재 시 단일 석판 교보재) ---
 
 
 func _draw() -> void:
-	if _sprite != null and _sprite.visible:
+	if _sprite_mode:
 		return
 	_draw_body()
 	_draw_edges()
@@ -85,16 +241,3 @@ func _draw_moss() -> void:
 		draw_circle(Vector2(x, -half_h + moss_h * 0.5), 1.3, COLOR_MOSS_LIGHT)
 	draw_circle(Vector2(-half_w + 3.0, half_h - 2.0), 2.0, COLOR_MOSS_DARK)
 	draw_circle(Vector2(half_w - 4.0, half_h - 3.0), 1.8, COLOR_MOSS_DARK)
-
-
-func _setup_sprite_fallback() -> void:
-	if sprite_path == "" or not ResourceLoader.exists(sprite_path):
-		return
-	var tex := load(sprite_path) as Texture2D
-	if tex == null:
-		return
-	_sprite = Sprite2D.new()
-	_sprite.name = "CoverSprite"
-	_sprite.texture = tex
-	_sprite.centered = true
-	add_child(_sprite)
