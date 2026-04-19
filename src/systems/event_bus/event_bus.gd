@@ -149,3 +149,8 @@ signal dialogue_finished(npc_id: String)
 
 # === 타이틀/게임 진입 (Phase 3-6) ===
 signal game_start_requested(is_new_game: bool)
+
+# === 일시정지 메뉴 (Phase 3-6) ===
+signal game_paused
+signal game_resumed
+signal return_to_title_requested

@@ -45,6 +45,10 @@ func _process(_delta: float) -> void:
 		_purchase_selected()
 
 
+func is_open() -> bool:
+	return _is_open
+
+
 func _on_shop_opened(shop_id: String) -> void:
 	_shop_items.clear()
 	var keepers: Array = get_tree().get_nodes_in_group("shop_keepers")

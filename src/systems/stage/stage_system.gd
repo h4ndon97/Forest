@@ -204,9 +204,15 @@ func _connect_signals() -> void:
 	EventBus.residue_revived.connect(_on_residue_revived)
 	EventBus.stage_transition_requested.connect(_on_transition_requested)
 	EventBus.game_start_requested.connect(_on_game_start_requested)
+	EventBus.return_to_title_requested.connect(_on_return_to_title_requested)
 	EventBus.current_hour_changed.connect(func(hour: float): _tracked_hour = hour)
 	EventBus.time_flow_started.connect(func(_hour: float): _is_flowing = true)
 	EventBus.time_flow_stopped.connect(func(_hour: float): _is_flowing = false)
+
+
+func _on_return_to_title_requested() -> void:
+	_current_stage_id = ""
+	get_tree().change_scene_to_file.call_deferred("res://src/ui/menus/title/TitleScreen.tscn")
 
 
 func _on_game_start_requested(is_new_game: bool) -> void:

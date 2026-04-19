@@ -22,8 +22,10 @@
 | **Phase 3-5 월드맵 구현** | **✅ 완료 (2026-04-18) — D10/D11/D12 확정 + 3-5-a/b/c/d. §7 구현 결과 참조** |
 | **Phase 3-6 UI Pass 2 §2.2/§2.3** | **✅ 완료 (2026-04-18) — §2.2는 ba721ad에서 선행, §2.3 호흡/저체력 펄스 구현. §8 구현 결과 참조** |
 | **Phase 3-6 타이틀 화면** | **✅ 완료 (2026-04-19) — 4-메뉴 + 세이브 감지 + 덮어쓰기 확인 + fade in/out + `game_start_requested` 시그널 구동. §8 구현 결과 참조** |
+| **Phase 3-6 일시정지 메뉴** | **✅ 완료 (2026-04-19) — 3-메뉴(이어하기/설정/타이틀로) + ESC 토글 + 다른 UI·대화·전환 차단 + `tree.paused` + BGM -12dB 덕킹 + 어두운 베일. §8 구현 결과 참조** |
+| **Phase 3-6 메뉴 마감 (3-6-a/b/c)** | **✅ 완료 (2026-04-19) — 월드맵 상세 패널 + 인벤토리 5-파일 분리(EquipmentTab+SkillTab+Navigator+TabController, Q/E 탭·F·Enter 장착·J 탭별 분기·attack 액션 이중 발화 차단) + MenuFrame/MenuSelectionRect 공통 컴포넌트 + KEYMAP v0.3. 미니맵은 Phase 4 이월. §8 구현 결과 참조** |
 
-**→ Phase 3-6 잔여 (일시정지 / 스킬·장비·맵 폴리싱 / 미니맵) + Phase 3-7 1구역 아트 + 이펙트 착수 가능 상태** (§2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월)
+**→ Phase 3-6 종결 (2026-04-19). 다음=Phase 3-7 1구역 아트 + 이펙트 착수.** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월
 
 ---
 
@@ -329,12 +331,12 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 | 인게임 HUD (A-10 호흡/저체력 Pass 2 §2.3) | ✅ 2026-04-18 — HP pip 호흡(STOPPED 1.0s) + 저체력 맥동(0.8s 붉은) + 자원 링 호흡(FLOWING) + 저자원 맥동 | 완료 |
 | 인게임 HUD (B-6 일식 링 shader §2.1) | ❌ **영구 보류 확정** (2026-04-18) — 체감 검증 통과, `draw_arc` placeholder 충분 | 영구 보류 |
 | 인게임 HUD (회복 반딧불 파티클 §2.4) | ⏸ Phase 3-7 이월 — 에셋 의존 | Phase 3-7 |
-| 인게임 HUD 미니맵 | ❌ | 신규 구현 |
+| 인게임 HUD 미니맵 | ⏸ Phase 4 이월 (2026-04-19) | Phase 4 |
 | 타이틀 화면 | ✅ 2026-04-19 — 새 게임/이어하기/설정/종료 + 세이브 감지 + 덮어쓰기 확인 + fade + F12 스킵 | 완료 |
-| 일시정지 메뉴 | ❌ | 재개 / 설정 / 타이틀로 |
-| 장비 관리 메뉴 | ✅ Tab 인벤토리 (2-7) | 디자인 폴리싱 |
-| 스킬 관리 메뉴 | ❌ (장착은 되지만 UI 없음) | 4슬롯 장착/해제 + 스킬 상세 |
-| 맵 상세 패널 | ❌ | 월드맵 클릭 시 해당 맵 정보/입장 |
+| 일시정지 메뉴 | ✅ 2026-04-19 — 이어하기/설정/타이틀로 3-메뉴 + ESC 토글 + 다른 UI·대화·전환 차단 + `tree.paused` + BGM -12dB + 어두운 베일 | 완료 |
+| 장비 관리 메뉴 | ✅ 2026-04-19 — Q/E 탭 + EquipmentTab 분리 + 거점 제한 유지 + 공통 컴포넌트 정리 | 완료 |
+| 스킬 관리 메뉴 | ✅ 2026-04-19 — 4슬롯/해금 목록 2-컬럼 + ←→ 컬럼 / ↑↓ 항목 / F 장착 / J 해제 + 거점 제한 + 속성·티어·쿨다운 상세 | 완료 |
+| 맵 상세 패널 | ✅ 2026-04-19 — `world_map_detail_panel` 우측 패널, 이름/구역/시각/클리어/잠금/⚠/인접 실시간 갱신 + Enter 단일 이동 | 완료 |
 
 ### 구현 결과 (2026-04-18 Pass 2 §2.3)
 
@@ -377,6 +379,61 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - `control.anchors_preset = Control.PRESET_FULL_RECT` 프로퍼티 세터는 CanvasLayer 자식 Control에서 size를 viewport에 맞게 설정하지 못함 → 메뉴가 좌상단에 size 0으로 쏠림
 - 해결: `control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)` 메서드 사용
 - 적용: `title_screen.gd`/`title_menu_controller.gd`/`title_confirm_dialog.gd`/`title_settings_panel.gd`의 `_root`/`_fade_rect`/`_dim_rect` 전부 메서드 방식으로 전환
+
+### 구현 결과 (2026-04-19 일시정지 메뉴)
+
+**레퍼런스 리서치 기반 결정 (HK / Blasphemous / Salt and Sanctuary / AAA 공통)**
+- 3-메뉴 확정 (이어하기 / 설정 / 타이틀로) — HK 4-메뉴 중 Achievements 제거, Blasphemous·Salt 표준
+- "타이틀로" 경고 팝업 **없음** — 마지막 거점 자동 저장 상태이므로 진행 손실 위험 낮음. "※ 마지막 거점에서 이어집니다" 보조 라벨로 명시
+- 설정 패널은 **타이틀과 공유** — `title_settings_panel.gd` preload 재사용 (일관성 + 중복 방지)
+- BGM 덕킹 -12dB (AAA 표준), 어두운 베일 알파 60%
+
+**신규 파일 (2개, 모두 300줄 이하)**
+- `src/ui/menus/pause/pause_menu.gd` — Autoload CanvasLayer(layer=95, PROCESS_MODE_ALWAYS). 진입 시 `get_tree().paused = true` + BGM Master 버스 -12dB + 알파 60% 어두운 베일 + 240×320 플레이스홀더 프레임
+- `pause_menu_controller.gd` — 3 메뉴 네비(↑/↓·↑/↓, J/Enter) + "※ 마지막 거점에서 이어집니다" 힌트 + 선택 rect 호흡 펄스(1.0s, 알파 ±0.10)
+
+**시스템 수정**
+- `EventBus` 3건 신설 — `game_paused` / `game_resumed` / `return_to_title_requested`
+- `InventoryMenu` / `WorldMapUI` / `ShopMenu` — 공개 `is_open()` 게터 추가 (뮤텍스 게이팅용)
+- `StageSystem._on_return_to_title_requested()` — `_current_stage_id = ""` + `change_scene_to_file.call_deferred(TitleScreen.tscn)`
+- `project.godot` — `pause` InputMap 액션(ESC) + `PauseMenu` Autoload 등록 (ShopMenu 뒤, KeybindHud 앞)
+
+**차단 조건 (뮤텍스)**
+- `_in_game == false` (타이틀 화면)
+- `_in_transition == true` (스테이지 전환 중, `stage_transition_started/completed`로 추적)
+- `_dialog_active_count > 0` (대화 중, `dialogue_started/finished`로 카운트)
+- `InventoryMenu.is_open()` or `WorldMapUI.is_open()` or `ShopMenu.is_open()` (다른 메뉴 열림)
+
+**설정 패널 ESC 이중 트리거 방지**
+- `pause`·`ui_cancel` 둘 다 ESC 바인딩 → 충돌 우려
+- 해결: `_in_settings` 플래그로 pause `_process` 조기 return. `title_settings_panel`가 자체 `ui_cancel` 소비
+
+**`_is_blocked()` max-returns 린트 대응**
+- gdlint `max-returns=6` 위반 → 7개 `if/return true`를 2개 boolean 표현식으로 통합
+
+### 구현 결과 (2026-04-19 메뉴 마감 — 3-6-a/b/c)
+
+**3-6-c 공통 컴포넌트**
+- `src/ui/common/menu_selection_rect.gd` (`class_name MenuSelectionRect`) — 호흡 펄스(1.0s ±0.10) 선택 사각. `set_target(Control)`/`clear_target()` API. `_process`에서 타깃 위치/크기 동기
+- `src/ui/common/menu_frame.gd` (`class_name MenuFrame`) — 어두운 베일(α=0.6) + 중앙 테두리/배경 패널 + 상단 제목 + 하단 힌트 + `get_content_root()` Control. `setup(parent: CanvasLayer, frame_size, title_text)`
+- `pause_menu` 마이그레이션: 자체 프레임/베일 코드 제거, MenuFrame/MenuSelectionRect 재사용 (224 → 155줄)
+- `pause_menu_controller`: 호흡 로직을 MenuSelectionRect로 이관 (180 → 145줄)
+- `title_menu_controller`: SelectionRect만 공통화 (전체 MenuFrame 마이그레이션은 4-CanvasLayer 구조상 위험으로 보류)
+
+**3-6-a 월드맵 상세 패널**
+- `src/ui/menus/world_map/world_map_detail_panel.gd` — `PanelContainer` 단독, 위치 (480, 60), 크기 (140, 240). `refresh(stage_id)`/`clear_display()` API
+- 표시 항목: `display_name` + `zone_id` + 시각(`get_stage_hour` / STOPPED 시 "정지") + 클리어 상태(미/절반/완전/거점) + 잠금(빛/정화/환경/능력 — `AbilitySystem.has` 미충족 시 능력 ID 노출) + 땅거미 ⚠ + 인접 거점 수
+- `world_map_ui._update_selection_highlight()`에서 `_detail_panel.refresh(selected_id)` 호출, 빈 상태에선 `clear_display()`. 단일 Enter 이동 (B안)
+
+**3-6-b 인벤토리 5-파일 분리 (orchestrator + tab strip + 2 tabs + navigator)**
+- `inventory_menu.gd` (orchestrator, 약 200줄) — Tab 토글, ESC 닫기, Q/E 탭 전환(`_input` 물리 키), 활성 탭으로 ↑↓/←→/Enter/F/J 라우팅. **이중 발화 방지**: `attack` 액션 라우팅 제거, J는 KEY_J 물리 키 단일 경로. F·Enter=양 탭 공통 장착, J=장비탭 장착 / 스킬탭 해제. 거점 진입/이탈 시 양 탭에 `set_at_checkpoint` 전파
+- `inventory_tab_controller.gd` (`class_name InventoryTabController`, ~80줄) — 상단 [장비] / [스킬] 탭 헤더 표시 + `cycle(±1)` + `tab_changed(int)` 시그널
+- `equipment_tab.gd` (`class_name EquipmentTab`, ~190줄) — 기존 장비 슬롯/소지품/정보 로직을 그대로 이관. 거점에서만 J 장착
+- `skill_tab.gd` (`class_name SkillTab`, ~265줄) — 4-슬롯 좌 컬럼 + 해금 스킬 목록 우 컬럼 + 정보. F·Enter=빈 슬롯 자동 장착(없으면 현재 슬롯 인덱스), J=현재 슬롯 해제. 속성(빛/그림자/하이브리드) 색상, T1~3 티어 + 쿨다운/시간/데미지 상세
+- `skill_tab_navigator.gd` (`class_name SkillTabNavigator`, RefCounted, ~55줄) — 컬럼/슬롯 인덱스/리스트 인덱스 상태. `navigate_vertical/horizontal`
+- 거점 제한: `EquipmentTab`/`SkillTab` 둘 다 `_is_at_checkpoint == false`면 변경 액션 무시, 힌트 라벨에 "(장착은 거점에서만)" 표기
+- `SkillSystem._auto_equip_debug` → `DEBUG_SKILL_AUTO_EQUIP: bool = true` 상수 게이팅 (수동 장착 시연 시 false 권장)
+- 모든 신규 파일 < 300줄, 다섯 파일 모두 `gdlint`/`gdformat` 통과
 
 ### 체감 검증 완료 (Pass 2 §2.3, 2026-04-18 사용자 확인 — 전부 OK)
 

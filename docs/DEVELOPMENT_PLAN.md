@@ -549,12 +549,13 @@ Phase 6  출시
 - [x] 인게임 HUD Pass 2 §2.2 (ba721ad — A-7 스킬 슬롯 원형 링 + 쿨다운 스윕 + 이끼 배경 + 아이콘 교보재)
 - [x] 인게임 HUD Pass 2 §2.3 (2026-04-18 — HP pip 호흡/저체력 맥동 + 자원 링 호흡/저자원 맥동)
 - [~] 인게임 HUD Pass 2 §2.1 (B-6 arc_mask shader — **영구 보류 확정** 2026-04-18, draw_arc placeholder 체감 검증 통과)
-- [ ] 인게임 HUD 미니맵
+- [~] 인게임 HUD 미니맵 (Phase 4 이월 — 2026-04-19)
 - [x] 타이틀 화면 (2026-04-19 — 새 게임/이어하기/설정/종료 + 세이브 감지 + 덮어쓰기 확인 + fade in/out + game_start_requested 시그널 구동)
-- [ ] 일시정지 메뉴
-- [ ] 장비 관리 메뉴 폴리싱 (Tab 인벤토리는 2-7에서 기본 구현)
-- [ ] 스킬 관리 메뉴 (4슬롯 장착/해제 + 상세)
-- [ ] 맵 상세 패널
+- [x] 일시정지 메뉴 (2026-04-19 — 이어하기/설정/타이틀로 3-메뉴 + ESC 토글 + 다른 UI·대화·전환 중 차단 + tree paused + BGM -12dB + 어두운 베일)
+- [x] 장비 관리 메뉴 폴리싱 (2026-04-19 — Q/E 탭 분리, EquipmentTab 단독 모듈, 거점 제한 유지)
+- [x] 스킬 관리 메뉴 (2026-04-19 — 4슬롯/해금 목록 2-컬럼, ←→ 컬럼 / ↑↓ 항목 / F·Enter 장착 / J 해제, 거점 제한)
+- [x] 맵 상세 패널 (2026-04-19 — world_map_detail_panel, 이름·구역·시각·클리어·잠금·⚠·인접 실시간)
+- [x] 공통 메뉴 컴포넌트 (2026-04-19 — MenuFrame + MenuSelectionRect class_name, pause_menu/title 마이그레이션)
 - **의존성**: Phase 2 완료
 - **상세**: `docs/UI_IMPLEMENTATION_PLAN.md` (A/B 카테고리 Pass 구조) / `docs/PHASE_3_PLAN.md` §8
 
@@ -770,7 +771,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-18, Phase 3-6 UI Pass 2 §2.3 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-19, Phase 3-6 종결 — 메뉴 마감 3-6-a/b/c 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -805,6 +806,9 @@ Phase 6 (출시)
 | **3-6 Pass 1** | **UI 기반 프레임워크 (placeholder)** | **✅ 완료** | **4분면 배치 + HP pip 5개 + 콤보 오브/도트 + 스킬 슬롯 완만한 오름 호 + 포션 병 + 시간 코어(궤도/일식/배지) (33ac495). `propagation_origin_changed` 시그널 신설** |
 | **3-6 Pass 2 §2.2** | **스킬 슬롯 원형 렌더 + 쿨다운 스윕** | **✅ 완료** | **skill_slot.gd 분리 + 링 2px/쿨다운 시계 스윕/이끼 배경/ready 펄스/flash/icon_path PNG fallback (ba721ad)** |
 | **3-6 Pass 2 §2.3** | **호흡/저체력 펄스** | **✅ 완료** | **HP pip 호흡(STOPPED 1.0s ±5%) + 저체력(<20%) 0.8s 붉은 맥동 + 자원 링 호흡(FLOWING 1.0s) + 저자원(<20%) 0.8s 금↔붉은 보간 맥동. `EventBus.time_state_changed` 구독, 조건부 queue_redraw로 상시 갱신 방지** |
+| **3-6 타이틀 화면** | **타이틀 4-메뉴 + 세이브 감지 + 진입** | **✅ 완료** | **새 게임/이어하기/설정/종료 + 덮어쓰기 확인 + fade in/out + F12 스킵. EventBus.game_start_requested 신설, StageSystem 자동 로드 경로 제거 (070ce01)** |
+| **3-6 일시정지 메뉴** | **3-메뉴 + 차단 + tree.paused** | **✅ 완료** | **이어하기/설정/타이틀로 + ESC 토글 + Inventory/WorldMap/Shop/대화/전환 차단 + BGM -12dB 덕킹 + 어두운 베일. EventBus 3건 신설(`game_paused`/`game_resumed`/`return_to_title_requested`)** |
+| **3-6 메뉴 마감 (a/b/c)** | **월드맵 상세 + 인벤토리 5-파일 + 공통 컴포넌트** | **✅ 완료** | **(a) world_map_detail_panel — 이름·구역·시각·클리어·잠금·⚠·인접 실시간 + B안 단일 Enter. (b) inventory 5-파일 분리 — orchestrator + InventoryTabController(Q/E) + EquipmentTab + SkillTab(2-컬럼/F·J/거점 제한) + SkillTabNavigator. SkillSystem `DEBUG_SKILL_AUTO_EQUIP` 게이팅. (c) MenuFrame + MenuSelectionRect class_name 추출, pause_menu/title 마이그레이션. 미니맵은 Phase 4 이월** |
 
 ### Phase 2 세부 작업 순서
 

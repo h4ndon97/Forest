@@ -7,6 +7,7 @@ extends CanvasLayer
 
 const GraphBuilderScript = preload("res://src/ui/menus/world_map/world_map_graph_builder.gd")
 const ZoneLayoutScript = preload("res://src/ui/menus/world_map/world_map_zone_layout.gd")
+const DetailPanelScript = preload("res://src/ui/menus/world_map/world_map_detail_panel.gd")
 const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
 const NODE_SPACING := Vector2(88, 0)
 const GRAPH_ORIGIN := Vector2(320, 180)
@@ -28,6 +29,7 @@ var _stage_positions: Dictionary = {}  # stage_id -> Vector2 (노드 중심 위�
 var _spider_icons: Dictionary = {}  # stage_id -> Label
 var _spider_container: Control
 var _zone_container: Control
+var _detail_panel: PanelContainer
 var _selectable_ids: Array = []  # 이동 가능한 거점 ID 목록
 var _selected_index: int = 0
 
@@ -79,6 +81,10 @@ func _process(_delta: float) -> void:
 # --- UI 구축 ---
 
 
+func is_open() -> bool:
+	return _visible
+
+
 func _build_ui_frame() -> void:
 	_bg = ColorRect.new()
 	_bg.name = "BG"
@@ -108,6 +114,11 @@ func _build_ui_frame() -> void:
 	_zone_container = _make_container("ZoneLabels")
 	_node_container = _make_container("Nodes")
 	_spider_container = _make_container("SpiderIcons")
+
+	_detail_panel = PanelContainer.new()
+	_detail_panel.name = "DetailPanel"
+	_detail_panel.set_script(DetailPanelScript)
+	add_child(_detail_panel)
 
 
 func _make_container(container_name: String) -> Control:
@@ -199,6 +210,8 @@ func _update_selection_highlight() -> void:
 			style.set_border_width_all(2)
 
 	if _selectable_ids.is_empty():
+		if _detail_panel:
+			_detail_panel.clear_display()
 		return
 	var selected_id: String = _selectable_ids[_selected_index]
 	if _stage_nodes.has(selected_id):
@@ -207,6 +220,8 @@ func _update_selection_highlight() -> void:
 		if style:
 			style.border_color = SELECTED_COLOR
 			style.set_border_width_all(3)
+	if _detail_panel:
+		_detail_panel.refresh(selected_id)
 
 
 func _update_hint_label() -> void:

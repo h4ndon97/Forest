@@ -12,6 +12,9 @@ const SKILL_PATHS := [
 	"res://data/skills/light_slash.tres",
 	"res://data/skills/shadow_strike.tres",
 ]
+## true면 _ready에서 모든 슬롯에 자동 장착(개발/테스트용).
+## 인벤토리 [스킬] 탭에서 수동 장착 시연용으로는 false 권장.
+const DEBUG_SKILL_AUTO_EQUIP: bool = true
 
 var _all_skills: Dictionary = {}
 var _unlocked_skills: Dictionary = {}
@@ -25,7 +28,8 @@ func _ready() -> void:
 	_create_components()
 	_load_skills()
 	_auto_unlock_all()
-	_auto_equip_debug()
+	if DEBUG_SKILL_AUTO_EQUIP:
+		_auto_equip_debug()
 	_load_hud.call_deferred()
 
 
