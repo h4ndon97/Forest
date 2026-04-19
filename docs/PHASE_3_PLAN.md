@@ -29,7 +29,7 @@
 | **Phase 3-7 Pass 2 전투 타격감** | **✅ 완료 (2026-04-19) — Step 1 피니시 속성→힛플래시 색 체인(2c1d41f) + Step 2 데미지 넘버 3티어 재설계 Galmuri11 LabelSettings(df1b376) + Step 3 피격 파티클 3 카테고리 풀 시스템(469d7b3). §9 구현 결과 (Pass 2) 참조** |
 | **Phase 3-7 Pass 3 Step 1 세피아 프레임워크** | **✅ 완료 (2026-04-19, 미커밋) — `time_stop_sepia.gdshader` 신규 + `EffectsTimeStop` RefCounted 헬퍼 + `EffectsConfigData` Time Stop 그룹 9필드 + 디버그 키 F12 토글. **D7-1 재조정**: "주변부 색상 유지" 해석 폐기, 화면 전체 균일 세피아로 확정(사용자 체감 검증). §9 구현 결과 (Pass 3 Step 1) 참조** |
 | **Phase 3-7 Pass 3 Step 2 Tween 트랜지션** | **✅ 완료 (2026-04-19, 904bace) — `EffectsTimeStop`이 EventBus `time_flow_started/stopped` 구독 + `apply_transition` Tween(`set_ignore_time_scale(true)`, 0.30s) 추가. `_current_weight` 로컬 추적, `_weight_tween.kill()` 재진입 안전. F12 디버그는 `apply_instant`→`apply_transition`으로 전환되어 동일 Tween 미리보기. §9 구현 결과 (Pass 3 Step 2) 참조** |
-| **Phase 3-7 Pass 3 Step 3 Freezable 그룹 + 플레이어 숨결** | **✅ 완료 (2026-04-19, 미커밋) — `EffectsFreezable` RefCounted 헬퍼 신규(`EventBus.time_flow_stopped/started` 구독 → `call_group("freezable_particles", &"set", "speed_scale", 0.0/1.0)`). Player.tscn에 `BreathParticles` GPUParticles2D 추가(그룹 비가입, speed_scale=1 고정, 위치 `(4,-28)`, process_material·GradientTexture 모두 scene sub_resource로 베이킹). F12 디버그가 셰이더 Tween + 그룹 토글 동시 호출. §9 구현 결과 (Pass 3 Step 3) 참조** |
+| **Phase 3-7 Pass 3 Step 3 Freezable 그룹 + 플레이어 숨결** | **✅ 완료 (2026-04-19, 4357e1c) — `EffectsFreezable` RefCounted 헬퍼 신규(`EventBus.time_flow_stopped/started` 구독 → `call_group("freezable_particles", &"set", "speed_scale", 0.0/1.0)`). Player.tscn에 `BreathParticles` GPUParticles2D 추가(그룹 비가입, speed_scale=1 고정, 위치 `(4,-28)`, process_material·GradientTexture 모두 scene sub_resource로 베이킹). F12 디버그가 셰이더 Tween + 그룹 토글 동시 호출. §9 구현 결과 (Pass 3 Step 3) 참조** |
 
 **→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2·3 완료. 다음=Pass 3 Step 4 (해제 블루 펄스 + 플레이어 잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
@@ -462,7 +462,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - **Pass 3** (진행 중 2026-04-19~): 시간 정지 연출 — **D7-1 재조정: 화면 전체 균일 세피아**(원안 "주변부 색 유지" 폐기)
   - **Step 1** ✅ 완료 (2026-04-19, 25acfa7): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
   - **Step 2** ✅ 완료 (2026-04-19, 904bace): EventBus 구독(`time_flow_started/stopped`) + `apply_transition` weight Tween(0.30s, `set_ignore_time_scale(true)`) + `_weight_tween.kill()` 재진입 처리. F12는 Tween 미리보기로 전환
-  - **Step 3** ✅ 완료 (2026-04-19, 미커밋): `EffectsFreezable` 헬퍼 + Player.tscn `BreathParticles` 노드(그룹 비가입, speed_scale=1 고정). F12 디버그가 셰이더·그룹 동시 토글
+  - **Step 3** ✅ 완료 (2026-04-19, 4357e1c): `EffectsFreezable` 헬퍼 + Player.tscn `BreathParticles` 노드(그룹 비가입, speed_scale=1 고정). F12 디버그가 셰이더·그룹 동시 토글
   - **Step 4** (예정): 해제 시 블루 펄스 + 플레이어 잔상
 - **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
 - **Pass 5** (예정): 앰비언트 파티클(D7-5 낮 꽃가루 + 밤 반딧불) + HUD 구슬 pip(D7-6) + 환경/컷인
