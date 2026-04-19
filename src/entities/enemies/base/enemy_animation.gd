@@ -5,14 +5,26 @@ extends Node
 
 const EnemyStateMachine = preload("res://src/entities/enemies/base/enemy_state_machine.gd")
 
-var _sprite: AnimatedSprite2D
-var _fallback: ColorRect
-var _using_fallback: bool = false
-
+const SPRITE_BASE_OFFSET := Vector2(0, -16)
 const FALLBACK_SIZE := Vector2(20, 28)
 const FALLBACK_COLOR := Color(0.6, 0.1, 0.1, 0.8)
 const HURT_COLOR := Color(1.0, 0.3, 0.3, 0.9)
 const DORMANT_COLOR := Color(0.3, 0.05, 0.05, 0.4)
+
+const _STATE_TO_ANIM := {
+	EnemyStateMachine.State.IDLE: "idle",
+	EnemyStateMachine.State.DORMANT: "idle",
+	EnemyStateMachine.State.PATROL: "walk",
+	EnemyStateMachine.State.CHASE: "run",
+	EnemyStateMachine.State.ATTACK: "attack",
+	EnemyStateMachine.State.HURT: "hurt",
+	EnemyStateMachine.State.DEAD: "dead",
+}
+
+var _sprite: AnimatedSprite2D
+var _fallback: ColorRect
+var _using_fallback: bool = false
+var _shake_offset: Vector2 = Vector2.ZERO
 
 
 func setup(sprite: AnimatedSprite2D) -> void:
@@ -28,8 +40,13 @@ func update(state: int, facing_dir: float) -> void:
 		_update_sprite(state, facing_dir)
 
 
+func set_shake_offset(offset: Vector2) -> void:
+	_shake_offset = offset
+
+
 func _update_sprite(state: int, facing_dir: float) -> void:
 	_sprite.flip_h = facing_dir > 0.0
+	_sprite.position = SPRITE_BASE_OFFSET + _shake_offset
 
 	var anim := _state_to_anim(state)
 	if _sprite.sprite_frames.has_animation(anim) and _sprite.animation != anim:
@@ -45,25 +62,15 @@ func _update_fallback(state: int, facing_dir: float) -> void:
 		_:
 			_fallback.color = FALLBACK_COLOR
 
-	# 간단한 facing 표현: 위치 오프셋
-	_fallback.position.x = -FALLBACK_SIZE.x * 0.5 + facing_dir * 2.0
+	# 간단한 facing 표현: 위치 오프셋 + 흔들기 오프셋
+	_fallback.position = Vector2(
+		-FALLBACK_SIZE.x * 0.5 + facing_dir * 2.0 + _shake_offset.x,
+		-FALLBACK_SIZE.y + _shake_offset.y
+	)
 
 
 func _state_to_anim(state: int) -> String:
-	match state:
-		EnemyStateMachine.State.IDLE, EnemyStateMachine.State.DORMANT:
-			return "idle"
-		EnemyStateMachine.State.PATROL:
-			return "walk"
-		EnemyStateMachine.State.CHASE:
-			return "run"
-		EnemyStateMachine.State.ATTACK:
-			return "attack"
-		EnemyStateMachine.State.HURT:
-			return "hurt"
-		EnemyStateMachine.State.DEAD:
-			return "dead"
-	return "idle"
+	return _STATE_TO_ANIM.get(state, "idle")
 
 
 func _create_fallback() -> void:

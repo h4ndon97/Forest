@@ -28,6 +28,7 @@ var _revive_attack_ratio: float = 1.0
 @onready var stats_comp: Node = $Stats
 @onready var movement_comp: Node = $Movement
 @onready var animation_comp: Node = $AnimationController
+@onready var feedback_comp: Node = $FeedbackController
 @onready var detect_area: Area2D = $DetectArea
 @onready var hurtbox: Area2D = $Hurtbox
 @onready var hitbox: Area2D = $Hitbox
@@ -53,6 +54,7 @@ func _ready() -> void:
 	movement_comp.setup(stats_data, stats_comp)
 	state_machine.setup(self)
 	animation_comp.setup($AnimatedSprite2D)
+	feedback_comp.setup(self, animation_comp)
 	defense.setup(stats_data)
 	attack_behavior.setup(self, stats_data, hitbox)
 	if death_behavior.has_method("setup"):
@@ -192,6 +194,7 @@ func _on_died() -> void:
 	_spawn_residue(killed_during_day)
 	if death_behavior.has_method("on_death"):
 		death_behavior.on_death()
+	await feedback_comp.play_death_dissolve()
 	queue_free()
 
 
@@ -220,6 +223,13 @@ func _on_state_changed(old_state: int, new_state: int) -> void:
 	elif exited_attack:
 		attack_behavior.on_attack_exit()
 
+	var entered_hurt: bool = (
+		new_state == EnemyStateMachine.State.HURT
+		and old_state != EnemyStateMachine.State.HURT
+	)
+	if entered_hurt:
+		feedback_comp.play_stagger_shake()
+
 
 func _on_detect_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
@@ -235,6 +245,7 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if area.is_in_group("player_attack"):
 		var damage: float = area.get_meta("damage", 0.0)
 		var is_finish: bool = area.get_meta("is_finish", false)
+		feedback_comp.play_hit_flash()
 		take_damage(damage)
 		_spawn_damage_number(damage, is_finish)
 		EventBus.damage_dealt.emit(enemy_id, damage)
