@@ -245,9 +245,13 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if area.is_in_group("player_attack"):
 		var damage: float = area.get_meta("damage", 0.0)
 		var is_finish: bool = area.get_meta("is_finish", false)
-		feedback_comp.play_hit_flash()
+		var attribute: String = area.get_meta("finish_attribute", "")
+		var flash_color: Color = Color(0.0, 0.0, 0.0, 0.0)
+		if is_finish and attribute != "":
+			flash_color = EffectsSystem.get_finish_color(attribute)
+		feedback_comp.play_hit_flash(flash_color)
 		if is_finish:
-			EffectsSystem.request_shake(EffectsSystem.PRESET_HEAVY)
+			EffectsSystem.request_shake(EffectsSystem.PRESET_FINISH)
 			EffectsSystem.request_hitstop(EffectsSystem.PRESET_FINISH)
 		else:
 			EffectsSystem.request_shake(EffectsSystem.PRESET_LIGHT)

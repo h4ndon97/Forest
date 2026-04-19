@@ -73,7 +73,9 @@ func _start_hit(hit_number: int) -> void:
 	_attack_hitbox.set_meta("hit_number", _combo_count)
 	var damage: float = CombatSystem.get_combo_damage(_combo_count)
 	_attack_hitbox.set_meta("damage", damage)
-	_attack_hitbox.set_meta("is_finish", _combo_count >= _config.combo_max_hits)
+	var is_finish: bool = _combo_count >= _config.combo_max_hits
+	_attack_hitbox.set_meta("is_finish", is_finish)
+	_attack_hitbox.set_meta("finish_attribute", _resolve_finish_attribute() if is_finish else "")
 	if _enemies_active:
 		_attack_hitbox.monitoring = true
 		_attack_hitbox.monitorable = true
@@ -98,10 +100,7 @@ func _on_hit_timer_timeout() -> void:
 	if _combo_count >= _config.combo_max_hits:
 		# 피니시 완료 — 공격 플래그 즉시 해제, 리셋 타이머 후 콤보 초기화
 		_is_attacking = false
-		var attribute: String = _config.finish_attribute
-		if SkillSystem:
-			attribute = SkillSystem.get_finish_attribute()
-		EventBus.combo_finished.emit(attribute)
+		EventBus.combo_finished.emit(_resolve_finish_attribute())
 		_combo_state = ComboState.IDLE
 		_reset_timer.start()
 		return
@@ -130,6 +129,12 @@ func _on_player_died() -> void:
 	_window_timer.stop()
 	_reset_timer.stop()
 	_reset_combo()
+
+
+func _resolve_finish_attribute() -> String:
+	if SkillSystem:
+		return SkillSystem.get_finish_attribute()
+	return _config.finish_attribute
 
 
 func _reset_combo() -> void:

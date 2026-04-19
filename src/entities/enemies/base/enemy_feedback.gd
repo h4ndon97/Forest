@@ -36,11 +36,12 @@ func setup(p_owner: CanvasItem, p_animation_comp: Node) -> void:
 			_flash_target = _owner
 
 
-func play_hit_flash() -> void:
+func play_hit_flash(color_override: Color = Color(0.0, 0.0, 0.0, 0.0)) -> void:
 	if _flash_target == null:
 		return
 	var cfg: EffectsConfigData = EffectsSystem.get_config()
-	EffectsSystem.request_hit_flash(_flash_target, cfg.enemy_hit_color, cfg.enemy_hit_duration)
+	var color: Color = color_override if color_override.a > 0.0 else cfg.enemy_hit_color
+	EffectsSystem.request_hit_flash(_flash_target, color, cfg.enemy_hit_duration)
 
 
 func play_stagger_shake() -> void:

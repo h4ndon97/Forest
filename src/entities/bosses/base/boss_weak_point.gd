@@ -74,5 +74,6 @@ func _on_area_entered(area: Area2D) -> void:
 	if damage <= 0.0:
 		return
 	var is_finish: bool = area.get_meta("is_finish", false)
+	var attribute: String = area.get_meta("finish_attribute", "")
 	if _boss.has_method("apply_player_hit"):
-		_boss.apply_player_hit(damage, is_finish, true)
+		_boss.apply_player_hit(damage, is_finish, true, attribute)

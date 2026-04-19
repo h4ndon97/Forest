@@ -145,20 +145,25 @@ func take_damage(amount: float, is_weak_point: bool = false) -> float:
 
 
 ## Hurtbox / WeakPoint 양쪽이 호출. 데미지 적용 + 데미지 숫자 + 이벤트 emit 일원화.
-func apply_player_hit(damage: float, is_finish: bool, is_weak_point: bool) -> void:
+func apply_player_hit(
+	damage: float, is_finish: bool, is_weak_point: bool, finish_attribute: String = ""
+) -> void:
 	var final_damage: float = take_damage(damage, is_weak_point)
 	if final_damage <= 0.0:
 		return
-	_play_hit_feedback(is_finish, is_weak_point)
+	_play_hit_feedback(is_finish, is_weak_point, finish_attribute)
 	_spawn_damage_number(final_damage, is_finish or is_weak_point)
 	EventBus.damage_dealt.emit(boss_id, final_damage)
 
 
-func _play_hit_feedback(is_finish: bool, is_weak_point: bool) -> void:
+func _play_hit_feedback(is_finish: bool, is_weak_point: bool, finish_attribute: String) -> void:
 	var cfg: EffectsConfigData = EffectsSystem.get_config()
 	var sprite: CanvasItem = get_node_or_null("AnimatedSprite2D") as CanvasItem
 	if sprite != null:
-		EffectsSystem.request_hit_flash(sprite, cfg.boss_hit_color, cfg.boss_hit_duration)
+		var color: Color = cfg.boss_hit_color
+		if is_finish and finish_attribute != "":
+			color = EffectsSystem.get_finish_color(finish_attribute)
+		EffectsSystem.request_hit_flash(sprite, color, cfg.boss_hit_duration)
 	if is_finish:
 		EffectsSystem.request_shake(EffectsSystem.PRESET_FINISH)
 		EffectsSystem.request_hitstop(EffectsSystem.PRESET_FINISH)
@@ -224,7 +229,8 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		return
 	var damage: float = area.get_meta("damage", 0.0)
 	var is_finish: bool = area.get_meta("is_finish", false)
-	apply_player_hit(damage, is_finish, false)
+	var attribute: String = area.get_meta("finish_attribute", "")
+	apply_player_hit(damage, is_finish, false, attribute)
 
 
 func _on_weak_point_exposed(target_boss_id: String, exposed: bool) -> void:
