@@ -8,7 +8,7 @@ var _damage: float = 0.0
 var _pending_lifetime: float = -1.0
 
 @onready var _lifetime_timer: Timer = $Lifetime
-@onready var _fallback_visual: ColorRect = $FallbackVisual
+@onready var _visual: Node2D = $Visual
 
 
 func setup(direction: Vector2, speed: float, damage: float, lifetime: float) -> void:
@@ -53,4 +53,4 @@ func _on_body_entered(_body: Node2D) -> void:
 
 func _update_visual_facing() -> void:
 	if _velocity.x < 0.0:
-		_fallback_visual.scale.x = -1.0
+		_visual.scale.x = -1.0
