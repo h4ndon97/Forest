@@ -33,6 +33,7 @@ func _ready() -> void:
 
 # === Public API ===
 
+
 func get_config() -> CombatConfigData:
 	return _config
 
@@ -53,6 +54,7 @@ func get_spawn_point() -> Vector2:
 
 
 # === 내부 ===
+
 
 func _on_spawn_point_set(position: Vector2) -> void:
 	_spawn_point = position
@@ -80,3 +82,4 @@ func _load_hud() -> void:
 	if hud_scene:
 		var hud := hud_scene.instantiate()
 		get_tree().root.add_child(hud)
+		hud.add_to_group("game_hud")

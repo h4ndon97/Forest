@@ -21,8 +21,9 @@
 | **Phase 3-4 거점 구현** | **✅ 완료 (2026-04-18) — D6 확정 + 3-4-a/b/c/d/e. §6 구현 결과 참조** |
 | **Phase 3-5 월드맵 구현** | **✅ 완료 (2026-04-18) — D10/D11/D12 확정 + 3-5-a/b/c/d. §7 구현 결과 참조** |
 | **Phase 3-6 UI Pass 2 §2.2/§2.3** | **✅ 완료 (2026-04-18) — §2.2는 ba721ad에서 선행, §2.3 호흡/저체력 펄스 구현. §8 구현 결과 참조** |
+| **Phase 3-6 타이틀 화면** | **✅ 완료 (2026-04-19) — 4-메뉴 + 세이브 감지 + 덮어쓰기 확인 + fade in/out + `game_start_requested` 시그널 구동. §8 구현 결과 참조** |
 
-**→ Phase 3-7 1구역 아트 + 이펙트 착수 가능 상태** (§2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월)
+**→ Phase 3-6 잔여 (일시정지 / 스킬·장비·맵 폴리싱 / 미니맵) + Phase 3-7 1구역 아트 + 이펙트 착수 가능 상태** (§2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월)
 
 ---
 
@@ -326,10 +327,10 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 | 인게임 HUD (A/B 카테고리 Pass 1) | ✅ 33ac495 — 4분면 배치 + HP pip + 콤보 + 스킬 슬롯 + 포션 + 시간 코어 placeholder | 완료 |
 | 인게임 HUD (A-7 스킬 슬롯 Pass 2 §2.2) | ✅ ba721ad — 원형 링 + 쿨다운 스윕 + 이끼 배경 + ready 펄스 + icon_path fallback | 완료 |
 | 인게임 HUD (A-10 호흡/저체력 Pass 2 §2.3) | ✅ 2026-04-18 — HP pip 호흡(STOPPED 1.0s) + 저체력 맥동(0.8s 붉은) + 자원 링 호흡(FLOWING) + 저자원 맥동 | 완료 |
-| 인게임 HUD (B-6 일식 링 shader §2.1) | ⏸ 보류 — `draw_arc` placeholder가 STOPPED dim까지 동작. 체감 이상 시 진행 | 조건부 |
+| 인게임 HUD (B-6 일식 링 shader §2.1) | ❌ **영구 보류 확정** (2026-04-18) — 체감 검증 통과, `draw_arc` placeholder 충분 | 영구 보류 |
 | 인게임 HUD (회복 반딧불 파티클 §2.4) | ⏸ Phase 3-7 이월 — 에셋 의존 | Phase 3-7 |
 | 인게임 HUD 미니맵 | ❌ | 신규 구현 |
-| 타이틀 화면 | ❌ | 새 게임 / 이어하기 / 설정 |
+| 타이틀 화면 | ✅ 2026-04-19 — 새 게임/이어하기/설정/종료 + 세이브 감지 + 덮어쓰기 확인 + fade + F12 스킵 | 완료 |
 | 일시정지 메뉴 | ❌ | 재개 / 설정 / 타이틀로 |
 | 장비 관리 메뉴 | ✅ Tab 인벤토리 (2-7) | 디자인 폴리싱 |
 | 스킬 관리 메뉴 | ❌ (장착은 되지만 UI 없음) | 4슬롯 장착/해제 + 스킬 상세 |
@@ -349,14 +350,40 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
   - FLOWING: alpha ±5%, 1.0s 주기 — A-7/A-10/B-5 리듬 동조
 
 ### 알려진 제한 대응
-- **세이브 로드 시 초기 씬 1~2프레임 노출** (Phase 2-8a known issue) → **타이틀/로딩 화면 추가 시 자연 해결**
+- **세이브 로드 시 초기 씬 1~2프레임 노출** (Phase 2-8a known issue) → **타이틀 화면 추가로 해결됨** (2026-04-19 — `main_scene`을 `TitleScreen.tscn`로 변경하여 StageSystem 자동 로드 경로 제거, `game_start_requested` 시그널 기반 명시적 진입)
 
-### 인게임 미검증 (Pass 2 §2.3)
+### 구현 결과 (2026-04-19 타이틀 화면)
 
-- [ ] STOPPED 상태에서 HP pip 1.0s 은은한 호흡 체감 (±5%가 과하지/약하지 않은지)
-- [ ] HP <20%에서 붉은 맥동 위급감 적절 여부 (0.8s 주기)
-- [ ] FLOWING 중 자원 링 호흡이 시선 피로를 유발하지 않는지
-- [ ] 자원 <20%에서 금↔붉은 보간 맥동 대비 충분 여부
+**신규 파일 (5개, 모두 300줄 이하)**
+- `src/ui/menus/title/TitleScreen.tscn` / `title_screen.gd` — 루트 오케스트레이터 (CanvasLayer 5단: bg/fg/menu/overlay/settings). `StageSystem.has_save_file()` 확인 후 이어하기 버튼 활성화. 로고 호흡(1.0s ±5%) + fade in/out + `debug_auto_start` @export + F12 debug_skip_title
+- `title_menu_controller.gd` — 4 메뉴(새 게임/이어하기/설정/종료) + 키/마우스 네비 + 선택 rect 호흡(1.0s)
+- `title_confirm_dialog.gd` — 세이브 덮어쓰기 확인 모달(기본=아니오)
+- `title_settings_panel.gd` — BGM/SFX/창모드 placeholder (Phase 5 실구현)
+- `title_background.gd` — `title_bg.png` 존재 시 Sprite2D, 없으면 ColorRect + 반딧불 12개 fallback
+
+**시스템 수정**
+- `EventBus.game_start_requested(is_new_game: bool)` 시그널 추가
+- `StageSystem`: `_ready` 자동 세이브 로드 제거, `game_start_requested` 시그널 기반으로 전환. `has_save_file()` 공개 API 추가. 새 게임 시 세이브 삭제 + 상태 클리어 + `stage_transition_requested("start_village", "checkpoint")`
+- `CheckpointBase._ensure_player_spawned()` — 거점 씬이 로드될 때 Player 노드가 없으면 자체 인스턴스화 (타이틀→거점 부팅 경로용)
+- `project.godot`: `main_scene = TitleScreen.tscn` + `debug_skip_title`(F12) InputMap 추가
+
+**HUD 가시성 제어 (`game_hud` 그룹)**
+- TimeSystem/CombatSystem/SkillSystem/InventorySystem/DuskSpiderSystem `_load_hud()` — instantiate → `add_child` → `add_to_group("game_hud")` 순서
+- KeybindHud `_ready()` — `add_to_group("game_hud")` 추가
+- TitleScreen — `_ready`에서 `_hide_game_hud.call_deferred()` (autoload의 `_load_hud.call_deferred()`보다 FIFO 뒤에 실행되도록). `_start_game` fade-out 완료 후 `set_visible(true)` 호출로 복원
+- **중요**: `call_group` 기본은 immediate(`GROUP_CALL_DEFAULT=0`). HUD 인스턴스화가 deferred 큐에 들어가 있으므로 hide 호출도 deferred로 미뤄야 함. 또한 HUD는 CanvasLayer라 `hide()/show()` 불가 → `set_visible(bool)` 사용 필수
+
+**CanvasLayer 자식 Control 앵커 이슈**
+- `control.anchors_preset = Control.PRESET_FULL_RECT` 프로퍼티 세터는 CanvasLayer 자식 Control에서 size를 viewport에 맞게 설정하지 못함 → 메뉴가 좌상단에 size 0으로 쏠림
+- 해결: `control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)` 메서드 사용
+- 적용: `title_screen.gd`/`title_menu_controller.gd`/`title_confirm_dialog.gd`/`title_settings_panel.gd`의 `_root`/`_fade_rect`/`_dim_rect` 전부 메서드 방식으로 전환
+
+### 체감 검증 완료 (Pass 2 §2.3, 2026-04-18 사용자 확인 — 전부 OK)
+
+- [x] STOPPED HP pip 1.0s 호흡 (±5% 적정)
+- [x] HP <20% 0.8s 붉은 맥동 위급감 적절
+- [x] FLOWING 자원 링 호흡 시선 피로 없음
+- [x] 자원 <20% 금↔붉은 보간 대비 충분
 
 ---
 

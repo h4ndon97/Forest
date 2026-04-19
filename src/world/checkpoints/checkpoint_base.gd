@@ -15,6 +15,7 @@ const CAMERA_BOTTOM: int = 360
 
 const GROUND_SIZE: Vector2 = Vector2(640, 64)
 const GROUND_POSITION: Vector2 = Vector2(0, 328)
+const PLAYER_SCENE_PATH := "res://src/entities/player/Player.tscn"
 
 @export var stage_id: String = ""
 @export var spawn_point: Vector2 = Vector2(320, 320)
@@ -26,11 +27,25 @@ func _ready() -> void:
 	if stage_id.is_empty():
 		push_error("CheckpointBase: stage_id가 비어 있다. 씬 인스펙터에서 설정.")
 		return
+	_ensure_player_spawned()
 	EventBus.stage_entered.emit(stage_id)
 	EventBus.spawn_point_set.emit(spawn_point)
 	_setup_camera_limits()
 	_try_apply_background()
 	_try_apply_ground()
+
+
+## 씬 트리에 Player가 없으면(타이틀→체크포인트 첫 진입) 생성해 배치한다.
+func _ensure_player_spawned() -> void:
+	if get_tree().get_first_node_in_group("player") != null:
+		return
+	var player_scene: PackedScene = load(PLAYER_SCENE_PATH) as PackedScene
+	if not player_scene:
+		push_warning("CheckpointBase: Player.tscn 로드 실패")
+		return
+	var player: CharacterBody2D = player_scene.instantiate() as CharacterBody2D
+	player.global_position = spawn_point
+	add_child(player)
 
 
 func _setup_camera_limits() -> void:

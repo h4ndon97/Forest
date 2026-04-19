@@ -53,6 +53,7 @@ var _visible: bool = false
 
 func _ready() -> void:
 	layer = 100
+	add_to_group("game_hud")
 	_build_ui()
 	set_process_unhandled_input(true)
 	_panel.visible = false

@@ -21,16 +21,18 @@ var _time_propagation: Node
 var _save_manager: Node
 var _current_stage_id: String = ""
 var _last_checkpoint_id: String = ""
-var _stage_hours: Dictionary = {}    # stage_id -> float (저장된 시각)
-var _tracked_hour: float = 12.0      # 현재 시간 시스템의 최신 시각
-var _is_flowing: bool = false        # 현재 시간 흐름 상태
+var _stage_hours: Dictionary = {}  # stage_id -> float (저장된 시각)
+var _tracked_hour: float = 12.0  # 현재 시간 시스템의 최신 시각
+var _is_flowing: bool = false  # 현재 시간 흐름 상태
 var _discovered_checkpoints: Array = []  # 발견한 거점 ID 목록
 
 
 func _ready() -> void:
 	_registry = _add_child_node("Registry", RegistryScript)
 	_clear_tracker = _add_child_node("ClearTracker", ClearTrackerScript)
-	_clear_tracker.setup_residue_scene("res://src/entities/enemies/shadow_residue/ShadowResidue.tscn")
+	_clear_tracker.setup_residue_scene(
+		"res://src/entities/enemies/shadow_residue/ShadowResidue.tscn"
+	)
 	_transition = _add_child_canvas("Transition", TransitionScript)
 	_lock_validator = _add_child_node("LockValidator", LockValidatorScript)
 	_time_propagation = _add_child_node("TimePropagation", TimePropagationScript)
@@ -42,11 +44,6 @@ func _ready() -> void:
 
 	var prop_config: PropagationConfigData = load(PROPAGATION_CONFIG_PATH) as PropagationConfigData
 	_time_propagation.setup(_registry, _stage_hours, prop_config)
-
-	if _save_manager.has_save():
-		_transition.set_fade_black()
-
-	_try_load_save.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -87,6 +84,17 @@ func get_last_checkpoint_id() -> String:
 	return _last_checkpoint_id
 
 
+## 세이브 파일 존재 여부 (타이틀 "이어하기" 활성화 판단용).
+func has_save_file() -> bool:
+	if not _save_manager:
+		return false
+	if not _save_manager.has_save():
+		return false
+	# 세이브는 있으나 last_checkpoint_id가 비면 이어하기 불가
+	var data: Dictionary = _save_manager.load_game()
+	return not String(data.get("last_checkpoint_id", "")).is_empty()
+
+
 func get_discovered_checkpoints() -> Array:
 	return _discovered_checkpoints.duplicate()
 
@@ -111,10 +119,14 @@ func transition_to_stage(target_stage_id: String, entry_direction: String) -> vo
 
 	var lock_result: Dictionary = _lock_validator.validate(data)
 	if not lock_result["accessible"]:
-		EventBus.stage_access_denied.emit(
-			target_stage_id,
-			lock_result["lock_type"],
-			lock_result["reason"],
+		(
+			EventBus
+			. stage_access_denied
+			. emit(
+				target_stage_id,
+				lock_result["lock_type"],
+				lock_result["reason"],
+			)
 		)
 		return
 
@@ -150,6 +162,7 @@ func load_save_data(data: Dictionary) -> void:
 
 
 # --- 내부 ---
+
 
 ## 세이브 파일이 있으면 상태를 복원하고 거점으로 전환한다.
 func _try_load_save() -> void:
@@ -190,9 +203,23 @@ func _connect_signals() -> void:
 	EventBus.residue_purified.connect(_on_residue_purified)
 	EventBus.residue_revived.connect(_on_residue_revived)
 	EventBus.stage_transition_requested.connect(_on_transition_requested)
+	EventBus.game_start_requested.connect(_on_game_start_requested)
 	EventBus.current_hour_changed.connect(func(hour: float): _tracked_hour = hour)
 	EventBus.time_flow_started.connect(func(_hour: float): _is_flowing = true)
 	EventBus.time_flow_stopped.connect(func(_hour: float): _is_flowing = false)
+
+
+func _on_game_start_requested(is_new_game: bool) -> void:
+	if is_new_game:
+		if _save_manager.has_save():
+			_save_manager.delete_save()
+		_last_checkpoint_id = ""
+		_stage_hours.clear()
+		_discovered_checkpoints.clear()
+		EventBus.stage_transition_requested.emit("start_village", "checkpoint")
+	else:
+		_transition.set_fade_black()
+		_try_load_save()
 
 
 func _on_transition_requested(target_stage_id: String, entry_direction: String) -> void:
@@ -240,8 +267,13 @@ func _on_stage_entered(stage_id: String) -> void:
 			_discovered_checkpoints.append(stage_id)
 		EventBus.checkpoint_entered.emit(stage_id)
 		EventBus.full_recovery_requested.emit()
-		var save_data: Dictionary = _save_manager.collect_data(
-			_last_checkpoint_id, _stage_hours, _discovered_checkpoints,
+		var save_data: Dictionary = (
+			_save_manager
+			. collect_data(
+				_last_checkpoint_id,
+				_stage_hours,
+				_discovered_checkpoints,
+			)
 		)
 		_save_manager.save_game(save_data)
 

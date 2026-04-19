@@ -269,8 +269,11 @@ func _cleanup_defeated() -> void:
 func _load_hud() -> void:
 	if not ResourceLoader.exists(HUD_PATH):
 		return
-	var hud := load(HUD_PATH) as PackedScene
-	get_tree().root.add_child(hud.instantiate())
+	var hud_scene := load(HUD_PATH) as PackedScene
+	if hud_scene:
+		var hud := hud_scene.instantiate()
+		get_tree().root.add_child(hud)
+		hud.add_to_group("game_hud")
 
 
 func _create_child(child_name: String, script: GDScript) -> Node:

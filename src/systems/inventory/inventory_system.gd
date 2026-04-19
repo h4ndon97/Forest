@@ -268,7 +268,9 @@ func _load_hud() -> void:
 		return
 	var hud_scene: PackedScene = load(HUD_PATH)
 	if hud_scene:
-		get_tree().root.add_child(hud_scene.instantiate())
+		var hud := hud_scene.instantiate()
+		get_tree().root.add_child(hud)
+		hud.add_to_group("game_hud")
 
 
 func _debug_give_starter_items() -> void:

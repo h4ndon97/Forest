@@ -253,3 +253,4 @@ func _load_hud() -> void:
 	if hud_scene:
 		var hud := hud_scene.instantiate()
 		get_tree().root.add_child(hud)
+		hud.add_to_group("game_hud")

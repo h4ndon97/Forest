@@ -548,9 +548,9 @@ Phase 6  출시
 - [x] 인게임 HUD Pass 1 (33ac495 — HP pip/콤보/속성 오브/스킬 슬롯/포션/시간 코어 placeholder, 4분면 배치)
 - [x] 인게임 HUD Pass 2 §2.2 (ba721ad — A-7 스킬 슬롯 원형 링 + 쿨다운 스윕 + 이끼 배경 + 아이콘 교보재)
 - [x] 인게임 HUD Pass 2 §2.3 (2026-04-18 — HP pip 호흡/저체력 맥동 + 자원 링 호흡/저자원 맥동)
-- [ ] 인게임 HUD Pass 2 §2.1 (B-6 arc_mask shader — draw_arc placeholder 충분, 우선순위 ↓)
+- [~] 인게임 HUD Pass 2 §2.1 (B-6 arc_mask shader — **영구 보류 확정** 2026-04-18, draw_arc placeholder 체감 검증 통과)
 - [ ] 인게임 HUD 미니맵
-- [ ] 타이틀 화면
+- [x] 타이틀 화면 (2026-04-19 — 새 게임/이어하기/설정/종료 + 세이브 감지 + 덮어쓰기 확인 + fade in/out + game_start_requested 시그널 구동)
 - [ ] 일시정지 메뉴
 - [ ] 장비 관리 메뉴 폴리싱 (Tab 인벤토리는 2-7에서 기본 구현)
 - [ ] 스킬 관리 메뉴 (4슬롯 장착/해제 + 상세)

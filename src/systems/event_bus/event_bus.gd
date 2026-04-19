@@ -65,11 +65,11 @@ signal player_respawned(position: Vector2)
 # === 성장 시스템 ===
 signal points_earned(amount: int, source: String)
 signal skill_unlocked(skill_id: String)
-signal growth_stats_changed()
+signal growth_stats_changed
 signal growth_points_changed(growth_available: int, property_available: int)
 signal growth_invested(category: String, total_invested: int)
-signal growth_respec_completed()
-signal hybrid_unlocked()
+signal growth_respec_completed
+signal hybrid_unlocked
 
 # === 등불 시스템 ===
 signal lantern_toggled(is_on: bool, lantern_position: Vector2)
@@ -101,10 +101,10 @@ signal item_acquired(item_id: String)
 signal item_removed(item_id: String)
 ## slot_type: 0=weapon, 1=armor, 2~4=accessory. item_id="" = 해제
 signal equipment_changed(slot_type: int, item_id: String)
-signal equipment_stats_changed()
+signal equipment_stats_changed
 signal consumable_used(consumable_type: int, amount: float)
 signal consumable_count_changed(item_id: String, current: int, max_val: int)
-signal consumables_refilled()
+signal consumables_refilled
 
 # === 상점 시스템 ===
 signal shop_opened(shop_id: String)
@@ -146,3 +146,6 @@ signal ability_unlocked(ability_id: String)
 # === 대화 시스템 (Phase 3-4) ===
 signal dialogue_started(npc_id: String)
 signal dialogue_finished(npc_id: String)
+
+# === 타이틀/게임 진입 (Phase 3-6) ===
+signal game_start_requested(is_new_game: bool)
