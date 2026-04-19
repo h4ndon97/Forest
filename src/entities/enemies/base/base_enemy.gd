@@ -246,6 +246,12 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		var damage: float = area.get_meta("damage", 0.0)
 		var is_finish: bool = area.get_meta("is_finish", false)
 		feedback_comp.play_hit_flash()
+		if is_finish:
+			EffectsSystem.request_shake(EffectsSystem.PRESET_HEAVY)
+			EffectsSystem.request_hitstop(EffectsSystem.PRESET_FINISH)
+		else:
+			EffectsSystem.request_shake(EffectsSystem.PRESET_LIGHT)
+			EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
 		take_damage(damage)
 		_spawn_damage_number(damage, is_finish)
 		EventBus.damage_dealt.emit(enemy_id, damage)

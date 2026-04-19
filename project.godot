@@ -23,6 +23,8 @@ config/features=PackedStringArray("4.6")
 
 EventBus="*res://src/systems/event_bus/event_bus.gd"
 StateFlags="*res://src/systems/state_flags/state_flag_persistence.gd"
+OverlaySystem="*res://src/systems/overlay/overlay_system.gd"
+EffectsSystem="*res://src/systems/effects/effects_system.gd"
 GrowthSystem="*res://src/systems/growth/growth_system.gd"
 InventorySystem="*res://src/systems/inventory/inventory_system.gd"
 TimeSystem="*res://src/systems/time/time_system.gd"

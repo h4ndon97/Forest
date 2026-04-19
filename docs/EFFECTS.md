@@ -265,3 +265,4 @@ Pass 1(프레임워크)은 아트가 필요 없으므로, 1구역 아트 제작 
 | 날짜 | 내용 |
 |---|---|
 | 2026-04-17 | 초안 작성. 레퍼런스 분석 + Top 12 + 로드맵 정의. Phase 2-3c 진입 전 기준 |
+| 2026-04-19 | Pass 1 (프레임워크) 구현 완료 — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres. 디버그 키 F6~F9. Damageable 3건(플레이어/적/보스) 연동. D7 6가지 디렉션 결정은 Pass 2에서 진행 |

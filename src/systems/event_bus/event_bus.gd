@@ -154,3 +154,11 @@ signal game_start_requested(is_new_game: bool)
 signal game_paused
 signal game_resumed
 signal return_to_title_requested
+
+# === 이펙트 시스템 (Phase 3-7 Pass 1) ===
+## screen_shake_requested만 Pass 1에서 emit/connect됨 (EffectsSystem → PlayerCameraShake).
+## 나머지 3개는 Pass 3~5 예약 — 현재는 EffectsSystem이 헬퍼/OverlaySystem을 직접 호출.
+signal hit_flash_requested(target: CanvasItem, color: Color, duration: float)
+signal screen_shake_requested(trauma: float)
+signal hitstop_requested(duration: float, scale: float)
+signal screen_flash_requested(color: Color, duration: float)

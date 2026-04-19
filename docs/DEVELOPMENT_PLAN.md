@@ -559,14 +559,17 @@ Phase 6  출시
 - **의존성**: Phase 2 완료
 - **상세**: `docs/UI_IMPLEMENTATION_PLAN.md` (A/B 카테고리 Pass 구조) / `docs/PHASE_3_PLAN.md` §8
 
-#### 3-7. 1구역 아트 적용
+#### 3-7. 1구역 아트 + 이펙트 적용
+- [x] **이펙트 Pass 1 프레임워크** (2026-04-19) — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres + 디버그 키 F6~F9 + Damageable 3건(플레이어/적/보스) 연동
 - [ ] 플레이어 스프라이트 + 애니메이션
 - [ ] 1구역 타일셋 (빛의 숲)
 - [ ] 1구역 적/보스 스프라이트
 - [ ] 1구역 배경
 - [ ] UI 아트
-- [ ] 이펙트 (공격, 피격, 그림자 등)
+- [ ] 이펙트 Pass 2 (D7 디렉션 결정 후 — 힛플래시/힛스톱 튜닝, 데미지 넘버 재설계, 파티클)
+- [ ] 이펙트 Pass 5c (슬래시 트레일/검광/피니시 컷인)
 - **의존성**: Art Spec Writer 명세서 기반, 3-1~3-6 구현 완료 후
+- **상세**: `docs/PHASE_3_PLAN.md` §9 / `docs/EFFECTS.md`
 
 #### 3-8. 사운드 (기본)
 - [ ] 효과음 (공격, 피격, 시간 조작, 적 처치)
@@ -771,7 +774,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-19, Phase 3-6 종결 — 메뉴 마감 3-6-a/b/c 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-19, Phase 3-7 Pass 1 이펙트 프레임워크 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -809,6 +812,7 @@ Phase 6 (출시)
 | **3-6 타이틀 화면** | **타이틀 4-메뉴 + 세이브 감지 + 진입** | **✅ 완료** | **새 게임/이어하기/설정/종료 + 덮어쓰기 확인 + fade in/out + F12 스킵. EventBus.game_start_requested 신설, StageSystem 자동 로드 경로 제거 (070ce01)** |
 | **3-6 일시정지 메뉴** | **3-메뉴 + 차단 + tree.paused** | **✅ 완료** | **이어하기/설정/타이틀로 + ESC 토글 + Inventory/WorldMap/Shop/대화/전환 차단 + BGM -12dB 덕킹 + 어두운 베일. EventBus 3건 신설(`game_paused`/`game_resumed`/`return_to_title_requested`)** |
 | **3-6 메뉴 마감 (a/b/c)** | **월드맵 상세 + 인벤토리 5-파일 + 공통 컴포넌트** | **✅ 완료** | **(a) world_map_detail_panel — 이름·구역·시각·클리어·잠금·⚠·인접 실시간 + B안 단일 Enter. (b) inventory 5-파일 분리 — orchestrator + InventoryTabController(Q/E) + EquipmentTab + SkillTab(2-컬럼/F·J/거점 제한) + SkillTabNavigator. SkillSystem `DEBUG_SKILL_AUTO_EQUIP` 게이팅. (c) MenuFrame + MenuSelectionRect class_name 추출, pause_menu/title 마이그레이션. 미니맵은 Phase 4 이월** |
+| **3-7 Pass 1** | **이펙트 프레임워크** | **✅ 완료** | **EffectsSystem/OverlaySystem Autoload 신설(project.godot 2개 추가) + 카메라 쉐이크 trauma² 감쇠(player_camera_shake.gd, Camera2D 자식, EventBus.screen_shake_requested 구독) + 힛플래시 셰이더(canvas_item, alpha-preserving mix) + 힛스톱 Engine.time_scale + ignore_time_scale SceneTreeTimer + effects_config.tres 외부화(쉐이크/힛스톱 프리셋 + 색/지속시간) + 디버그 키 F6~F9 + Damageable 3건(player_health/base_enemy/base_boss) 통합. 신규 파일 11 + 수정 4. EventBus 시그널 4개(Pass 3~5 예약). Pass 1 프레임워크는 D7 디렉션 결정 무관 — 모든 색/지속시간이 .tres 외부화** |
 
 ### Phase 2 세부 작업 순서
 

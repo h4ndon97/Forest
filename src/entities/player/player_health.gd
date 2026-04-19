@@ -51,12 +51,23 @@ func take_damage(amount: float) -> void:
 	EventBus.health_changed.emit(current_hp, max_hp)
 	EventBus.damage_received.emit(amount)
 
+	_play_hit_feedback()
+
 	if current_hp <= 0.0:
 		_hurtbox.monitoring = false
 		EventBus.player_died.emit()
 		return
 
 	_start_invincibility()
+
+
+func _play_hit_feedback() -> void:
+	var sprite: CanvasItem = _parent.get_node_or_null("AnimatedSprite2D") as CanvasItem
+	var cfg: EffectsConfigData = EffectsSystem.get_config()
+	if sprite != null:
+		EffectsSystem.request_hit_flash(sprite, cfg.player_hit_color, cfg.player_hit_duration)
+	EffectsSystem.request_shake(EffectsSystem.PRESET_MEDIUM)
+	EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
 
 
 # === 내부 ===

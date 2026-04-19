@@ -149,8 +149,25 @@ func apply_player_hit(damage: float, is_finish: bool, is_weak_point: bool) -> vo
 	var final_damage: float = take_damage(damage, is_weak_point)
 	if final_damage <= 0.0:
 		return
+	_play_hit_feedback(is_finish, is_weak_point)
 	_spawn_damage_number(final_damage, is_finish or is_weak_point)
 	EventBus.damage_dealt.emit(boss_id, final_damage)
+
+
+func _play_hit_feedback(is_finish: bool, is_weak_point: bool) -> void:
+	var cfg: EffectsConfigData = EffectsSystem.get_config()
+	var sprite: CanvasItem = get_node_or_null("AnimatedSprite2D") as CanvasItem
+	if sprite != null:
+		EffectsSystem.request_hit_flash(sprite, cfg.boss_hit_color, cfg.boss_hit_duration)
+	if is_finish:
+		EffectsSystem.request_shake(EffectsSystem.PRESET_FINISH)
+		EffectsSystem.request_hitstop(EffectsSystem.PRESET_FINISH)
+	elif is_weak_point:
+		EffectsSystem.request_shake(EffectsSystem.PRESET_HEAVY)
+		EffectsSystem.request_hitstop(EffectsSystem.PRESET_CRITICAL)
+	else:
+		EffectsSystem.request_shake(EffectsSystem.PRESET_MEDIUM)
+		EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
 
 
 ## PhaseController가 호출 — 공격 행동 스크립트를 런타임 swap한다.

@@ -3,15 +3,13 @@ extends Node
 ## 적 피격/경직/사망 시각 반영 (교보재).
 ##
 ## 기능:
-## - 피격 플래시: 흰색 오버레이 (0.08s)
+## - 피격 플래시: EffectsSystem(셰이더 기반)에 위임 (Phase 3-7 Pass 1)
 ## - 경직 흔들기: X축 랜덤 오프셋 + 감쇠 (0.3s)
 ## - 사망 디졸브: 페이드 + 축소 (0.4s)
 ##
-## 모든 효과는 modulate / position 만 건드리며 전투 로직과 무관하다.
+## 경직/사망은 modulate / position 만 건드리며 전투 로직과 무관하다.
 ## 픽셀아트 교체 후에도 동일하게 적용된다.
 
-const FLASH_DURATION: float = 0.08
-const FLASH_COLOR := Color(2.5, 2.5, 2.5, 1.0)
 const SHAKE_DURATION: float = 0.3
 const SHAKE_AMPLITUDE: float = 2.5
 const SHAKE_INTERVAL: float = 0.04
@@ -19,9 +17,10 @@ const DEATH_DURATION: float = 0.4
 const DEATH_SCALE := Vector2(0.6, 0.6)
 
 var _owner: CanvasItem
+## flash 셰이더는 AnimatedSprite2D에 부착해야 한다 (modulate=대상이 동일 노드)
+var _flash_target: CanvasItem
 var _animation_comp: Node
 var _base_modulate: Color = Color.WHITE
-var _flash_tween: Tween
 var _shake_tween: Tween
 var _death_tween: Tween
 var _shake_accum: float = 0.0
@@ -32,18 +31,16 @@ func setup(p_owner: CanvasItem, p_animation_comp: Node) -> void:
 	_animation_comp = p_animation_comp
 	if _owner != null:
 		_base_modulate = _owner.modulate
+		_flash_target = _owner.get_node_or_null("AnimatedSprite2D") as CanvasItem
+		if _flash_target == null:
+			_flash_target = _owner
 
 
 func play_hit_flash() -> void:
-	if _owner == null:
+	if _flash_target == null:
 		return
-	if _flash_tween != null and _flash_tween.is_valid():
-		_flash_tween.kill()
-	var flash: Color = FLASH_COLOR
-	flash.a = _base_modulate.a
-	_owner.modulate = flash
-	_flash_tween = create_tween()
-	_flash_tween.tween_property(_owner, "modulate", _base_modulate, FLASH_DURATION)
+	var cfg: EffectsConfigData = EffectsSystem.get_config()
+	EffectsSystem.request_hit_flash(_flash_target, cfg.enemy_hit_color, cfg.enemy_hit_duration)
 
 
 func play_stagger_shake() -> void:
@@ -60,8 +57,6 @@ func play_stagger_shake() -> void:
 func play_death_dissolve() -> Signal:
 	if _owner == null:
 		return _finished_now()
-	if _flash_tween != null and _flash_tween.is_valid():
-		_flash_tween.kill()
 	if _shake_tween != null and _shake_tween.is_valid():
 		_shake_tween.kill()
 	if _death_tween != null and _death_tween.is_valid():
