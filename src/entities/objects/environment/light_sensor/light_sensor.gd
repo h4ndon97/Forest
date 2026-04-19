@@ -18,7 +18,7 @@ var _is_activated: bool = false
 var _pending_generation: int = 0
 var _resolved_sensor_id: String = ""
 
-@onready var _visual: ColorRect = $Visual if has_node("Visual") else null
+@onready var _visual: Node2D = $Visual if has_node("Visual") else null
 
 
 func _ready() -> void:
@@ -30,7 +30,15 @@ func _ready() -> void:
 		push_warning("LightSensor: sensor_id 미설정 (%s)" % name)
 	area_entered.connect(_on_area_entered)
 	area_exited.connect(_on_area_exited)
+	_setup_visual()
 	_update_visual()
+
+
+func _setup_visual() -> void:
+	if _visual == null or data == null:
+		return
+	if _visual.has_method("configure"):
+		_visual.configure(data.color_off, data.color_on)
 
 
 ## 현재 점등 상태.
@@ -107,6 +115,7 @@ func _set_activated(activated: bool) -> void:
 
 
 func _update_visual() -> void:
-	if _visual == null or data == null:
+	if _visual == null:
 		return
-	_visual.color = data.color_on if _is_activated else data.color_off
+	if _visual.has_method("set_active"):
+		_visual.set_active(_is_activated)
