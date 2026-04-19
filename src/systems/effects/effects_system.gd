@@ -126,11 +126,11 @@ func request_hit_particle(
 	_hit_particle.emit(world_pos, category, is_finish)
 
 
-## Pass 3 디버그: 시간 정지 연출 즉시 on/off 토글.
+## Pass 3 디버그: 시간 정지 연출 Tween 트랜지션 토글(TimeSystem 상태는 건드리지 않음).
 func debug_toggle_time_stop() -> void:
 	if _time_stop == null:
 		return
-	_time_stop.apply_instant(not _time_stop.is_applied())
+	_time_stop.apply_transition(not _time_stop.is_applied())
 
 
 func resolve_enemy_category(enemy_type: String) -> StringName:

@@ -28,8 +28,9 @@
 | **Phase 3-7 D7 6 디렉션** | **✅ 확정 (2026-04-19, 7b30d51, 잠정) — 시간정지 세피아 / 힛플래시 속성별 분기 / 땅거미 거리 보간 / 데미지 넘버 Galmuri11 / 앰비언트 낮 꽃가루+밤 반딧불 / HUD 구슬 pip. §9 결정 대기 참조** |
 | **Phase 3-7 Pass 2 전투 타격감** | **✅ 완료 (2026-04-19) — Step 1 피니시 속성→힛플래시 색 체인(2c1d41f) + Step 2 데미지 넘버 3티어 재설계 Galmuri11 LabelSettings(df1b376) + Step 3 피격 파티클 3 카테고리 풀 시스템(469d7b3). §9 구현 결과 (Pass 2) 참조** |
 | **Phase 3-7 Pass 3 Step 1 세피아 프레임워크** | **✅ 완료 (2026-04-19, 미커밋) — `time_stop_sepia.gdshader` 신규 + `EffectsTimeStop` RefCounted 헬퍼 + `EffectsConfigData` Time Stop 그룹 9필드 + 디버그 키 F12 토글. **D7-1 재조정**: "주변부 색상 유지" 해석 폐기, 화면 전체 균일 세피아로 확정(사용자 체감 검증). §9 구현 결과 (Pass 3 Step 1) 참조** |
+| **Phase 3-7 Pass 3 Step 2 Tween 트랜지션** | **✅ 완료 (2026-04-19, 미커밋) — `EffectsTimeStop`이 EventBus `time_flow_started/stopped` 구독 + `apply_transition` Tween(`set_ignore_time_scale(true)`, 0.30s) 추가. `_current_weight` 로컬 추적, `_weight_tween.kill()` 재진입 안전. F12 디버그는 `apply_instant`→`apply_transition`으로 전환되어 동일 Tween 미리보기. §9 구현 결과 (Pass 3 Step 2) 참조** |
 
-**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1 완료. 다음=Pass 3 Step 2~4 (EventBus Tween / 플레이어 숨결 파티클 / 블루 펄스+잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
+**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2 완료. 다음=Pass 3 Step 3~4 (플레이어 숨결 파티클 / 블루 펄스+잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
 ---
 
@@ -459,7 +460,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - **Pass 2** ✅ 완료 (2026-04-19): 힛 플래시 속성별 분기(D7-2) + 데미지 넘버 재설계(D7-4 Galmuri11) + 피격 파티클 3 카테고리. Step 1/2/3 커밋 분리
 - **Pass 3** (진행 중 2026-04-19~): 시간 정지 연출 — **D7-1 재조정: 화면 전체 균일 세피아**(원안 "주변부 색 유지" 폐기)
   - **Step 1** ✅ 완료 (2026-04-19, 미커밋): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
-  - **Step 2** (예정): EventBus 구독(`time_flow_started/stopped`) + weight Tween 트랜지션(0.3s, ignore_time_scale)
+  - **Step 2** ✅ 완료 (2026-04-19, 미커밋): EventBus 구독(`time_flow_started/stopped`) + `apply_transition` weight Tween(0.30s, `set_ignore_time_scale(true)`) + `_weight_tween.kill()` 재진입 처리. F12는 Tween 미리보기로 전환
   - **Step 3** (예정): 플레이어 주변 파티클(freezable_particles 그룹 정지 + breath_particles 예외)
   - **Step 4** (예정): 해제 시 블루 펄스 + 플레이어 잔상
 - **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
@@ -534,7 +535,26 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 **Step 1 검증**: gdlint 클린 (4개 파일), 헤드리스 로드 클린. 사용자 F12 토글 체감 OK
 
-**다음 단계 (Step 2)**: `EffectsTimeStop`에 `EventBus.time_flow_started/stopped` 구독 추가 + weight Tween 트랜지션(`config.time_stop_transition_duration` = 0.30s, `set_ignore_time_scale(true)`). `_weight_tween.kill()` 재진입 처리.
+### 구현 결과 (2026-04-19 Pass 3 Step 2 — Tween 트랜지션)
+
+**수정 파일 2**
+- `src/systems/effects/effects_time_stop.gd` (~50 → ~85줄):
+  - 멤버 추가: `_current_weight: float`(로컬 추적 — OverlaySystem에 getter 없음), `_weight_tween: Tween`
+  - `_init`에 `EventBus.time_flow_stopped/started.connect()` 추가 → `_on_time_flow_stopped/started`가 `apply_transition(true/false)` 호출
+  - 신규 `apply_transition(on: bool)`: 같은 상태 조기 반환, `_weight_tween.kill()` 후 `_host.create_tween().set_ignore_time_scale(true).tween_method(_set_weight, _current_weight, target, duration)`. `duration <= 0`이면 즉시 설정으로 폴백
+  - `apply_instant`은 초기화/테스트 경로로 유지(Tween도 동시 kill)
+  - `_set_weight(value)` 콜백이 `_current_weight` + OverlaySystem param 동시 갱신 (`_install_shader`도 이 경로 사용)
+- `src/systems/effects/effects_system.gd`: `debug_toggle_time_stop()`을 `apply_instant` → `apply_transition`으로 전환. TimeSystem 상태는 건드리지 않고 시각만 미리보기(사이드이펙트 없음)
+
+**설계 결정**
+- **디버그 키 F12는 EventBus emit 금지**: TimeSystem 상태가 바뀌면 적 정지/클럭 사이드이펙트가 생김. F12는 시각 전용 미리보기로 격리
+- **`set_ignore_time_scale(true)` 필수**: 힛스톱 중(`Engine.time_scale=0` 또는 `hitstop_scale`) 세피아 전환이 멈추면 안 됨
+- **`_current_weight` 로컬 추적**: OverlaySystem에 `get_post_process_param` 없음. Tween 재진입 시 현재값→목표값으로 자연 연결(점프 없음)
+- **Autoload 순서 확인**: EventBus(24) < OverlaySystem(26) < EffectsSystem(27) < TimeSystem(30). `_init`에서 `EventBus.*.connect` 안전
+
+**Step 2 검증**: gdlint 클린(2개 파일), `--headless --quit` 클린
+
+**다음 단계 (Step 3)**: 플레이어 자식 `breath_particles`(speed_scale=1 유지) + 월드 배경 파티클 `freezable_particles` 그룹 speed_scale=0 토글. EventBus `time_flow_stopped/started` 구독 주체는 별도 헬퍼(`EffectsFreezable` 가칭) 권장.
 
 ### 결정 대기
 - ~~**D7** EFFECTS.md 디렉션 6가지~~ — ✅ 확정 (2026-04-19). EFFECTS.md §5 결정 반영. 잠정(provisional)으로 기록됨 — 아트 작업 중 변경 가능. `effects_config`에서 `fire`→`hybrid`, `dark`→`shadow` 네이밍 정정 동반.
