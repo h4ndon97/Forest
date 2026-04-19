@@ -566,7 +566,7 @@ Phase 6  출시
 - [ ] 1구역 적/보스 스프라이트
 - [ ] 1구역 배경
 - [ ] UI 아트
-- [ ] 이펙트 Pass 2 (D7 디렉션 결정 후 — 힛플래시/힛스톱 튜닝, 데미지 넘버 재설계, 파티클)
+- [x] **이펙트 Pass 2** (2026-04-19) — D7 6 디렉션 결정 완료 + Step 1 피니시 속성→힛플래시 색상 체인(2c1d41f) + Step 2 데미지 넘버 3티어 재설계 Galmuri11 LabelSettings(df1b376) + Step 3 피격 파티클 3 카테고리 풀 시스템(469d7b3)
 - [ ] 이펙트 Pass 5c (슬래시 트레일/검광/피니시 컷인)
 - **의존성**: Art Spec Writer 명세서 기반, 3-1~3-6 구현 완료 후
 - **상세**: `docs/PHASE_3_PLAN.md` §9 / `docs/EFFECTS.md`
@@ -774,7 +774,7 @@ Phase 6 (출시)
 
 ---
 
-## 구현 현황 요약 (최종 업데이트: 2026-04-19, Phase 3-7 Pass 1 이펙트 프레임워크 완료)
+## 구현 현황 요약 (최종 업데이트: 2026-04-19, Phase 3-7 Pass 2 전체 완료)
 
 | Phase | 마일스톤 | 상태 | 비고 |
 |---|---|---|---|
@@ -813,6 +813,8 @@ Phase 6 (출시)
 | **3-6 일시정지 메뉴** | **3-메뉴 + 차단 + tree.paused** | **✅ 완료** | **이어하기/설정/타이틀로 + ESC 토글 + Inventory/WorldMap/Shop/대화/전환 차단 + BGM -12dB 덕킹 + 어두운 베일. EventBus 3건 신설(`game_paused`/`game_resumed`/`return_to_title_requested`)** |
 | **3-6 메뉴 마감 (a/b/c)** | **월드맵 상세 + 인벤토리 5-파일 + 공통 컴포넌트** | **✅ 완료** | **(a) world_map_detail_panel — 이름·구역·시각·클리어·잠금·⚠·인접 실시간 + B안 단일 Enter. (b) inventory 5-파일 분리 — orchestrator + InventoryTabController(Q/E) + EquipmentTab + SkillTab(2-컬럼/F·J/거점 제한) + SkillTabNavigator. SkillSystem `DEBUG_SKILL_AUTO_EQUIP` 게이팅. (c) MenuFrame + MenuSelectionRect class_name 추출, pause_menu/title 마이그레이션. 미니맵은 Phase 4 이월** |
 | **3-7 Pass 1** | **이펙트 프레임워크** | **✅ 완료** | **EffectsSystem/OverlaySystem Autoload 신설(project.godot 2개 추가) + 카메라 쉐이크 trauma² 감쇠(player_camera_shake.gd, Camera2D 자식, EventBus.screen_shake_requested 구독) + 힛플래시 셰이더(canvas_item, alpha-preserving mix) + 힛스톱 Engine.time_scale + ignore_time_scale SceneTreeTimer + effects_config.tres 외부화(쉐이크/힛스톱 프리셋 + 색/지속시간) + 디버그 키 F6~F9 + Damageable 3건(player_health/base_enemy/base_boss) 통합. 신규 파일 11 + 수정 4. EventBus 시그널 4개(Pass 3~5 예약). Pass 1 프레임워크는 D7 디렉션 결정 무관 — 모든 색/지속시간이 .tres 외부화** |
+| **3-7 D7 6 디렉션** | **이펙트 아트 디렉션 결정** | **✅ 완료** | **(7b30d51, 잠정) 1.시간정지=세피아+주변부 색 유지(Pass 3 예약) / 2.힛플래시=피니시 속성별 분기(light 흰·shadow 보라·hybrid 금 HDR) / 3.땅거미=거리별 보라→빨강 보간(Pass 4) / 4.데미지 넘버=Galmuri11 비트맵 / 5.앰비언트=낮 꽃가루+밤 반딧불(Pass 5) / 6.HUD=구슬 pip(Pass 5). EFFECTS.md §5 갱신 + effects_config 네이밍 정정(shadow/hybrid)** |
+| **3-7 Pass 2** | **피니시 속성 체인 + 데미지 넘버 + 파티클** | **✅ 완료** | **Step 1 (2c1d41f) — player_combo 히트박스 `finish_attribute` 메타 + `_resolve_finish_attribute()` (SkillSystem 우선, fallback=combat_config) + enemy_feedback.play_hit_flash(color_override) 파라미터 + base_enemy/boss_weak_point/base_boss.apply_player_hit(..., finish_attribute) 시그니처 확장 + enemy 피니시 쉐이크 HEAVY→FINISH 정렬. Step 2 (df1b376) — damage_number.gd 전면 재작성 3티어(일반/크리티컬/피니시) + Galmuri11 LabelSettings + shadow_offset 1px 아웃라인 + 크리티컬 scale 1.4 오버슛 TRANS_BACK + 피니시 속성색 LDR 클램프 + 가로 쉐이크 감쇠 + static _font_cache. 보스 약점 히트=크리티컬(확률 시스템 미도입). Step 3 (469d7b3) — EffectsHitParticle RefCounted 헬퍼(~230줄) + 카테고리 3종(organic/mineral/shadow) × 풀 2개 = 6 GPUParticles2D round-robin + particle_presets.tres 외부화(color_core/tint, amount, lifetime, speed, gravity, scale, texture_path, finish_amount_mult=2.0, finish_speed_mult=1.3) + `request_hit_particle(pos, cat, is_finish, attr)` + `resolve_enemy_category(enemy_type)` API + 4×4 흰색 fallback ImageTexture + 피니시 color_ramp swap(속성색). base_enemy/base_boss 1줄 연결. 아트 명세 `docs/art_specs/hit_particles.md` 신규(8×8 단색 3장). ART_RESOURCE_LIST #45~47 카테고리 기반 재작성, #47 비트맵 폰트 폐기(D7-4 대체). 신규 class_name 2개(EffectsHitParticle/EffectsParticlePresetsData) 등록 시 `--editor --headless --quit` 1회로 global_script_class_cache 갱신 필요(파이프라인 주의점)** |
 
 ### Phase 2 세부 작업 순서
 

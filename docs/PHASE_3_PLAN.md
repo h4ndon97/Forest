@@ -25,8 +25,10 @@
 | **Phase 3-6 일시정지 메뉴** | **✅ 완료 (2026-04-19) — 3-메뉴(이어하기/설정/타이틀로) + ESC 토글 + 다른 UI·대화·전환 차단 + `tree.paused` + BGM -12dB 덕킹 + 어두운 베일. §8 구현 결과 참조** |
 | **Phase 3-6 메뉴 마감 (3-6-a/b/c)** | **✅ 완료 (2026-04-19) — 월드맵 상세 패널 + 인벤토리 5-파일 분리(EquipmentTab+SkillTab+Navigator+TabController, Q/E 탭·F·Enter 장착·J 탭별 분기·attack 액션 이중 발화 차단) + MenuFrame/MenuSelectionRect 공통 컴포넌트 + KEYMAP v0.3. 미니맵은 Phase 4 이월. §8 구현 결과 참조** |
 | **Phase 3-7 Pass 1 이펙트 프레임워크** | **✅ 완료 (2026-04-19) — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres + 디버그 키 F6~F9. Damageable 3건(플레이어/적/보스) 연동. §9 구현 결과 참조** |
+| **Phase 3-7 D7 6 디렉션** | **✅ 확정 (2026-04-19, 7b30d51, 잠정) — 시간정지 세피아 / 힛플래시 속성별 분기 / 땅거미 거리 보간 / 데미지 넘버 Galmuri11 / 앰비언트 낮 꽃가루+밤 반딧불 / HUD 구슬 pip. §9 결정 대기 참조** |
+| **Phase 3-7 Pass 2 전투 타격감** | **✅ 완료 (2026-04-19) — Step 1 피니시 속성→힛플래시 색 체인(2c1d41f) + Step 2 데미지 넘버 3티어 재설계 Galmuri11 LabelSettings(df1b376) + Step 3 피격 파티클 3 카테고리 풀 시스템(469d7b3). §9 구현 결과 (Pass 2) 참조** |
 
-**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 프레임워크 완료 + D7 6가지 디렉션 결정 완료. 다음=Pass 2 (전투 타격감) 착수 가능.** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월
+**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 전체 완료. 다음=Pass 3 시간 정지 연출(세피아 포스트프로세스 + Tween 트랜지션) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
 ---
 
@@ -453,7 +455,10 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 ### 이펙트 로드맵 (EFFECTS.md Pass 1~5c 일괄 적용, **안 A 확정**)
 - **Pass 1** ✅ 완료 (2026-04-19): 프레임워크 — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres
-- **Pass 2**: 힛 플래시(D7-2 속성별 분기) + 힛스톱 튜닝 + 데미지 넘버 재설계(D7-4 Galmuri11) + 파티클 — D7 결정 반영 가능 (2026-04-19~)
+- **Pass 2** ✅ 완료 (2026-04-19): 힛 플래시 속성별 분기(D7-2) + 데미지 넘버 재설계(D7-4 Galmuri11) + 피격 파티클 3 카테고리. Step 1/2/3 커밋 분리
+- **Pass 3** (예정): 시간 정지 연출(D7-1 세피아 + 주변부 색 유지) — 포스트프로세스 ColorRect + Tween 트랜지션 + 주변 파티클
+- **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
+- **Pass 5** (예정): 앰비언트 파티클(D7-5 낮 꽃가루 + 밤 반딧불) + HUD 구슬 pip(D7-6) + 환경/컷인
 - **Pass 5c**: 슬래시 트레일 + 검광 + 피니시 컷인
 
 ### 구현 결과 (2026-04-19 Pass 1)
@@ -463,6 +468,39 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - **프리셋**: 쉐이크 light/medium/heavy/finish, 힛스톱 hit/critical/finish — 모두 `effects_config.tres`로 외부화
 - **디버그 키 (F6~F9)**: F6=쉐이크 heavy / F7=근접 적 힛플래시 / F8=힛스톱 finish / F9=스크린 플래시
 - **검증**: gdlint 클린, gdformat 적용, `--headless --quit` 클린, Code Reviewer agent PASS
+
+### 구현 결과 (2026-04-19 Pass 2)
+
+**Step 1 — 피니시 속성 체인 (2c1d41f)**
+- `player_combo.gd`: 히트박스 메타 `finish_attribute` 추가 + `_resolve_finish_attribute()` 헬퍼(SkillSystem 우선, fallback=`combat_config.finish_attribute`)
+- `enemy_feedback.play_hit_flash(color_override: Color = Color(0,0,0,0))`: 색 override 파라미터 추가. alpha 0이면 config 기본
+- `base_enemy._on_hurtbox_area_entered`: `finish_attribute` 메타 읽고 `EffectsSystem.get_finish_color(attr)`로 override
+- `base_boss.apply_player_hit(damage, is_finish, is_weak_point, finish_attribute="")`: 시그니처 확장. `_play_hit_feedback`에서 속성색 적용
+- `boss_weak_point._on_area_entered`: 메타 읽고 4번째 인자로 전달
+- **enemy 피니시 쉐이크 HEAVY→FINISH 정렬** (사양 일치)
+
+**Step 2 — 데미지 넘버 재설계 (df1b376, D7-4)**
+- `damage_number.gd` 전면 재작성. Galmuri11 LabelSettings + shadow_offset 1px 아웃라인
+- 3티어: 일반=흰/12px, 크리티컬=노랑(#FFEB59)/14px + scale 1.4 오버슛(TRANS_BACK EASE_OUT, 0.12s), 피니시=속성색 LDR 클램프/14px + 가로 쉐이크(amp 2.0, 0.24s 감쇠)
+- `setup(amount, is_finish, is_critical, finish_attribute)` 확장. 폰트는 `static var _font_cache`로 1회 로드
+- **크리티컬 소스**: 보스 약점 히트 = 크리티컬. 일반 적엔 크리티컬 없음(확률 시스템 미도입)
+
+**Step 3 — 피격 파티클 (469d7b3)**
+- `src/systems/effects/effects_hit_particle.gd` (~230줄, `class_name EffectsHitParticle` RefCounted): 카테고리별 GPUParticles2D 풀 `pool_per_category=2` × 3 = 6개. round-robin restart. `_make_fallback_texture()` 4×4 흰색 ImageTexture
+- `data/effects/effects_particle_presets_data.gd` + `particle_presets.tres`: 3 카테고리 × (color_core/tint, amount, lifetime, speed_min/max, gravity, scale, texture_path) + `finish_amount_mult=2.0` / `finish_speed_mult=1.3`
+- 카테고리 매핑: **organic**(tree/flower, 녹/흰, 8발, 중력 60) / **mineral**(rock/pillar/shard, 회/검, 10발, 중력 120) / **shadow**(dusk_spider/보스 기본, 보라/검, 12발, 중력 40)
+- **공개 API**: `EffectsSystem.request_hit_particle(world_pos, category, is_finish, finish_attribute)` + `resolve_enemy_category(enemy_type)`. 상수 `CATEGORY_ORGANIC/MINERAL/SHADOW`
+- 피니시 시 `amount ×2.0`, `initial_velocity_min/max ×1.3`, color_ramp tint를 속성색(light=흰 / shadow=보라 / hybrid=앰버)으로 swap
+- 연결: `base_enemy._on_hurtbox_area_entered` + `base_boss._play_hit_feedback` 각 1줄
+- **아트 명세** `docs/art_specs/hit_particles.md` 신규: 8×8 단색 3장(organic_leaf/mineral_chip/shadow_mote). 내부 채색 금지, 흰/회색 단계만
+- `ART_RESOURCE_LIST` #45~47 카테고리 기반 재작성. #47 비트맵 폰트 폐기 표기(D7-4 LabelSettings 대체)
+
+**파이프라인 주의점 — 신규 `class_name` 추가 시 캐시 갱신 필요**
+- `EffectsHitParticle`, `EffectsParticlePresetsData` 같은 새 `class_name` 등록 후 `--headless --quit`만 돌리면 `Could not find type "..." in the current scope` 파스 에러 발생
+- **해결**: `godot --editor --headless --path ... --quit` 1회 실행으로 `.godot/global_script_class_cache.cfg` 갱신
+- 이후 일반 `--headless --quit` 정상 동작
+
+**Pass 2 검증**: gdlint 클린, `--headless --quit` 클린(캐시 갱신 후)
 
 ### 결정 대기
 - ~~**D7** EFFECTS.md 디렉션 6가지~~ — ✅ 확정 (2026-04-19). EFFECTS.md §5 결정 반영. 잠정(provisional)으로 기록됨 — 아트 작업 중 변경 가능. `effects_config`에서 `fire`→`hybrid`, `dark`→`shadow` 네이밍 정정 동반.

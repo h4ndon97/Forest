@@ -420,11 +420,11 @@ GDD에서 확정된 환경 오브젝트:
 | 환경 오브젝트 전투 활용 — 렌즈 | ✅ Phase 2-5c 완료 | LensData + FocusZone + 강도 override(min 병합, focus_intensity=0.1) + 4프리셋 회전 |
 | 환경 오브젝트 전투 활용 — 반사 바닥 | ✅ Phase 2-5d 완료 | ReflectiveFloorData + InfluenceZone + baseline × reflect_multiplier(0.5, 이중 약화) + 정적/비상호작용 + _process 재적용 |
 | HP 성장 곡선 | 미결 | 밸런싱 단계에서 결정 |
-| **힛 플래시 (피격 시 화이트 플래시)** | 미구현 → Phase 3-7 Pass 2 | 전 Damageable 공통 shader. 피니시 속성별 색상 분기 (EFFECTS.md 선택지 #2) |
-| **힛스톱 (피격 시 프리즈)** | 미구현 → Phase 3-7 Pass 2 | `Engine.time_scale` + 약/중/강/피니시 3~4단계. CombatSystem API로 노출 |
-| **카메라 쉐이크 (trauma 기반)** | 미구현 → Phase 3-7 Pass 1/2 | 공격/피격/폭발 세기 분리. `add_trauma()` API |
-| **데미지 넘버 팝업 재설계** | 부분 구현 → Phase 3-7 Pass 2 | 현재 있음(섹션 6). 크리티컬/피니시 속성별 색상·스케일 차별화 필요 |
-| **혈흔/파편 파티클** | 미구현 → Phase 3-7 Pass 2 | GPUParticles2D. 적 타입별 색상 (나무=갈색, 바위=회색 등) |
+| **힛 플래시 (피격 시 화이트 플래시)** | ✅ 구현 완료 (Phase 3-7 Pass 1 + Pass 2, 2026-04-19) | `hit_flash.gdshader` canvas_item alpha-preserving + `EffectsSystem.request_hit_flash`. Pass 2에서 피니시 속성별 색상 분기 연결(light 흰 / shadow 보라 / hybrid 금) |
+| **힛스톱 (피격 시 프리즈)** | ✅ 구현 완료 (Phase 3-7 Pass 1, 2026-04-19) | `Engine.time_scale` + `ignore_time_scale=true` SceneTreeTimer. 프리셋 hit/critical/finish 3단계, `effects_config.tres` 외부화. `get_tree().paused` 중 거부(PauseMenu 호환) |
+| **카메라 쉐이크 (trauma 기반)** | ✅ 구현 완료 (Phase 3-7 Pass 1, 2026-04-19) | `player_camera_shake.gd` trauma² 감쇠, Player Camera2D 자식. `EventBus.screen_shake_requested` 구독. 프리셋 light/medium/heavy/finish. Pass 2에서 enemy 피니시 HEAVY→FINISH 정렬 |
+| **데미지 넘버 팝업 재설계** | ✅ 구현 완료 (Phase 3-7 Pass 2 Step 2, df1b376, 2026-04-19) | Galmuri11 LabelSettings + shadow_offset 1px 아웃라인. 3티어: 일반=흰/12px, 크리티컬=노랑/14px + scale 1.4 TRANS_BACK 오버슛, 피니시=속성색 LDR/14px + 가로 쉐이크. 보스 약점 히트=크리티컬(확률 시스템 미도입) |
+| **피격 파티클 (3 카테고리)** | ✅ 구현 완료 (Phase 3-7 Pass 2 Step 3, 469d7b3, 2026-04-19) | GPUParticles2D 풀 2×3=6개 round-robin. organic(tree/flower, 녹/흰) / mineral(rock/pillar/shard, 회/검) / shadow(dusk_spider/보스, 보라/검). `EffectsSystem.request_hit_particle` + `resolve_enemy_category`. 피니시 시 amount×2.0 / speed×1.3 + color_ramp 속성색 swap. 4×4 흰색 fallback 텍스처로 아트 없이 플레이어블. 아트 명세 `docs/art_specs/hit_particles.md` |
 | **슬래시 트레일 + 검광** | 미구현 → Phase 3-7 Pass 5c | 콤보 1~3타 Line2D, 피니시는 전용 스프라이트 |
 | **피니시 컷인 (줌 + 슬로우 + 블랙바)** | 미구현 → Phase 3-7 Pass 5c | 보스/엘리트 마지막 일격 |
 | 무적 깜빡임 | 미구현 | 피격 후 0.5s 무적 동안 modulate 점멸. 아트 불필요(코드만) |
