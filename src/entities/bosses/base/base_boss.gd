@@ -64,6 +64,12 @@ func _ready() -> void:
 		weak_point.setup(self, boss_data.weak_point_offset, boss_data.weak_point_radius)
 	EventBus.boss_weak_point_exposed.connect(_on_weak_point_exposed)
 
+	if has_node("Visual"):
+		var visual: Node = get_node("Visual")
+		if visual.has_method("configure"):
+			var size := Vector2(base_stats.collision_width, base_stats.collision_height)
+			visual.configure(size, boss_data.weak_point_offset)
+
 	hitbox.monitoring = false
 	hitbox.monitorable = false
 

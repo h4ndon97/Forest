@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://src/entities/bosses/base/base_boss.gd" id="1"]
 [ext_resource type="Script" path="res://src/entities/bosses/base/boss_state_machine.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://src/entities/enemies/base/enemy_animation.gd" id="6"]
 [ext_resource type="Script" path="res://src/systems/shadow/shadow_caster.gd" id="7"]
 [ext_resource type="Script" path="res://src/entities/bosses/base/boss_weak_point.gd" id="8"]
+[ext_resource type="Script" path="res://src/entities/bosses/zone1/ancient_oakheart_visual.gd" id="9"]
 [ext_resource type="Resource" path="res://data/bosses/zone1/ancient_oakheart.tres" id="boss_data"]
 
 [sub_resource type="RectangleShape2D" id="body_shape"]
@@ -109,9 +110,5 @@ mouse_filter = 2
 
 [node name="Defense" type="Node" parent="."]
 
-[node name="FallbackSprite" type="ColorRect" parent="."]
-offset_left = -28.0
-offset_top = -72.0
-offset_right = 28.0
-offset_bottom = 0.0
-color = Color(0.32, 0.18, 0.1, 1.0)
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("9")
