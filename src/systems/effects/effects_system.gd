@@ -103,14 +103,14 @@ func get_config() -> EffectsConfigData:
 
 
 func get_finish_color(attribute: String) -> Color:
-	# Pass 2에서 사용 — 미리 노출
+	# D7-2: 프로젝트 속성 체계 light/shadow/hybrid와 일치
 	match attribute:
 		"light":
 			return _config.finish_color_light
-		"dark":
-			return _config.finish_color_dark
-		"fire":
-			return _config.finish_color_fire
+		"shadow":
+			return _config.finish_color_shadow
+		"hybrid":
+			return _config.finish_color_hybrid
 		_:
 			return _config.default_flash_color
 

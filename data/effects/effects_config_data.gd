@@ -18,11 +18,12 @@ extends Resource
 ## attack: rise / total = peak 도달 비율 (0~1)
 @export_range(0.0, 1.0, 0.05) var flash_attack_ratio: float = 0.25
 
-# === 힛 플래시 — 피니시 속성별 (Pass 2에서 사용, Pass 1은 값만 보유) ===
-@export_subgroup("Finish Attribute Colors (Pass 2)")
+# === 힛 플래시 — 피니시 속성별 (D7-2 결정: 속성별 분기) ===
+# 프로젝트 속성 체계(light/shadow/hybrid)와 일치. HDR(1.5~2.5)로 오버브라이트 연출.
+@export_subgroup("Finish Attribute Colors")
 @export var finish_color_light: Color = Color(2.5, 2.5, 2.5, 1.0)
-@export var finish_color_dark: Color = Color(1.6, 0.4, 2.2, 1.0)
-@export var finish_color_fire: Color = Color(2.5, 1.4, 0.4, 1.0)
+@export var finish_color_shadow: Color = Color(1.6, 0.4, 2.2, 1.0)
+@export var finish_color_hybrid: Color = Color(2.4, 1.9, 0.6, 1.0)
 
 # === 카메라 쉐이크 ===
 @export_group("Camera Shake")

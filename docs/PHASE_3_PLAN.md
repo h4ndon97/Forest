@@ -26,7 +26,7 @@
 | **Phase 3-6 메뉴 마감 (3-6-a/b/c)** | **✅ 완료 (2026-04-19) — 월드맵 상세 패널 + 인벤토리 5-파일 분리(EquipmentTab+SkillTab+Navigator+TabController, Q/E 탭·F·Enter 장착·J 탭별 분기·attack 액션 이중 발화 차단) + MenuFrame/MenuSelectionRect 공통 컴포넌트 + KEYMAP v0.3. 미니맵은 Phase 4 이월. §8 구현 결과 참조** |
 | **Phase 3-7 Pass 1 이펙트 프레임워크** | **✅ 완료 (2026-04-19) — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres + 디버그 키 F6~F9. Damageable 3건(플레이어/적/보스) 연동. §9 구현 결과 참조** |
 
-**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 프레임워크 완료. 다음=D7 6가지 디렉션 결정 + Pass 2 이후.** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월
+**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 프레임워크 완료 + D7 6가지 디렉션 결정 완료. 다음=Pass 2 (전투 타격감) 착수 가능.** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 이월
 
 ---
 
@@ -453,7 +453,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 ### 이펙트 로드맵 (EFFECTS.md Pass 1~5c 일괄 적용, **안 A 확정**)
 - **Pass 1** ✅ 완료 (2026-04-19): 프레임워크 — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres
-- **Pass 2**: 힛 플래시 + 힛스톱 튜닝 + 데미지 넘버 재설계 + 파티클 (D7 디렉션 결정 후)
+- **Pass 2**: 힛 플래시(D7-2 속성별 분기) + 힛스톱 튜닝 + 데미지 넘버 재설계(D7-4 Galmuri11) + 파티클 — D7 결정 반영 가능 (2026-04-19~)
 - **Pass 5c**: 슬래시 트레일 + 검광 + 피니시 컷인
 
 ### 구현 결과 (2026-04-19 Pass 1)
@@ -465,7 +465,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - **검증**: gdlint 클린, gdformat 적용, `--headless --quit` 클린, Code Reviewer agent PASS
 
 ### 결정 대기
-- **D7** EFFECTS.md 디렉션 6가지 — Pass 2 착수 전 확정 필요 (Pass 1 프레임워크는 모든 색/지속시간이 `.tres` 외부화로 영향 없음)
+- ~~**D7** EFFECTS.md 디렉션 6가지~~ — ✅ 확정 (2026-04-19). EFFECTS.md §5 결정 반영. 잠정(provisional)으로 기록됨 — 아트 작업 중 변경 가능. `effects_config`에서 `fire`→`hybrid`, `dark`→`shadow` 네이밍 정정 동반.
 - **D8** UI 아트 팔레트/톤/모티프 — 잠정 기록, 아트 작업 중 변경 가능
 
 ### 제작 순서 (권장)
@@ -516,7 +516,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 | ~~D4~~ | ~~1구역 보스 컨셉 (3안 중 1)~~ | ✅ 확정 (2026-04-18) — **A 거대 고목**, §5 참조 |
 | ~~D5~~ | ~~1구역 보스 보상 강화 이동 (빛 대시 확정 여부)~~ | ✅ 확정 (2026-04-18) — **빛 대시**, §5 참조 |
 | D6 | 시작 마을 NPC 대화 흐름 | ✅ 확정 (2026-04-18) — §6 참조 |
-| D7 | EFFECTS.md 디렉션 6가지 | Pass 2 착수 전 (Pass 1 프레임워크는 무관하게 완료) |
+| ~~D7~~ | ~~EFFECTS.md 디렉션 6가지~~ | ✅ 확정 (2026-04-19) — 세피아/속성별 힛플래시/거리별 보간 경고/Galmuri11 넘버/혼합 앰비언트/HP pip. EFFECTS.md §5 참조 |
 | D8 | UI 아트 팔레트/톤/모티프 | 3-7 착수 전 |
 | D9 | 사운드 제작 방식 | 3-8 착수 전 |
 | ~~D10~~ | ~~영역 구분 방식(zone_id vs prefix)~~ | ✅ 확정 (2026-04-18) — **zone_id 필드**, §7 참조 |
