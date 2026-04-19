@@ -16,6 +16,7 @@ const HitFlashScript = preload("res://src/systems/effects/effects_hit_flash.gd")
 const HitstopScript = preload("res://src/systems/effects/effects_hitstop.gd")
 const HitParticleScript = preload("res://src/systems/effects/effects_hit_particle.gd")
 const TimeStopScript = preload("res://src/systems/effects/effects_time_stop.gd")
+const FreezableScript = preload("res://src/systems/effects/effects_freezable.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
@@ -37,6 +38,7 @@ var _hit_flash: EffectsHitFlash
 var _hitstop: EffectsHitstop
 var _hit_particle: EffectsHitParticle
 var _time_stop: EffectsTimeStop
+var _freezable: EffectsFreezable
 
 
 func _ready() -> void:
@@ -48,6 +50,7 @@ func _ready() -> void:
 	_hitstop = HitstopScript.new(get_tree(), _config.hitstop_scale, _config.hitstop_enabled)
 	_hit_particle = HitParticleScript.new(self, _load_particle_presets())
 	_time_stop = TimeStopScript.new(self, _config)
+	_freezable = FreezableScript.new(self)
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
@@ -126,11 +129,15 @@ func request_hit_particle(
 	_hit_particle.emit(world_pos, category, is_finish)
 
 
-## Pass 3 디버그: 시간 정지 연출 Tween 트랜지션 토글(TimeSystem 상태는 건드리지 않음).
+## Pass 3 디버그: 시간 정지 연출 Tween 트랜지션 + freezable 그룹 토글.
+## TimeSystem 상태는 건드리지 않는다(EventBus emit 없음) — 적 정지/클럭 사이드이펙트 회피.
 func debug_toggle_time_stop() -> void:
 	if _time_stop == null:
 		return
-	_time_stop.apply_transition(not _time_stop.is_applied())
+	var next_on: bool = not _time_stop.is_applied()
+	_time_stop.apply_transition(next_on)
+	if _freezable != null:
+		_freezable.apply(next_on)
 
 
 func resolve_enemy_category(enemy_type: String) -> StringName:

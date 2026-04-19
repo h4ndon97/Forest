@@ -28,9 +28,10 @@
 | **Phase 3-7 D7 6 디렉션** | **✅ 확정 (2026-04-19, 7b30d51, 잠정) — 시간정지 세피아 / 힛플래시 속성별 분기 / 땅거미 거리 보간 / 데미지 넘버 Galmuri11 / 앰비언트 낮 꽃가루+밤 반딧불 / HUD 구슬 pip. §9 결정 대기 참조** |
 | **Phase 3-7 Pass 2 전투 타격감** | **✅ 완료 (2026-04-19) — Step 1 피니시 속성→힛플래시 색 체인(2c1d41f) + Step 2 데미지 넘버 3티어 재설계 Galmuri11 LabelSettings(df1b376) + Step 3 피격 파티클 3 카테고리 풀 시스템(469d7b3). §9 구현 결과 (Pass 2) 참조** |
 | **Phase 3-7 Pass 3 Step 1 세피아 프레임워크** | **✅ 완료 (2026-04-19, 미커밋) — `time_stop_sepia.gdshader` 신규 + `EffectsTimeStop` RefCounted 헬퍼 + `EffectsConfigData` Time Stop 그룹 9필드 + 디버그 키 F12 토글. **D7-1 재조정**: "주변부 색상 유지" 해석 폐기, 화면 전체 균일 세피아로 확정(사용자 체감 검증). §9 구현 결과 (Pass 3 Step 1) 참조** |
-| **Phase 3-7 Pass 3 Step 2 Tween 트랜지션** | **✅ 완료 (2026-04-19, 미커밋) — `EffectsTimeStop`이 EventBus `time_flow_started/stopped` 구독 + `apply_transition` Tween(`set_ignore_time_scale(true)`, 0.30s) 추가. `_current_weight` 로컬 추적, `_weight_tween.kill()` 재진입 안전. F12 디버그는 `apply_instant`→`apply_transition`으로 전환되어 동일 Tween 미리보기. §9 구현 결과 (Pass 3 Step 2) 참조** |
+| **Phase 3-7 Pass 3 Step 2 Tween 트랜지션** | **✅ 완료 (2026-04-19, 904bace) — `EffectsTimeStop`이 EventBus `time_flow_started/stopped` 구독 + `apply_transition` Tween(`set_ignore_time_scale(true)`, 0.30s) 추가. `_current_weight` 로컬 추적, `_weight_tween.kill()` 재진입 안전. F12 디버그는 `apply_instant`→`apply_transition`으로 전환되어 동일 Tween 미리보기. §9 구현 결과 (Pass 3 Step 2) 참조** |
+| **Phase 3-7 Pass 3 Step 3 Freezable 그룹 + 플레이어 숨결** | **✅ 완료 (2026-04-19, 미커밋) — `EffectsFreezable` RefCounted 헬퍼 신규(`EventBus.time_flow_stopped/started` 구독 → `call_group("freezable_particles", &"set", "speed_scale", 0.0/1.0)`). Player.tscn에 `BreathParticles` GPUParticles2D 추가(그룹 비가입, speed_scale=1 고정, 위치 `(4,-28)`, process_material·GradientTexture 모두 scene sub_resource로 베이킹). F12 디버그가 셰이더 Tween + 그룹 토글 동시 호출. §9 구현 결과 (Pass 3 Step 3) 참조** |
 
-**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2 완료. 다음=Pass 3 Step 3~4 (플레이어 숨결 파티클 / 블루 펄스+잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
+**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2·3 완료. 다음=Pass 3 Step 4 (해제 블루 펄스 + 플레이어 잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
 ---
 
@@ -459,9 +460,9 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - **Pass 1** ✅ 완료 (2026-04-19): 프레임워크 — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres
 - **Pass 2** ✅ 완료 (2026-04-19): 힛 플래시 속성별 분기(D7-2) + 데미지 넘버 재설계(D7-4 Galmuri11) + 피격 파티클 3 카테고리. Step 1/2/3 커밋 분리
 - **Pass 3** (진행 중 2026-04-19~): 시간 정지 연출 — **D7-1 재조정: 화면 전체 균일 세피아**(원안 "주변부 색 유지" 폐기)
-  - **Step 1** ✅ 완료 (2026-04-19, 미커밋): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
-  - **Step 2** ✅ 완료 (2026-04-19, 미커밋): EventBus 구독(`time_flow_started/stopped`) + `apply_transition` weight Tween(0.30s, `set_ignore_time_scale(true)`) + `_weight_tween.kill()` 재진입 처리. F12는 Tween 미리보기로 전환
-  - **Step 3** (예정): 플레이어 주변 파티클(freezable_particles 그룹 정지 + breath_particles 예외)
+  - **Step 1** ✅ 완료 (2026-04-19, 25acfa7): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
+  - **Step 2** ✅ 완료 (2026-04-19, 904bace): EventBus 구독(`time_flow_started/stopped`) + `apply_transition` weight Tween(0.30s, `set_ignore_time_scale(true)`) + `_weight_tween.kill()` 재진입 처리. F12는 Tween 미리보기로 전환
+  - **Step 3** ✅ 완료 (2026-04-19, 미커밋): `EffectsFreezable` 헬퍼 + Player.tscn `BreathParticles` 노드(그룹 비가입, speed_scale=1 고정). F12 디버그가 셰이더·그룹 동시 토글
   - **Step 4** (예정): 해제 시 블루 펄스 + 플레이어 잔상
 - **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
 - **Pass 5** (예정): 앰비언트 파티클(D7-5 낮 꽃가루 + 밤 반딧불) + HUD 구슬 pip(D7-6) + 환경/컷인
@@ -554,7 +555,34 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 **Step 2 검증**: gdlint 클린(2개 파일), `--headless --quit` 클린
 
-**다음 단계 (Step 3)**: 플레이어 자식 `breath_particles`(speed_scale=1 유지) + 월드 배경 파티클 `freezable_particles` 그룹 speed_scale=0 토글. EventBus `time_flow_stopped/started` 구독 주체는 별도 헬퍼(`EffectsFreezable` 가칭) 권장.
+### 구현 결과 (2026-04-19 Pass 3 Step 3 — Freezable 그룹 + 플레이어 숨결)
+
+**신규 파일 1**
+- `src/systems/effects/effects_freezable.gd` (~35줄, `class_name EffectsFreezable`, RefCounted):
+  - 상수 `GROUP_FREEZABLE = &"freezable_particles"`, `PROP_SPEED_SCALE = &"speed_scale"`
+  - `_init(host)`에서 `EventBus.time_flow_stopped.connect(_on_time_flow_stopped)` + `time_flow_started.connect(_on_time_flow_started)`
+  - `apply(frozen: bool)`: `_host.get_tree().call_group(GROUP_FREEZABLE, &"set", PROP_SPEED_SCALE, 0.0 or 1.0)`. 디버그·초기화 경로용 수동 토글
+  - `_on_time_flow_stopped/started`가 `apply(true/false)` 호출
+
+**수정 파일 2**
+- `src/systems/effects/effects_system.gd`:
+  - `FreezableScript` preload + `_freezable: EffectsFreezable` 멤버 + `_ready`에서 `FreezableScript.new(self)` 인스턴스화
+  - `debug_toggle_time_stop()`이 셰이더 `apply_transition` + `_freezable.apply()` 동시 호출. TimeSystem 상태는 여전히 미조작
+- `src/entities/player/Player.tscn`:
+  - `load_steps` 34 → 39
+  - 신규 sub_resource 5개: `Gradient`(breath_shape) / `GradientTexture2D`(breath_texture, 4×4 흰) / `Gradient`(breath_ramp, alpha 0.85→0.45→0) / `GradientTexture1D`(breath_color_ramp) / `ParticleProcessMaterial`(breath_material: direction=(0,-1,0), spread=20°, gravity=(0,-10,0), velocity 6~14, damping 8~15, scale 0.8~1.2)
+  - 신규 노드 `BreathParticles` (GPUParticles2D, 플레이어 루트 직속 자식): 위치 `(4,-28)`, amount=3 / lifetime=1.2 / explosiveness=0 / randomness=0.4 / speed_scale=1.0 / texture·process_material=sub_resource. **`freezable_particles` 그룹 비가입**(시간 정지 예외)
+
+**설계 결정**
+- **단일 책임 분리**: `EffectsTimeStop` = 셰이더 전담 / `EffectsFreezable` = 그룹 전담. 하나의 헬퍼가 두 책임을 지면 Step 4 펄스·잔상 추가 시 확장 어려움
+- **Player 커플링 없음**: BreathParticles는 scene sub_resource로 베이킹 — `player.gd` 수정 0줄. 시각 파라미터 튜닝은 Player.tscn 인스펙터에서 직접 수행
+- **preset 필드 미도입**: `EffectsParticlePresetsData`는 "피격 파티클 카테고리"에 의미가 집중(organic/mineral/shadow) → 플레이어 고유 숨결은 별도 카테고리로 확장하면 의미가 흐려짐. 데이터-in-Resource 원칙(§2.4)은 scene sub_resource도 Resource이므로 충족
+- **F12 통합 토글**: 셰이더와 그룹이 함께 전환되어야 시각 검증이 직관적. EventBus emit은 여전히 금지(TimeSystem 상태 비오염)
+- **그룹 멤버 현재 0개**: Step 3 단계에서는 `freezable_particles` 가입 파티클 없음. Pass 5 앰비언트(꽃가루/반딧불) 합류 시 자동 편입 — 프레임워크 선행
+
+**Step 3 검증**: gdlint 클린(2개 파일 `effects_freezable.gd` + `effects_system.gd`), `--editor --headless --quit`로 `class_name EffectsFreezable` 캐시 갱신 후 `--headless --quit` 로드 클린. Player.tscn 파싱 에러 없음(editor indexing 통과)
+
+**다음 단계 (Step 4)**: 해제 시 블루 펄스 (`request_screen_flash` 재사용 — 이미 Pass 1 인프라) + 플레이어 잔상 (`EffectsAfterimage` 가칭 헬퍼). `EffectsConfigData` Time Stop 그룹에 이미 예약된 `blue_pulse_color/duration` + `afterimage_count/interval/fade` 필드 활용. 잔상은 Light Dash 재사용성 고려.
 
 ### 결정 대기
 - ~~**D7** EFFECTS.md 디렉션 6가지~~ — ✅ 확정 (2026-04-19). EFFECTS.md §5 결정 반영. 잠정(provisional)으로 기록됨 — 아트 작업 중 변경 가능. `effects_config`에서 `fire`→`hybrid`, `dark`→`shadow` 네이밍 정정 동반.

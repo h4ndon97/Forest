@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene load_steps=39 format=3]
 
 [ext_resource type="Script" path="res://src/entities/player/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player/player_spritesheet.png" id="2"]
@@ -151,6 +151,33 @@ size = Vector2(14, 28)
 [sub_resource type="CircleShape2D" id="env_interact_shape"]
 radius = 48.0
 
+[sub_resource type="Gradient" id="breath_shape_gradient"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="breath_texture"]
+gradient = SubResource("breath_shape_gradient")
+width = 4
+height = 4
+
+[sub_resource type="Gradient" id="breath_ramp_gradient"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(1, 1, 1, 0.85, 1, 1, 1, 0.45, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture1D" id="breath_color_ramp"]
+gradient = SubResource("breath_ramp_gradient")
+
+[sub_resource type="ParticleProcessMaterial" id="breath_material"]
+direction = Vector3(0, -1, 0)
+spread = 15.0
+gravity = Vector3(0, -5, 0)
+initial_velocity_min = 3.0
+initial_velocity_max = 7.0
+damping_min = 6.0
+damping_max = 10.0
+scale_min = 0.8
+scale_max = 1.2
+color_ramp = SubResource("breath_color_ramp")
+
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 2
 collision_mask = 1
@@ -225,3 +252,13 @@ script = ExtResource("12")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="EnvironmentInteractor"]
 shape = SubResource("env_interact_shape")
+
+[node name="BreathParticles" type="GPUParticles2D" parent="."]
+position = Vector2(4, -28)
+amount = 2
+lifetime = 1.8
+explosiveness = 0.0
+randomness = 0.6
+speed_scale = 1.0
+process_material = SubResource("breath_material")
+texture = SubResource("breath_texture")
