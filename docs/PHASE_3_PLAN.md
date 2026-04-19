@@ -27,8 +27,9 @@
 | **Phase 3-7 Pass 1 이펙트 프레임워크** | **✅ 완료 (2026-04-19) — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres + 디버그 키 F6~F9. Damageable 3건(플레이어/적/보스) 연동. §9 구현 결과 참조** |
 | **Phase 3-7 D7 6 디렉션** | **✅ 확정 (2026-04-19, 7b30d51, 잠정) — 시간정지 세피아 / 힛플래시 속성별 분기 / 땅거미 거리 보간 / 데미지 넘버 Galmuri11 / 앰비언트 낮 꽃가루+밤 반딧불 / HUD 구슬 pip. §9 결정 대기 참조** |
 | **Phase 3-7 Pass 2 전투 타격감** | **✅ 완료 (2026-04-19) — Step 1 피니시 속성→힛플래시 색 체인(2c1d41f) + Step 2 데미지 넘버 3티어 재설계 Galmuri11 LabelSettings(df1b376) + Step 3 피격 파티클 3 카테고리 풀 시스템(469d7b3). §9 구현 결과 (Pass 2) 참조** |
+| **Phase 3-7 Pass 3 Step 1 세피아 프레임워크** | **✅ 완료 (2026-04-19, 미커밋) — `time_stop_sepia.gdshader` 신규 + `EffectsTimeStop` RefCounted 헬퍼 + `EffectsConfigData` Time Stop 그룹 9필드 + 디버그 키 F12 토글. **D7-1 재조정**: "주변부 색상 유지" 해석 폐기, 화면 전체 균일 세피아로 확정(사용자 체감 검증). §9 구현 결과 (Pass 3 Step 1) 참조** |
 
-**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 전체 완료. 다음=Pass 3 시간 정지 연출(세피아 포스트프로세스 + Tween 트랜지션) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
+**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1 완료. 다음=Pass 3 Step 2~4 (EventBus Tween / 플레이어 숨결 파티클 / 블루 펄스+잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
 ---
 
@@ -456,7 +457,11 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 ### 이펙트 로드맵 (EFFECTS.md Pass 1~5c 일괄 적용, **안 A 확정**)
 - **Pass 1** ✅ 완료 (2026-04-19): 프레임워크 — EffectsSystem/OverlaySystem Autoload + 카메라 쉐이크(trauma²) + 힛플래시 셰이더 + 힛스톱 + effects_config.tres
 - **Pass 2** ✅ 완료 (2026-04-19): 힛 플래시 속성별 분기(D7-2) + 데미지 넘버 재설계(D7-4 Galmuri11) + 피격 파티클 3 카테고리. Step 1/2/3 커밋 분리
-- **Pass 3** (예정): 시간 정지 연출(D7-1 세피아 + 주변부 색 유지) — 포스트프로세스 ColorRect + Tween 트랜지션 + 주변 파티클
+- **Pass 3** (진행 중 2026-04-19~): 시간 정지 연출 — **D7-1 재조정: 화면 전체 균일 세피아**(원안 "주변부 색 유지" 폐기)
+  - **Step 1** ✅ 완료 (2026-04-19, 미커밋): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
+  - **Step 2** (예정): EventBus 구독(`time_flow_started/stopped`) + weight Tween 트랜지션(0.3s, ignore_time_scale)
+  - **Step 3** (예정): 플레이어 주변 파티클(freezable_particles 그룹 정지 + breath_particles 예외)
+  - **Step 4** (예정): 해제 시 블루 펄스 + 플레이어 잔상
 - **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
 - **Pass 5** (예정): 앰비언트 파티클(D7-5 낮 꽃가루 + 밤 반딧불) + HUD 구슬 pip(D7-6) + 환경/컷인
 - **Pass 5c**: 슬래시 트레일 + 검광 + 피니시 컷인
@@ -501,6 +506,35 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - 이후 일반 `--headless --quit` 정상 동작
 
 **Pass 2 검증**: gdlint 클린, `--headless --quit` 클린(캐시 갱신 후)
+
+### 구현 결과 (2026-04-19 Pass 3 Step 1 — 세피아 프레임워크)
+
+**신규 파일**
+- `assets/shaders/effects/time_stop_sepia.gdshader`: canvas_item + `hint_screen_texture`. `mix(original, sepia, weight)` 균일 적용. uniform: `weight` / `sepia_tone` / `tint_color` / `saturation_lerp`
+- `src/systems/effects/effects_time_stop.gd` (`class_name EffectsTimeStop`, RefCounted, ~50줄): `_init(host, config)`에서 `OverlaySystem.set_post_process_shader(SHADER)` + param 4개 세팅. `apply_instant(on: bool)` → weight를 0 또는 `config.time_stop_weight_target`로 즉시 설정
+
+**수정 파일 4**
+- `data/effects/effects_config_data.gd`: `@export_group("Time Stop (Pass 3)")` — 9개 필드 (sepia_tone / tint_color / saturation_lerp / weight_target / transition_duration / blue_pulse_color·duration / afterimage_count·interval·fade — Step 2~4 예약 포함)
+- `src/systems/effects/effects_system.gd`: `TimeStopScript` preload + `_time_stop` 멤버 + `_ready()` 인스턴스화 + `debug_toggle_time_stop()` API
+- `src/systems/effects/effects_debug.gd`: `KEY_TIME_STOP = KEY_F12` (F10/F11은 InventorySystem 선점)
+
+**D7-1 재조정 내역 (사용자 체감 검증)**
+- 원안: "세피아 + 주변부만 색상 유지" (edge vignette 마스크)
+- 검증 결과: 중앙 원형만 세피아 상태가 "터널 시야"처럼 보여 몰입감 저하
+- 확정: **화면 전체 균일 세피아**. edge_mask_radius / edge_softness uniform 완전 제거. `time_stop_saturation_lerp`(0.15)와 `time_stop_weight_target`(1.0)으로 강도 조정 가능
+- EFFECTS.md §5-1 동시 갱신
+
+**디버그 키 F12 배정 근거**
+- F5·F6·F7·F9 = GrowthSystem
+- F6·F7·F8·F9 = 이펙트 Pass 1
+- F10·F11 = InventorySystem
+- → F12가 유일한 미점유 키
+
+**파이프라인 주의점 재확인**: 신규 `class_name EffectsTimeStop` 등록 후 일반 `--headless --quit`만 돌리면 parse error. `godot --editor --headless --path ... --quit` 1회 실행으로 `.godot/global_script_class_cache.cfg` 갱신 필요 (Pass 2 Step 3에서 확인된 현상 재현)
+
+**Step 1 검증**: gdlint 클린 (4개 파일), 헤드리스 로드 클린. 사용자 F12 토글 체감 OK
+
+**다음 단계 (Step 2)**: `EffectsTimeStop`에 `EventBus.time_flow_started/stopped` 구독 추가 + weight Tween 트랜지션(`config.time_stop_transition_duration` = 0.30s, `set_ignore_time_scale(true)`). `_weight_tween.kill()` 재진입 처리.
 
 ### 결정 대기
 - ~~**D7** EFFECTS.md 디렉션 6가지~~ — ✅ 확정 (2026-04-19). EFFECTS.md §5 결정 반영. 잠정(provisional)으로 기록됨 — 아트 작업 중 변경 가능. `effects_config`에서 `fire`→`hybrid`, `dark`→`shadow` 네이밍 정정 동반.

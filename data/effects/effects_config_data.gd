@@ -52,6 +52,20 @@ extends Resource
 @export var flash_default_color: Color = Color(1.0, 1.0, 1.0, 0.6)
 @export var flash_default_duration: float = 0.08
 
+# === 시간 정지 연출 (Pass 3, D7-1 재조정: 화면 전체 균일 세피아) ===
+@export_group("Time Stop (Pass 3)")
+@export var time_stop_sepia_tone: Color = Color(0.74, 0.55, 0.33, 1.0)
+@export var time_stop_tint_color: Color = Color(0.90, 0.75, 0.55, 1.0)
+@export_range(0.0, 1.0, 0.01) var time_stop_saturation_lerp: float = 0.15
+## 최대 weight — 접근성 감쇠용 (0.0=OFF, 1.0=풀)
+@export_range(0.0, 1.0, 0.01) var time_stop_weight_target: float = 1.0
+@export var time_stop_transition_duration: float = 0.30
+@export var time_stop_blue_pulse_color: Color = Color(0.45, 0.75, 1.20, 0.55)
+@export var time_stop_blue_pulse_duration: float = 0.18
+@export var time_stop_afterimage_count: int = 3
+@export var time_stop_afterimage_interval: float = 0.04
+@export var time_stop_afterimage_fade: float = 0.25
+
 # === 접근성 (Phase 5-2에서 UI 노출) ===
 @export_group("Accessibility")
 ## 0.0 = 쉐이크 OFF
