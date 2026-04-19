@@ -832,17 +832,16 @@ aseprite --batch hud_time_sun.ase --sheet hud_time_sun.png --split-tags
 
 | # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
 |---|---|---|---|---|---|
-| 45 | 혈흔 파티클 | 8x8, 3종 변형 | `assets/sprites/effects/` | `particle_blood_01.png` ~ `particle_blood_03.png` | GPUParticles2D 텍스처. 적 타입별 색상은 코드 modulate |
-| 46 | 파편/흙 파티클 | 8x8, 3종 변형 | `assets/sprites/effects/` | `particle_debris_01.png` ~ `03.png` | 바위/나무 적 피격 시 |
-| 47 | 데미지 비트맵 폰트 (선택) | BitmapFont (.fnt + .png) | `assets/ui/` | `font_damage.fnt` | **아트 디렉션 선택지 #4에서 (A) 선택 시만 필요**. (B) Label+아웃라인 셰이더 선택 시 생략 |
+| 45 | 파티클 — organic (숲 생명체) | 8x8 단색 | `assets/sprites/effects/hit_particles/` | `organic_leaf.png` | tree/flower 계열 피격. 찢어진 잎·수액 방울. 흰/회색 단계만, 색은 코드 ramp. 상세: `docs/art_specs/hit_particles.md` |
+| 46 | 파티클 — mineral (돌/결정) | 8x8 단색 | `assets/sprites/effects/hit_particles/` | `mineral_chip.png` | rock/pillar/shard 피격. 각진 돌 파편 |
+| 47 | 파티클 — shadow (그림자/보스) | 8x8 단색 | `assets/sprites/effects/hit_particles/` | `shadow_mote.png` | dusk_spider/보스 피격. 흐릿한 입자 |
+| ~~48~~ | ~~데미지 비트맵 폰트~~ | ~~BitmapFont~~ | — | — | **불필요 (2026-04-19)** — D7-4 결정에서 Galmuri11 LabelSettings + shadow_offset 아웃라인으로 확정. Pass 2 Step 2 구현 완료 |
 
 ### 제작 가이드
 
-**파티클 텍스처**: 작은 점/얼룩 픽셀아트. 흰색 단색 기본, 코드에서 modulate로 색 변경(피=붉음, 나무=갈색, 바위=회색). 3~5종 랜덤이면 자연스러움.
+**파티클 3종 (#45~#47)**: 각 카테고리당 단판 1장. 8×8, 방향성 없는 모양, **흰색·회색 단계 음영만** — 색은 런타임 color_ramp가 부여하므로 내부 채색 금지. 제작 전까지 4×4 흰색 fallback으로 동작 중. 상세 규격·교체 절차는 `docs/art_specs/hit_particles.md`.
 
-**비트맵 폰트**: 데미지 숫자 0~9 + 크리티컬용 "!". 8~12px 높이 권장. 선택지 #4 결정 후 제작.
-
-**우선순위**: 45 > 46 > 47 (선택)
+**우선순위**: 45 = 46 = 47 (동등) — 어느 쪽부터 제작해도 해당 카테고리만 즉시 반영
 
 ---
 

@@ -256,6 +256,12 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		else:
 			EffectsSystem.request_shake(EffectsSystem.PRESET_LIGHT)
 			EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
+		var category: StringName = EffectsSystem.resolve_enemy_category(
+			stats_data.enemy_type if stats_data else ""
+		)
+		EffectsSystem.request_hit_particle(
+			global_position + Vector2(0, -8), category, is_finish, attribute
+		)
 		take_damage(damage)
 		_spawn_damage_number(damage, is_finish, attribute)
 		EventBus.damage_dealt.emit(enemy_id, damage)

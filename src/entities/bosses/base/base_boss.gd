@@ -173,6 +173,9 @@ func _play_hit_feedback(is_finish: bool, is_weak_point: bool, finish_attribute: 
 	else:
 		EffectsSystem.request_shake(EffectsSystem.PRESET_MEDIUM)
 		EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
+	EffectsSystem.request_hit_particle(
+		global_position, EffectsSystem.CATEGORY_SHADOW, is_finish, finish_attribute
+	)
 
 
 ## PhaseController가 호출 — 공격 행동 스크립트를 런타임 swap한다.

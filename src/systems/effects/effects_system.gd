@@ -14,9 +14,11 @@ extends Node
 
 const HitFlashScript = preload("res://src/systems/effects/effects_hit_flash.gd")
 const HitstopScript = preload("res://src/systems/effects/effects_hitstop.gd")
+const HitParticleScript = preload("res://src/systems/effects/effects_hit_particle.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
+const PARTICLE_PRESETS_PATH: String = "res://data/effects/particle_presets.tres"
 
 const PRESET_LIGHT: StringName = &"light"
 const PRESET_MEDIUM: StringName = &"medium"
@@ -25,9 +27,14 @@ const PRESET_FINISH: StringName = &"finish"
 const PRESET_HIT: StringName = &"hit"
 const PRESET_CRITICAL: StringName = &"critical"
 
+const CATEGORY_ORGANIC: StringName = &"organic"
+const CATEGORY_MINERAL: StringName = &"mineral"
+const CATEGORY_SHADOW: StringName = &"shadow"
+
 var _config: EffectsConfigData
 var _hit_flash: EffectsHitFlash
 var _hitstop: EffectsHitstop
+var _hit_particle: EffectsHitParticle
 
 
 func _ready() -> void:
@@ -37,6 +44,7 @@ func _ready() -> void:
 		HIT_FLASH_SHADER, _config.flash_attack_ratio, _config.flash_intensity_mult
 	)
 	_hitstop = HitstopScript.new(get_tree(), _config.hitstop_scale, _config.hitstop_enabled)
+	_hit_particle = HitParticleScript.new(self, _load_particle_presets())
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
@@ -102,6 +110,33 @@ func get_config() -> EffectsConfigData:
 	return _config
 
 
+# === 공개 API: 파티클 ===
+
+
+func request_hit_particle(
+	world_pos: Vector2, category: StringName, is_finish: bool = false, finish_attribute: String = ""
+) -> void:
+	if _hit_particle == null:
+		return
+	if is_finish and finish_attribute != "":
+		_hit_particle.apply_finish_color(category, finish_attribute)
+	_hit_particle.emit(world_pos, category, is_finish)
+
+
+func resolve_enemy_category(enemy_type: String) -> StringName:
+	match enemy_type:
+		"tree", "flower":
+			return CATEGORY_ORGANIC
+		"rock", "pillar", "shard":
+			return CATEGORY_MINERAL
+		"dusk_spider":
+			return CATEGORY_SHADOW
+		_:
+			if enemy_type != "":
+				push_warning("EffectsSystem: unknown enemy_type '%s' → shadow fallback" % enemy_type)
+			return CATEGORY_SHADOW
+
+
 func get_finish_color(attribute: String) -> Color:
 	# D7-2: 프로젝트 속성 체계 light/shadow/hybrid와 일치
 	match attribute:
@@ -124,6 +159,15 @@ func _load_config() -> void:
 	if _config == null:
 		push_warning("EffectsSystem: config 누락 — 기본값으로 생성")
 		_config = EffectsConfigData.new()
+
+
+func _load_particle_presets() -> EffectsParticlePresetsData:
+	if ResourceLoader.exists(PARTICLE_PRESETS_PATH):
+		var presets := load(PARTICLE_PRESETS_PATH) as EffectsParticlePresetsData
+		if presets != null:
+			return presets
+	push_warning("EffectsSystem: particle_presets 누락 — 기본값으로 생성")
+	return EffectsParticlePresetsData.new()
 
 
 func _resolve_shake_preset(preset: StringName) -> float:
