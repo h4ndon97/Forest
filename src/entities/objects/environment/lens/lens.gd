@@ -12,10 +12,7 @@ var _affected_enemies: Dictionary = {}
 @onready var _rotation_pivot: Node2D = $RotationPivot
 @onready var _focus_zone: Area2D = $RotationPivot/FocusZone
 @onready var _focus_collision: CollisionShape2D = $RotationPivot/FocusZone/CollisionShape2D
-@onready var _focus_visual: ColorRect = $RotationPivot/FocusZone/FocusVisual
-@onready var _beam_visual: Polygon2D = $RotationPivot/BeamVisual
-@onready var _lens_body: Polygon2D = $RotationPivot/LensBody
-@onready var _lens_border: Line2D = $RotationPivot/LensBorder
+@onready var _visual: Node2D = $RotationPivot/Visual
 @onready var _highlight_node_local: Node2D = $Highlight
 @onready var _prompt_node_local: Node2D = $Prompt
 
@@ -30,9 +27,8 @@ func _ready() -> void:
 	data = lens_data
 	_preset_index = lens_data.initial_preset_index
 
-	_setup_beam_visual()
 	_setup_focus_zone()
-	_setup_body_visual()
+	_setup_visual()
 	_apply_rotation()
 
 	_focus_zone.enemy_entered.connect(_on_enemy_entered)
@@ -65,28 +61,6 @@ func _apply_rotation() -> void:
 	_rotation_pivot.rotation = step * float(_preset_index)
 
 
-func _setup_beam_visual() -> void:
-	if lens_data == null or _beam_visual == null:
-		return
-	# 원뿔 수렴 형태: 넓은 입구 (본체) → 좁은 출구 (focus zone)
-	var beam_len: float = lens_data.beam_length
-	var focus_len: float = lens_data.focus_zone_length
-	var body_half: float = lens_data.body_size.y * 0.5
-	var focus_half: float = lens_data.focus_zone_width * 0.5
-	var focus_start: float = beam_len - focus_len
-	_beam_visual.polygon = PackedVector2Array(
-		[
-			Vector2(0, -body_half),
-			Vector2(focus_start, -focus_half),
-			Vector2(beam_len, -focus_half),
-			Vector2(beam_len, focus_half),
-			Vector2(focus_start, focus_half),
-			Vector2(0, body_half),
-		]
-	)
-	_beam_visual.color = Color(1.0, 0.92, 0.35, 0.22)
-
-
 func _setup_focus_zone() -> void:
 	if lens_data == null:
 		return
@@ -97,30 +71,20 @@ func _setup_focus_zone() -> void:
 	if _focus_collision and _focus_collision.shape is RectangleShape2D:
 		(_focus_collision.shape as RectangleShape2D).size = Vector2(focus_len, focus_width)
 		_focus_collision.position = Vector2(focus_start + focus_len * 0.5, 0)
-	if _focus_visual:
-		_focus_visual.size = Vector2(focus_len, focus_width)
-		_focus_visual.position = Vector2(focus_start, -focus_width * 0.5)
-		_focus_visual.color = Color(1.0, 1.0, 0.6, 0.35)
 
 
-func _setup_body_visual() -> void:
-	if lens_data == null:
+func _setup_visual() -> void:
+	if lens_data == null or _visual == null:
 		return
-	var body: Vector2 = lens_data.body_size
-	# 원형 렌즈 본체 (12각형 폴리곤)
-	var points: PackedVector2Array = PackedVector2Array()
-	var segments: int = 12
-	for i in range(segments):
-		var theta: float = TAU * float(i) / float(segments)
-		points.append(Vector2(cos(theta) * body.x * 0.5, sin(theta) * body.y * 0.5))
-	if _lens_body:
-		_lens_body.polygon = points
-		_lens_body.color = lens_data.body_color
-	if _lens_border:
-		var border_points: PackedVector2Array = points.duplicate()
-		border_points.append(points[0])
-		_lens_border.points = border_points
-		_lens_border.default_color = lens_data.body_border_color
+	if not _visual.has_method("configure"):
+		return
+	_visual.configure(
+		lens_data.beam_length,
+		lens_data.body_size.x,
+		lens_data.focus_zone_length,
+		lens_data.focus_zone_width,
+		lens_data.body_size.y * 0.5
+	)
 
 
 func _on_enemy_entered(enemy: Node) -> void:

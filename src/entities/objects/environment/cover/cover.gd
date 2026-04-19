@@ -11,7 +11,7 @@ var _initial_x: float = 0.0
 var _step_index: int = 0
 var _affected_enemies: Dictionary = {}
 
-@onready var _body_visual: ColorRect = $Body/BodyVisual
+@onready var _body_visual: Node2D = $Body/Visual
 @onready var _body_collision: CollisionShape2D = $Body/CollisionShape2D
 @onready var _projection_zone: Area2D = $ShadowProjectionZone
 @onready var _projection_collision: CollisionShape2D = $ShadowProjectionZone/CollisionShape2D
@@ -71,10 +71,8 @@ func _on_interact() -> void:
 # --- 내부 ---
 
 func _setup_body_visual() -> void:
-	if _body_visual:
-		_body_visual.size = cover_data.body_size
-		_body_visual.position = -cover_data.body_size * 0.5
-		_body_visual.color = cover_data.body_color
+	if _body_visual != null and _body_visual.has_method("configure"):
+		_body_visual.configure(cover_data.body_size)
 	if _body_collision and _body_collision.shape is RectangleShape2D:
 		(_body_collision.shape as RectangleShape2D).size = cover_data.body_size
 

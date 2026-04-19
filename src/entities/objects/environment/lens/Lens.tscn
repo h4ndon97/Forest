@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://src/entities/objects/environment/base/environment_influence_zone.gd" id="2"]
 [ext_resource type="Script" path="res://src/entities/objects/environment/common/environment_prompt.gd" id="3"]
 [ext_resource type="Script" path="res://src/entities/objects/environment/common/environment_highlight.gd" id="4"]
+[ext_resource type="Script" path="res://src/entities/objects/environment/lens/lens_visual.gd" id="5"]
 
 [sub_resource type="CircleShape2D" id="interact_shape"]
 radius = 32.0
@@ -24,10 +25,6 @@ shape = SubResource("interact_shape")
 
 [node name="RotationPivot" type="Node2D" parent="."]
 
-[node name="BeamVisual" type="Polygon2D" parent="RotationPivot"]
-color = Color(1, 0.92, 0.35, 0.22)
-polygon = PackedVector2Array(0, -12, 112, -12, 160, -12, 160, 12, 112, 12, 0, 12)
-
 [node name="FocusZone" type="Area2D" parent="RotationPivot"]
 collision_layer = 128
 collision_mask = 4
@@ -39,21 +36,8 @@ script = ExtResource("2")
 position = Vector2(136, 0)
 shape = SubResource("focus_shape")
 
-[node name="FocusVisual" type="ColorRect" parent="RotationPivot/FocusZone"]
-offset_left = 112.0
-offset_top = -12.0
-offset_right = 160.0
-offset_bottom = 12.0
-color = Color(1, 1, 0.6, 0.35)
-
-[node name="LensBody" type="Polygon2D" parent="RotationPivot"]
-color = Color(0.82, 0.91, 0.94, 1)
-polygon = PackedVector2Array(12, 0, 10.39, 6, 6, 10.39, 0, 12, -6, 10.39, -10.39, 6, -12, 0, -10.39, -6, -6, -10.39, 0, -12, 6, -10.39, 10.39, -6)
-
-[node name="LensBorder" type="Line2D" parent="RotationPivot"]
-width = 1.5
-default_color = Color(0.55, 0.48, 0.29, 1)
-points = PackedVector2Array(12, 0, 10.39, 6, 6, 10.39, 0, 12, -6, 10.39, -10.39, 6, -12, 0, -10.39, -6, -6, -10.39, 0, -12, 6, -10.39, 10.39, -6, 12, 0)
+[node name="Visual" type="Node2D" parent="RotationPivot"]
+script = ExtResource("5")
 
 [node name="Highlight" type="Node2D" parent="."]
 script = ExtResource("4")

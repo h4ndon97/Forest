@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/entities/objects/environment/reflective_floor/reflective_floor.gd" id="1"]
 [ext_resource type="Script" path="res://src/entities/objects/environment/base/environment_influence_zone.gd" id="2"]
+[ext_resource type="Script" path="res://src/entities/objects/environment/reflective_floor/reflective_floor_visual.gd" id="3"]
 
 [sub_resource type="RectangleShape2D" id="floor_shape"]
 size = Vector2(192, 32)
@@ -22,12 +23,8 @@ script = ExtResource("2")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InfluenceZone"]
 shape = SubResource("floor_shape")
 
-[node name="FloorVisual" type="ColorRect" parent="InfluenceZone"]
-offset_left = -96.0
-offset_top = -16.0
-offset_right = 96.0
-offset_bottom = 16.0
-color = Color(0.165, 0.29, 0.353, 0.65)
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("3")
 
 [node name="LightEmitterZone" type="Area2D" parent="."]
 collision_layer = 128

@@ -11,7 +11,7 @@ var _affected_enemies: Dictionary = {}
 
 @onready var _influence_zone: Area2D = $InfluenceZone
 @onready var _floor_collision: CollisionShape2D = $InfluenceZone/CollisionShape2D
-@onready var _floor_visual: ColorRect = $InfluenceZone/FloorVisual
+@onready var _visual: Node2D = $Visual
 @onready var _light_emitter_zone: Area2D = $LightEmitterZone
 @onready var _emitter_collision: CollisionShape2D = $LightEmitterZone/CollisionShape2D
 
@@ -50,10 +50,8 @@ func _setup_visual() -> void:
 	var size: Vector2 = reflective_floor_data.body_size
 	if _floor_collision and _floor_collision.shape is RectangleShape2D:
 		(_floor_collision.shape as RectangleShape2D).size = size
-	if _floor_visual:
-		_floor_visual.size = size
-		_floor_visual.position = -size * 0.5
-		_floor_visual.color = reflective_floor_data.body_color
+	if _visual != null and _visual.has_method("configure"):
+		_visual.configure(size)
 	if _emitter_collision and _emitter_collision.shape is RectangleShape2D:
 		(_emitter_collision.shape as RectangleShape2D).size = size
 
