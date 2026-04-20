@@ -67,6 +67,33 @@ extends Resource
 @export var time_stop_afterimage_interval: float = 0.04
 @export var time_stop_afterimage_fade: float = 0.25
 
+# === 땅거미 공포 비네트 (Pass 4, D7-3 거리 보간 보라→빨강) ===
+@export_group("Dusk Warning (Pass 4)")
+## 먼 거리 비네트 색 (#8B2FC6 보라 = 그림자 왕가 팔레트).
+@export var dusk_vignette_color_far: Color = Color(0.545, 0.184, 0.776, 1.0)
+## 근접 비네트 색 (#FF3333 빨강 = 본능적 공포).
+@export var dusk_vignette_color_near: Color = Color(1.0, 0.2, 0.2, 1.0)
+## 거리 2맵: 먼 보라 약하게.
+@export_range(0.0, 1.0, 0.01) var dusk_vignette_alpha_distance_2: float = 0.25
+## 거리 1맵: 보라↔빨강 중간, 좀 더 짙게.
+@export_range(0.0, 1.0, 0.01) var dusk_vignette_alpha_distance_1: float = 0.45
+## 거리 0맵(같은 스테이지 도착): 빨강 풀.
+@export_range(0.0, 1.0, 0.01) var dusk_vignette_alpha_distance_0: float = 0.6
+## 거리 1맵의 보라→빨강 보간 비율 (0=보라, 1=빨강).
+@export_range(0.0, 1.0, 0.01) var dusk_vignette_lerp_distance_1: float = 0.5
+## 거리 변경 시 색·알파 Tween 시간.
+@export var dusk_vignette_transition_duration: float = 0.5
+## 비네트 시작 반경 (셰이더 inner_radius).
+@export_range(0.0, 1.0, 0.01) var dusk_vignette_inner_radius: float = 0.35
+## 비네트 완전 도달 반경 (셰이더 outer_radius).
+@export_range(0.0, 1.5, 0.01) var dusk_vignette_outer_radius: float = 0.95
+## 거리 1맵일 때 화면 경계 셰이크 진폭(px). shake_intensity_mult가 곱해진다.
+@export_range(0.0, 8.0, 0.5) var dusk_warning_shake_amp_distance_1: float = 1.0
+## 거리 0맵(도착)일 때 화면 경계 셰이크 진폭(px).
+@export_range(0.0, 8.0, 0.5) var dusk_warning_shake_amp_distance_0: float = 2.0
+## 한 사이클 시간(초). 4단계 cycle이라 한 단계 = period/4.
+@export_range(0.04, 0.5, 0.01) var dusk_warning_shake_period: float = 0.16
+
 # === 접근성 (Phase 5-2에서 UI 노출) ===
 @export_group("Accessibility")
 ## 0.0 = 쉐이크 OFF

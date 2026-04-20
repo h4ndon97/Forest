@@ -19,6 +19,7 @@ const HitParticleScript = preload("res://src/systems/effects/effects_hit_particl
 const TimeStopScript = preload("res://src/systems/effects/effects_time_stop.gd")
 const FreezableScript = preload("res://src/systems/effects/effects_freezable.gd")
 const AfterimageScript = preload("res://src/systems/effects/effects_afterimage.gd")
+const DuskWarningScript = preload("res://src/systems/effects/effects_dusk_warning.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
@@ -42,6 +43,7 @@ var _hit_particle: EffectsHitParticle
 var _time_stop: EffectsTimeStop
 var _freezable: EffectsFreezable
 var _afterimage: EffectsAfterimage
+var _dusk_warning: EffectsDuskWarning
 
 
 func _ready() -> void:
@@ -55,6 +57,7 @@ func _ready() -> void:
 	_time_stop = TimeStopScript.new(self, _config)
 	_freezable = FreezableScript.new(self)
 	_afterimage = AfterimageScript.new(self)
+	_dusk_warning = DuskWarningScript.new(self, _config)
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
