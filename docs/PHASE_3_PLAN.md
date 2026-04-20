@@ -30,8 +30,9 @@
 | **Phase 3-7 Pass 3 Step 1 세피아 프레임워크** | **✅ 완료 (2026-04-19, 미커밋) — `time_stop_sepia.gdshader` 신규 + `EffectsTimeStop` RefCounted 헬퍼 + `EffectsConfigData` Time Stop 그룹 9필드 + 디버그 키 F12 토글. **D7-1 재조정**: "주변부 색상 유지" 해석 폐기, 화면 전체 균일 세피아로 확정(사용자 체감 검증). §9 구현 결과 (Pass 3 Step 1) 참조** |
 | **Phase 3-7 Pass 3 Step 2 Tween 트랜지션** | **✅ 완료 (2026-04-19, 904bace) — `EffectsTimeStop`이 EventBus `time_flow_started/stopped` 구독 + `apply_transition` Tween(`set_ignore_time_scale(true)`, 0.30s) 추가. `_current_weight` 로컬 추적, `_weight_tween.kill()` 재진입 안전. F12 디버그는 `apply_instant`→`apply_transition`으로 전환되어 동일 Tween 미리보기. §9 구현 결과 (Pass 3 Step 2) 참조** |
 | **Phase 3-7 Pass 3 Step 3 Freezable 그룹 + 플레이어 숨결** | **✅ 완료 (2026-04-19, 4357e1c) — `EffectsFreezable` RefCounted 헬퍼 신규(`EventBus.time_flow_stopped/started` 구독 → `call_group("freezable_particles", &"set", "speed_scale", 0.0/1.0)`). Player.tscn에 `BreathParticles` GPUParticles2D 추가(그룹 비가입, speed_scale=1 고정, 위치 `(4,-28)`, process_material·GradientTexture 모두 scene sub_resource로 베이킹). F12 디버그가 셰이더 Tween + 그룹 토글 동시 호출. §9 구현 결과 (Pass 3 Step 3) 참조** |
+| **Phase 3-7 Pass 3 Step 4 해제 블루 펄스 + 플레이어 잔상** | **✅ 완료 (2026-04-20, 미커밋) — `EffectsAfterimage` RefCounted 범용 헬퍼 신규(Sprite2D/AnimatedSprite2D 현 프레임을 Sprite2D 복제본으로 스폰, `SceneTreeTimer(ignore_time_scale=true)` 스케줄). `EffectsSystem.request_afterimage(source, count?, interval?, fade?)` API 추가. `EffectsTimeStop.apply_transition(on=false)` 경로에 `_trigger_release_fx()` 훅 — 블루 펄스(`request_screen_flash`) + Player 그룹 검색 후 잔상. blue_pulse_color B채널 LDR 클램프(1.20→1.00). INARI 레퍼런스의 방사형 burst/HDR 블룸은 Pass 5로 이월. §9 구현 결과 (Pass 3 Step 4) 참조** |
 
-**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2·3 완료. 다음=Pass 3 Step 4 (해제 블루 펄스 + 플레이어 잔상) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
+**→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2·3·4 완료. 다음=Pass 4 (땅거미 공포 연출) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
 ---
 
@@ -324,6 +325,20 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 - test_* 스테이지들은 zone_id=""로 "기타" 처리 (라벨 없음)
 - 땅거미 TRACKING 중간 transition 시그널이 없어 `current_hour_changed` 폴링으로 간접 갱신
 
+### 3-5 확장 — 동심 극좌표 재설계 (2026-04-20 착수)
+
+> 1D 선형 BFS 한계 + WORLD_DESIGN.md §2 나선형 컨셉 정합을 위해 **5 동심 링 + 2단 드릴다운** 으로 재설계. Phase 3-7 Pass 3 와 병행 진행.
+
+| 항목 | 상태 |
+|---|---|
+| 컨셉/결정/스키마/구현 순서 | ✅ 확정 — `docs/WORLD_MAP_REDESIGN.md` 참조 |
+| Step 1 — StageData +3필드 + zone_1 10건 .tres 패치 | ⏳ 진행 중 |
+| Step 2 — graph_builder 극좌표 재작성 + OVERVIEW 뷰 | ⏸ 대기 |
+| Step 3 — view 상태 머신 + drill-in + 카메라 tween | ⏸ 대기 |
+| Step 4 — 경계 거점 배지 + 땅거미 ⚠ 분기 + QA | ⏸ 대기 |
+
+확정 결정 8개(아크 270°/6시 시작 CCW, 1-h 안쪽 leaf, 안쪽 링 완전 가림, 카메라 tween 0.35s, 경계 거점 양쪽 노출 + 화살표 배지, test_* 숨김, Phase 3-7 병행)는 `WORLD_MAP_REDESIGN.md §2` 참조.
+
 ---
 
 ## 8. 3-6 — UI 완성
@@ -463,7 +478,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
   - **Step 1** ✅ 완료 (2026-04-19, 25acfa7): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
   - **Step 2** ✅ 완료 (2026-04-19, 904bace): EventBus 구독(`time_flow_started/stopped`) + `apply_transition` weight Tween(0.30s, `set_ignore_time_scale(true)`) + `_weight_tween.kill()` 재진입 처리. F12는 Tween 미리보기로 전환
   - **Step 3** ✅ 완료 (2026-04-19, 4357e1c): `EffectsFreezable` 헬퍼 + Player.tscn `BreathParticles` 노드(그룹 비가입, speed_scale=1 고정). F12 디버그가 셰이더·그룹 동시 토글
-  - **Step 4** (예정): 해제 시 블루 펄스 + 플레이어 잔상
+  - **Step 4** ✅ 완료 (2026-04-20, 미커밋): `EffectsAfterimage` 범용 헬퍼 + `EffectsSystem.request_afterimage` API + `apply_transition` 해제 경로에 블루 펄스·잔상 훅. blue_pulse_color LDR 클램프. INARI 방사형 burst/HDR 블룸은 Pass 5 이월
 - **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
 - **Pass 5** (예정): 앰비언트 파티클(D7-5 낮 꽃가루 + 밤 반딧불) + HUD 구슬 pip(D7-6) + 환경/컷인
 - **Pass 5c**: 슬래시 트레일 + 검광 + 피니시 컷인
@@ -582,7 +597,36 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
 
 **Step 3 검증**: gdlint 클린(2개 파일 `effects_freezable.gd` + `effects_system.gd`), `--editor --headless --quit`로 `class_name EffectsFreezable` 캐시 갱신 후 `--headless --quit` 로드 클린. Player.tscn 파싱 에러 없음(editor indexing 통과)
 
-**다음 단계 (Step 4)**: 해제 시 블루 펄스 (`request_screen_flash` 재사용 — 이미 Pass 1 인프라) + 플레이어 잔상 (`EffectsAfterimage` 가칭 헬퍼). `EffectsConfigData` Time Stop 그룹에 이미 예약된 `blue_pulse_color/duration` + `afterimage_count/interval/fade` 필드 활용. 잔상은 Light Dash 재사용성 고려.
+### 구현 결과 (2026-04-20 Pass 3 Step 4 — 해제 블루 펄스 + 플레이어 잔상)
+
+**신규 파일 1**
+- `src/systems/effects/effects_afterimage.gd` (~95줄, `class_name EffectsAfterimage`, RefCounted):
+  - 공개 `spawn(source: Node2D, count, interval, fade, tint=Color(1,1,1,0.6))` — 범용 API
+  - `_resolve_texture(source)`: AnimatedSprite2D → `sprite_frames.get_frame_texture(animation, frame)`, Sprite2D → `texture` 직접
+  - 복제본은 항상 `Sprite2D.new()` 단일 타입. `_copy_flip_and_offset`로 flip_h/flip_v/offset 복사, global_position/rotation/scale·texture_filter·z_index-1 일괄 복사
+  - 스케줄: `tree.create_timer(delay, process_always=true, process_in_physics=false, ignore_time_scale=true)` — 힛스톱/pause 중에도 안전
+  - 페이드: `ghost.create_tween().set_ignore_time_scale(true).tween_property(ghost, "modulate", end_color, fade)` → `tween_callback(ghost.queue_free)`
+  - 부모: `source.get_parent()` — 월드 좌표 고정(플레이어 이동해도 잔상 정지)
+
+**수정 파일 3**
+- `data/effects/effects_config_data.gd`: `time_stop_blue_pulse_color` B채널 1.20→1.00 LDR 클램프. ColorRect 알파 페이드 기반이라 HDR 채널은 발광하지 않음
+- `src/systems/effects/effects_system.gd`:
+  - `AfterimageScript` preload + `_afterimage: EffectsAfterimage` 멤버 + `_ready`에서 인스턴스화
+  - 공개 `request_afterimage(source, count=-1, interval=-1, fade=-1)` API — 기본값(-1)이면 config `time_stop_afterimage_*` 사용
+- `src/systems/effects/effects_time_stop.gd`:
+  - `apply_transition(on: bool)` 본문에 `if not on: _trigger_release_fx()` 훅
+  - `_trigger_release_fx()`: `_host.request_screen_flash(blue_pulse_color, blue_pulse_duration)` + `_find_player_sprite()`이 반환하면 `_host.request_afterimage(...)`
+  - `_find_player_sprite()`: `tree.get_first_node_in_group("player")` → `get_node_or_null("AnimatedSprite2D")`. 부재 시 null 반환(타이틀 화면 등에서 graceful skip)
+
+**설계 결정**
+- **해제 FX 훅 위치**: `apply_transition` 내부. EventBus 경로(`_on_time_flow_started`)·F12 디버그 경로(`debug_toggle_time_stop`) 양쪽에서 자동 포함, 분기 중복 없음. `apply_instant`는 초기화 경로로 부수효과 0 유지
+- **범용 헬퍼 설계**: `source: Node2D` 인자 하나로 Sprite2D/AnimatedSprite2D 모두 수용 → 향후 Light Dash 잔상 연결 시 `EffectsSystem.request_afterimage($AnimatedSprite2D, ...)` 1줄 호출로 끝
+- **잔상 부모 선택**: `source.get_parent()` = 스테이지 노드. 플레이어 이동과 분리되어 "해제 위치에 정지"된 잔상 연출(의도됨). UI 레이어 침범 없음
+- **Light Dash 연결 범위 밖**: Pass 3는 "시간 정지 연출" 단일 테마. 대시 잔상은 파라미터·톤이 다를 가능성 있어 별도 커밋으로 미룸. [player_light_dash.gd:6](src/entities/player/player_light_dash.gd#L6) 주석 자리 그대로 유지
+- **"블루 파티클 펑" 미포함**: config가 `blue_pulse_color/duration`(스크린 플래시)만 예약. 파티클 펑 추가 시 신규 프리셋·풀링·아트 요구로 Step 4 범위 초과. 실제 체감 후 Pass 5로 이월
+- **INARI 레퍼런스 분산**: HDR 블룸 베이스라인 → Pass 5 환경 폴리시(1구역 아트 확정 후), 방사형 burst → Pass 5 피니시 컷인(EFFECTS.md §4 #10). Step 4는 최소안 체감 검증 우선
+
+**Step 4 검증**: gdlint 클린(4개 파일), `--editor --headless --quit`로 `class_name EffectsAfterimage` 캐시 갱신 후 `--headless --quit` 로드 클린. F12 토글 체감 OK(사용자 확인)
 
 ### 결정 대기
 - ~~**D7** EFFECTS.md 디렉션 6가지~~ — ✅ 확정 (2026-04-19). EFFECTS.md §5 결정 반영. 잠정(provisional)으로 기록됨 — 아트 작업 중 변경 가능. `effects_config`에서 `fire`→`hybrid`, `dark`→`shadow` 네이밍 정정 동반.

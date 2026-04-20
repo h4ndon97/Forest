@@ -60,7 +60,8 @@ extends Resource
 ## 최대 weight — 접근성 감쇠용 (0.0=OFF, 1.0=풀)
 @export_range(0.0, 1.0, 0.01) var time_stop_weight_target: float = 1.0
 @export var time_stop_transition_duration: float = 0.30
-@export var time_stop_blue_pulse_color: Color = Color(0.45, 0.75, 1.20, 0.55)
+## LDR 클램프(ColorRect 알파 페이드 기반이라 HDR 채널은 발광하지 않음).
+@export var time_stop_blue_pulse_color: Color = Color(0.45, 0.75, 1.00, 0.55)
 @export var time_stop_blue_pulse_duration: float = 0.18
 @export var time_stop_afterimage_count: int = 3
 @export var time_stop_afterimage_interval: float = 0.04

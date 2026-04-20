@@ -4,7 +4,8 @@ extends RefCounted
 ## Phase 3-7 Pass 3 — 시간 정지 포스트프로세스 관리.
 ## Step 1: 셰이더 assign + weight 즉시 on/off.
 ## Step 2: EventBus(time_flow_started/stopped) 구독 + Tween 트랜지션.
-## Step 3에서 파티클 정지 그룹 토글, Step 4에서 해제 펄스/잔상 추가.
+## Step 3: 파티클 정지 그룹 토글(EffectsFreezable).
+## Step 4: 해제 시 블루 펄스 + 플레이어 잔상(apply_transition on=false 경로에서 트리거).
 
 const SHADER: Shader = preload("res://assets/shaders/effects/time_stop_sepia.gdshader")
 
@@ -37,6 +38,7 @@ func apply_instant(on: bool) -> void:
 
 
 ## 셰이더 weight를 Tween으로 0↔target 보간 (time_flow 시그널·디버그 진입점).
+## on=false(해제) 시 블루 펄스 + 플레이어 잔상도 함께 트리거한다(Step 4).
 func apply_transition(on: bool) -> void:
 	if _applied == on:
 		return
@@ -46,9 +48,11 @@ func apply_transition(on: bool) -> void:
 	var duration: float = _config.time_stop_transition_duration
 	if duration <= 0.0:
 		_set_weight(target_weight)
-		return
-	_weight_tween = _host.create_tween().set_ignore_time_scale(true)
-	_weight_tween.tween_method(_set_weight, _current_weight, target_weight, duration)
+	else:
+		_weight_tween = _host.create_tween().set_ignore_time_scale(true)
+		_weight_tween.tween_method(_set_weight, _current_weight, target_weight, duration)
+	if not on:
+		_trigger_release_fx()
 
 
 func is_applied() -> bool:
@@ -83,3 +87,33 @@ func _on_time_flow_stopped(_current_hour: float) -> void:
 
 func _on_time_flow_started(_current_hour: float) -> void:
 	apply_transition(false)
+
+
+# === Step 4: 해제 연출 트리거 ===
+
+
+func _trigger_release_fx() -> void:
+	if _host == null or _config == null:
+		return
+	_host.request_screen_flash(
+		_config.time_stop_blue_pulse_color, _config.time_stop_blue_pulse_duration
+	)
+	var sprite: Node2D = _find_player_sprite()
+	if sprite == null:
+		return
+	_host.request_afterimage(
+		sprite,
+		_config.time_stop_afterimage_count,
+		_config.time_stop_afterimage_interval,
+		_config.time_stop_afterimage_fade
+	)
+
+
+func _find_player_sprite() -> Node2D:
+	var tree: SceneTree = _host.get_tree()
+	if tree == null:
+		return null
+	var player: Node = tree.get_first_node_in_group("player")
+	if player == null:
+		return null
+	return player.get_node_or_null("AnimatedSprite2D") as Node2D

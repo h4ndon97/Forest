@@ -6,6 +6,7 @@ extends Node
 ##   request_shake(preset)            request_shake_amount(trauma)
 ##   request_hitstop(preset)          request_hitstop_duration(duration, scale?)
 ##   request_screen_flash(color, duration?)
+##   request_afterimage(source, count?, interval?, fade?)
 ##   get_config()
 ##
 ## 카메라 쉐이크는 EventBus.screen_shake_requested 시그널을 emit만 한다.
@@ -17,6 +18,7 @@ const HitstopScript = preload("res://src/systems/effects/effects_hitstop.gd")
 const HitParticleScript = preload("res://src/systems/effects/effects_hit_particle.gd")
 const TimeStopScript = preload("res://src/systems/effects/effects_time_stop.gd")
 const FreezableScript = preload("res://src/systems/effects/effects_freezable.gd")
+const AfterimageScript = preload("res://src/systems/effects/effects_afterimage.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
@@ -39,6 +41,7 @@ var _hitstop: EffectsHitstop
 var _hit_particle: EffectsHitParticle
 var _time_stop: EffectsTimeStop
 var _freezable: EffectsFreezable
+var _afterimage: EffectsAfterimage
 
 
 func _ready() -> void:
@@ -51,6 +54,7 @@ func _ready() -> void:
 	_hit_particle = HitParticleScript.new(self, _load_particle_presets())
 	_time_stop = TimeStopScript.new(self, _config)
 	_freezable = FreezableScript.new(self)
+	_afterimage = AfterimageScript.new(self)
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
@@ -127,6 +131,19 @@ func request_hit_particle(
 	if is_finish and finish_attribute != "":
 		_hit_particle.apply_finish_color(category, finish_attribute)
 	_hit_particle.emit(world_pos, category, is_finish)
+
+
+## Pass 3 Step 4: Sprite2D/AnimatedSprite2D 잔상 스폰.
+## 기본값(-1)이면 config의 time_stop_afterimage_* 값 사용.
+func request_afterimage(
+	source: Node2D, count: int = -1, interval: float = -1.0, fade: float = -1.0
+) -> void:
+	if _afterimage == null or source == null:
+		return
+	var c: int = count if count > 0 else _config.time_stop_afterimage_count
+	var i: float = interval if interval >= 0.0 else _config.time_stop_afterimage_interval
+	var f: float = fade if fade > 0.0 else _config.time_stop_afterimage_fade
+	_afterimage.spawn(source, c, i, f)
 
 
 ## Pass 3 디버그: 시간 정지 연출 Tween 트랜지션 + freezable 그룹 토글.
