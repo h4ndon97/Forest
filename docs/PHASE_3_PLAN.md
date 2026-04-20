@@ -30,7 +30,7 @@
 | **Phase 3-7 Pass 3 Step 1 세피아 프레임워크** | **✅ 완료 (2026-04-19, 미커밋) — `time_stop_sepia.gdshader` 신규 + `EffectsTimeStop` RefCounted 헬퍼 + `EffectsConfigData` Time Stop 그룹 9필드 + 디버그 키 F12 토글. **D7-1 재조정**: "주변부 색상 유지" 해석 폐기, 화면 전체 균일 세피아로 확정(사용자 체감 검증). §9 구현 결과 (Pass 3 Step 1) 참조** |
 | **Phase 3-7 Pass 3 Step 2 Tween 트랜지션** | **✅ 완료 (2026-04-19, 904bace) — `EffectsTimeStop`이 EventBus `time_flow_started/stopped` 구독 + `apply_transition` Tween(`set_ignore_time_scale(true)`, 0.30s) 추가. `_current_weight` 로컬 추적, `_weight_tween.kill()` 재진입 안전. F12 디버그는 `apply_instant`→`apply_transition`으로 전환되어 동일 Tween 미리보기. §9 구현 결과 (Pass 3 Step 2) 참조** |
 | **Phase 3-7 Pass 3 Step 3 Freezable 그룹 + 플레이어 숨결** | **✅ 완료 (2026-04-19, 4357e1c) — `EffectsFreezable` RefCounted 헬퍼 신규(`EventBus.time_flow_stopped/started` 구독 → `call_group("freezable_particles", &"set", "speed_scale", 0.0/1.0)`). Player.tscn에 `BreathParticles` GPUParticles2D 추가(그룹 비가입, speed_scale=1 고정, 위치 `(4,-28)`, process_material·GradientTexture 모두 scene sub_resource로 베이킹). F12 디버그가 셰이더 Tween + 그룹 토글 동시 호출. §9 구현 결과 (Pass 3 Step 3) 참조** |
-| **Phase 3-7 Pass 3 Step 4 해제 블루 펄스 + 플레이어 잔상** | **✅ 완료 (2026-04-20, 미커밋) — `EffectsAfterimage` RefCounted 범용 헬퍼 신규(Sprite2D/AnimatedSprite2D 현 프레임을 Sprite2D 복제본으로 스폰, `SceneTreeTimer(ignore_time_scale=true)` 스케줄). `EffectsSystem.request_afterimage(source, count?, interval?, fade?)` API 추가. `EffectsTimeStop.apply_transition(on=false)` 경로에 `_trigger_release_fx()` 훅 — 블루 펄스(`request_screen_flash`) + Player 그룹 검색 후 잔상. blue_pulse_color B채널 LDR 클램프(1.20→1.00). INARI 레퍼런스의 방사형 burst/HDR 블룸은 Pass 5로 이월. §9 구현 결과 (Pass 3 Step 4) 참조** |
+| **Phase 3-7 Pass 3 Step 4 해제 블루 펄스 + 플레이어 잔상** | **✅ 완료 (2026-04-20, 5c5ee5c) — `EffectsAfterimage` RefCounted 범용 헬퍼 신규(Sprite2D/AnimatedSprite2D 현 프레임을 Sprite2D 복제본으로 스폰, `SceneTreeTimer(ignore_time_scale=true)` 스케줄). `EffectsSystem.request_afterimage(source, count?, interval?, fade?)` API 추가. `EffectsTimeStop.apply_transition(on=false)` 경로에 `_trigger_release_fx()` 훅 — 블루 펄스(`request_screen_flash`) + Player 그룹 검색 후 잔상. blue_pulse_color B채널 LDR 클램프(1.20→1.00). INARI 레퍼런스의 방사형 burst/HDR 블룸은 Pass 5로 이월. §9 구현 결과 (Pass 3 Step 4) 참조** |
 
 **→ Phase 3-7 진행 중 (2026-04-19~). Pass 1 + D7 + Pass 2 + Pass 3 Step 1·2·3·4 완료. 다음=Pass 4 (땅거미 공포 연출) 또는 1구역 스프라이트 작업(병행 가능).** 미니맵은 Phase 4 이월. §2.1 arc_mask shader는 placeholder 충분으로 보류, §2.4 반딧불 파티클은 Phase 3-7 Pass 5 이월
 
@@ -478,7 +478,7 @@ Boss HP 0 → base_boss.EventBus.boss_defeated.emit(boss_id)
   - **Step 1** ✅ 완료 (2026-04-19, 25acfa7): 세피아 셰이더 + EffectsTimeStop 헬퍼 + Time Stop 그룹 config + F12 토글
   - **Step 2** ✅ 완료 (2026-04-19, 904bace): EventBus 구독(`time_flow_started/stopped`) + `apply_transition` weight Tween(0.30s, `set_ignore_time_scale(true)`) + `_weight_tween.kill()` 재진입 처리. F12는 Tween 미리보기로 전환
   - **Step 3** ✅ 완료 (2026-04-19, 4357e1c): `EffectsFreezable` 헬퍼 + Player.tscn `BreathParticles` 노드(그룹 비가입, speed_scale=1 고정). F12 디버그가 셰이더·그룹 동시 토글
-  - **Step 4** ✅ 완료 (2026-04-20, 미커밋): `EffectsAfterimage` 범용 헬퍼 + `EffectsSystem.request_afterimage` API + `apply_transition` 해제 경로에 블루 펄스·잔상 훅. blue_pulse_color LDR 클램프. INARI 방사형 burst/HDR 블룸은 Pass 5 이월
+  - **Step 4** ✅ 완료 (2026-04-20, 5c5ee5c): `EffectsAfterimage` 범용 헬퍼 + `EffectsSystem.request_afterimage` API + `apply_transition` 해제 경로에 블루 펄스·잔상 훅. blue_pulse_color LDR 클램프. INARI 방사형 burst/HDR 블룸은 Pass 5 이월
 - **Pass 4** (예정): 땅거미 경고 색(D7-3 거리 보간 보라→빨강)
 - **Pass 5** (예정): 앰비언트 파티클(D7-5 낮 꽃가루 + 밤 반딧불) + HUD 구슬 pip(D7-6) + 환경/컷인
 - **Pass 5c**: 슬래시 트레일 + 검광 + 피니시 컷인
