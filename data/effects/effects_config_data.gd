@@ -67,6 +67,13 @@ extends Resource
 @export var time_stop_afterimage_interval: float = 0.04
 @export var time_stop_afterimage_fade: float = 0.25
 
+# === 빛 대시 잔상 ===
+# 시간 정지 해제보다 속도감 강조 (count↑·interval↓·fade↑).
+@export_group("Light Dash")
+@export var light_dash_afterimage_count: int = 5
+@export var light_dash_afterimage_interval: float = 0.025
+@export var light_dash_afterimage_fade: float = 0.18
+
 # === 땅거미 공포 비네트 (Pass 4, D7-3 거리 보간 보라→빨강) ===
 @export_group("Dusk Warning (Pass 4)")
 ## 먼 거리 비네트 색 (#8B2FC6 보라 = 그림자 왕가 팔레트).
