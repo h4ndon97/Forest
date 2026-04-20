@@ -30,13 +30,20 @@ const GLOW_PERIOD: float = 2.4
 const NEAR_LERP_SPEED: float = 3.0
 const NEAR_GLOW_BOOST: float = 1.4
 
-@export var sprite_path: String = ""
+# 스프라이트 모드 코어 글로우 — 포탈 개구부 위에 덮이는 방사형 그라디언트
+const GLOW_WIDTH: int = 32
+const GLOW_HEIGHT: int = 48
+const GLOW_ALPHA_BASE: float = 0.35
+const GLOW_ALPHA_AMP: float = 0.25
+
+@export var sprite_path: String = "res://assets/sprites/objects/portal_stage.png"
 
 var player_nearby: bool = false
 
 var _t: float = 0.0
 var _near_mix: float = 0.0
 var _sprite: Sprite2D
+var _core_glow: Sprite2D
 
 
 func _ready() -> void:
@@ -47,8 +54,19 @@ func _process(delta: float) -> void:
 	_t += delta
 	var target: float = 1.0 if player_nearby else 0.0
 	_near_mix = move_toward(_near_mix, target, delta * NEAR_LERP_SPEED)
-	if _sprite == null or not _sprite.visible:
+	if _sprite != null and _sprite.visible:
+		_update_core_glow()
+	else:
 		queue_redraw()
+
+
+func _update_core_glow() -> void:
+	if _core_glow == null:
+		return
+	var pulse: float = 0.5 + 0.5 * sin(_t * TAU / GLOW_PERIOD)
+	var base_a: float = GLOW_ALPHA_BASE + GLOW_ALPHA_AMP * (pulse * 2.0 - 1.0)
+	var near_boost: float = lerpf(1.0, NEAR_GLOW_BOOST, _near_mix)
+	_core_glow.modulate.a = clampf(base_a * near_boost, 0.0, 1.0)
 
 
 func _draw() -> void:
@@ -207,4 +225,36 @@ func _setup_sprite_fallback() -> void:
 	_sprite.name = "PortalSprite"
 	_sprite.texture = tex
 	_sprite.centered = true
+	# PNG 중심이 포탈 중앙이라 가정 — Node2D 원점(바닥)에서 위로 반 높이만큼 오프셋
+	_sprite.position = Vector2(0, -PORTAL_HEIGHT * 0.5)
 	add_child(_sprite)
+	_core_glow = _make_radial_glow()
+	_core_glow.position = Vector2(0, (Y_PILLAR_TOP + Y_BOTTOM) * 0.5)
+	add_child(_core_glow)
+
+
+func _make_radial_glow() -> Sprite2D:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	gradient.colors = PackedColorArray([
+		Color(1.0, 1.0, 1.0, 1.0),
+		Color(1.0, 1.0, 1.0, 0.30),
+		Color(1.0, 1.0, 1.0, 0.0)
+	])
+	var gtex := GradientTexture2D.new()
+	gtex.gradient = gradient
+	gtex.fill = GradientTexture2D.FILL_RADIAL
+	gtex.fill_from = Vector2(0.5, 0.5)
+	gtex.fill_to = Vector2(1.0, 0.5)
+	gtex.width = GLOW_WIDTH
+	gtex.height = GLOW_HEIGHT
+	var spr := Sprite2D.new()
+	spr.name = "PortalCoreGlow"
+	spr.texture = gtex
+	spr.centered = true
+	spr.modulate = Color(COLOR_PORTAL_GLOW.r, COLOR_PORTAL_GLOW.g, COLOR_PORTAL_GLOW.b, 0.0)
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	spr.material = mat
+	return spr

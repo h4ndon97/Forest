@@ -7,6 +7,8 @@
 > **UI 관련 상위 문서**: [ui_design_master.md](ui_design_master.md) 참조.
 > 본 문서는 Phase별 필요 에셋의 규격/파일명을, 상위 문서는 UI 카테고리별 컨셉·연출을 담당한다.
 > UI 관련 에셋 선정은 상위 문서의 카테고리 결정을 따른다.
+>
+> **플레이어 전용 상세 명세**: [player_art_spec.md](player_art_spec.md) — 주인공 스프라이트 규격·컨셉·제작 순서를 통합 정리. 플레이어 아트 작업 전 필독.
 
 ---
 
@@ -194,22 +196,35 @@ Aseprite에서 태그별로 내보내기:
 
 | # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
 |---|---|---|---|---|---|
-| 24 | 포탈 이펙트 | 32x360 (세로 전체) | `assets/sprites/objects/` | `portal_stage.png` | 맵 경계의 빛 기둥/안개 느낌. 반투명. 현재 파란색 ColorRect placeholder |
+| 24 | 스테이지 포탈 본체 | **48×75** | `assets/sprites/objects/` | `portal_stage.png` | 아치형 벽돌 + 덩굴 유적. 현재 프로그래밍 드로잉(`stage_portal_visual.gd`) → PNG 드롭 시 자동 교체. **코어 글로우·근접 부스트는 코드가 덮어씀** (하이브리드 모션 훅) |
 | 25 | TestStage2 배경 | 640x360 | `assets/backgrounds/` | `bg_test_stage_2.png` | TestStage와 다른 분위기. 현재 보라색 ColorRect placeholder |
 
-### 포탈 제작 가이드
+### 포탈 제작 가이드 (하이브리드 모션 훅 패턴)
 
-**포탈 시각적 컨셉**:
-- 맵 좌/우 끝에 배치되는 세로형 이펙트
-- "다른 공간으로의 통로" 느낌 — 빛이 새어 나오거나 안개가 피어오르는 형태
-- 색상: 옅은 파란/흰색 계열, 투명도 30~50%
-- 애니메이션 없이 단일 이미지로 충분 (코드에서 추가 연출 가능)
+**캔버스**: **48×75** (폭 × 높이). PNG 중심 = 포탈의 시각적 중심.
+배치: `Node2D` 원점 = 지면 접지점 → 코드에서 `(0, -37.5)` 오프셋으로 중심 정렬. 사용자는 48×75 중앙 정렬로만 그리면 됨.
 
-**적용 방법**:
-- `StagePortal.tscn`의 `PortalVisual` (ColorRect)을 Sprite2D로 교체
-- 또는 `stage_portal.gd`에 fallback 로직 추가 후 파일 존재 시 자동 반영
+**그려야 할 것** (기둥 + 아치 + 덩굴 = 정적 실루엣만):
+- 좌/우 기둥 (폭 8, 높이 50) — 석재 벽돌 5단, 모르타르 라인
+- 아치 상단 (반경 ~20, 두께 8의 반원 링) — 방사형 모르타르
+- 덩굴: 기둥 외측 2줄 + 아치 바깥 1줄, 잎은 2×2
+- **포탈 개구부(중앙)는 비워둘 것** — 코드가 방사형 금색 코어 글로우를 덮어 그림
 
-**우선순위**: 낮음 (placeholder로 기능 테스트 가능. 아트 방향성 확정 후 적용)
+**그리지 말 것** (코드가 처리):
+- 개구부 중앙의 발광 (32×48 방사형 그라디언트, 애디티브 블렌드)
+- 글로우 펄스 (주기 2.4s, α 0.35↔0.60)
+- 플레이어 근접 부스트 (×1.4, lerp 3.0/s)
+
+**팔레트** (`portals_checkpoints.md` §1 기준):
+- 석재 베이스 `#6B6560` / 하이라이트 `#8A857F` / 그림자 `#4A453F` / 모르타르 `#2A2520`
+- 덩굴 `#4A5A30` / 잎 `#6B8F4A`
+- **금색 코어 글로우는 그리지 말 것** (코드가 `#F2CC66` 계열로 덮음)
+
+**임포트**:
+- Nearest 필터, Mipmap 끔 (코어 글로우 레이어는 Linear 필터로 자동 설정)
+- `sprite_path` 기본값 = `res://assets/sprites/objects/portal_stage.png` (드롭만 하면 자동 반영)
+
+**우선순위**: 중 (차폐물과 함께 자주 보이는 환경 오브젝트. 하이브리드 훅 완료, PNG 대기 중)
 
 ---
 
@@ -412,10 +427,10 @@ Aseprite에서 태그별로 내보내기:
 | # | 사용처 | 규격 | 폴더 | 파일명 | 비고 |
 |---|---|---|---|---|---|
 | 64a | 차폐물 — 룬 코어 | 24x32 캔버스 (실효 ~16x24) | `assets/sprites/objects/cover/` | `cover_rune.png` | 중앙 룬 각인 석판. 좌우 대칭. 형광 하늘색 룬 문양. 단판 |
-| 64b | 차폐물 — 상단 파편 | 16x16 캔버스 (실효 ~10-14) | `assets/sprites/objects/cover/` | `cover_fragment_1.png` | 쪼개진 돌 조각. 비정형 실루엣. 단판 |
-| 64c | 차폐물 — 하단 파편 | 16x16 캔버스 (실효 ~10-14) | `assets/sprites/objects/cover/` | `cover_fragment_2.png` | 64b와 다른 실루엣. 단판 |
-| 64d | 차폐물 — 좌측 파편 | 12x12 캔버스 (실효 ~6-10) | `assets/sprites/objects/cover/` | `cover_fragment_3.png` | 작은 돌 조각. 단판 |
-| 64e | 차폐물 — 우측 파편 | 12x12 캔버스 (실효 ~6-10) | `assets/sprites/objects/cover/` | `cover_fragment_4.png` | 64d와 다른 실루엣. 단판 |
+| 64b | 차폐물 — 좌상단 파편 | 16x16 캔버스 (실효 ~10-14) | `assets/sprites/objects/cover/` | `cover_fragment_1.png` | 쪼개진 돌 조각. 비정형 실루엣. 단판 |
+| 64c | 차폐물 — 우상단 파편 | 16x16 캔버스 (실효 ~10-14) | `assets/sprites/objects/cover/` | `cover_fragment_2.png` | 64b와 다른 실루엣. 단판 |
+| 64d | 차폐물 — 좌하단 파편 | 12x12 캔버스 (실효 ~6-10) | `assets/sprites/objects/cover/` | `cover_fragment_3.png` | 작은 돌 조각. 단판 |
+| 64e | 차폐물 — 우하단 파편 | 12x12 캔버스 (실효 ~6-10) | `assets/sprites/objects/cover/` | `cover_fragment_4.png` | 64d와 다른 실루엣. 단판 |
 | 65 | 차폐물 투영 영역 (정적) | 96x32 캔버스 | `assets/sprites/objects/cover/` | `cover_projection_static.png` | 본체 뒤쪽 그림자 투영 영역 시각화. 어두운 반투명 영역. 현재 ColorRect fallback (#0C0C19 alpha 0.35) |
 | 66 | 차폐물 투영 영역 (흐름 중) | 96x32, 4프레임 루프 | `assets/sprites/objects/cover/` | `cover_projection_flowing.png` | FLOWING 중 영역 내 적이 override 받는 동안 미세 파동 애니메이션 |
 
@@ -445,17 +460,16 @@ Aseprite에서 태그별로 내보내기:
 
 **레이아웃 (코드 배치 기준, Visual 로컬 좌표)**:
 ```
-  ·  [파편1] ·
-  [파편3]
-          [룬 코어(0,0)]
-                    [파편4]
-  ·        [파편2]  ·
+  [파편1]       [파편2]
+         [룬 코어]
+         (0, 0)
+  [파편3]       [파편4]
 ```
 - 룬: (0, 0)
-- 파편 1 (상단): (-5, -22)
-- 파편 2 (하단): (4, 22)
-- 파편 3 (좌측): (-7, 6)
-- 파편 4 (우측): (7, -8)
+- 파편 1 (좌상단): (-10, -22)
+- 파편 2 (우상단): (10, -22)
+- 파편 3 (좌하단): (-9, 22)
+- 파편 4 (우하단): (9, 22)
 - 전체 실루엣은 대략 24×64 영역에 수렴 (Body collision 유지)
 
 **움직임 (코드 적용)**:
