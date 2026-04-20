@@ -9,18 +9,12 @@ const GraphBuilderScript = preload("res://src/ui/menus/world_map/world_map_graph
 const ZoneLayoutScript = preload("res://src/ui/menus/world_map/world_map_zone_layout.gd")
 const DetailPanelScript = preload("res://src/ui/menus/world_map/world_map_detail_panel.gd")
 const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
-const NODE_SPACING := Vector2(88, 0)
-const GRAPH_ORIGIN := Vector2(320, 180)
 const SELECTED_COLOR := Color(1.0, 1.0, 1.0)
-const ZONE_LABEL_Y := 222.0  # 노드 하단(180+24) 아래
-const ZONE_SEPARATOR_TOP := 150.0
-const ZONE_SEPARATOR_BOTTOM := 210.0
 
 var _visible: bool = false
 var _builder: Node
 var _zone_layout: Node
 var _bg: ColorRect
-var _title_label: Label
 var _hint_label: Label
 var _node_container: Control
 var _line_container: Control
@@ -93,19 +87,11 @@ func _build_ui_frame() -> void:
 	_bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_bg)
 
-	_title_label = Label.new()
-	_title_label.name = "Title"
-	_title_label.text = "월드맵"
-	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title_label.position = Vector2(270, 16)
-	_title_label.size = Vector2(100, 24)
-	add_child(_title_label)
-
 	_hint_label = Label.new()
 	_hint_label.name = "Hint"
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.position = Vector2(170, 330)
-	_hint_label.size = Vector2(300, 20)
+	_hint_label.position = Vector2(170, 346)
+	_hint_label.size = Vector2(300, 12)
 	_hint_label.add_theme_font_size_override("font_size", 8)
 	_hint_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	add_child(_hint_label)
@@ -129,59 +115,54 @@ func _make_container(container_name: String) -> Control:
 
 
 func _rebuild_graph() -> void:
-	for child in _node_container.get_children():
-		child.queue_free()
-	for child in _line_container.get_children():
-		child.queue_free()
-	for child in _spider_container.get_children():
-		child.queue_free()
-	for child in _zone_container.get_children():
-		child.queue_free()
+	for c in [_node_container, _line_container, _spider_container, _zone_container]:
+		for child in c.get_children():
+			child.queue_free()
 	_stage_nodes.clear()
 	_stage_positions.clear()
 	_spider_icons.clear()
 	_selectable_ids.clear()
 
+	var stopped: bool = _is_time_stopped()
 	var all_ids: Array = StageSystem.get_all_stage_ids()
-	var ordered: Array = _builder.bfs_order(all_ids)
+	var polar_ids: Array = []
+	var ring_populated: Dictionary = {}
 
-	var total: int = ordered.size()
-	var start_x: float = GRAPH_ORIGIN.x - (total - 1) * NODE_SPACING.x / 2.0
-
-	for i in range(total):
-		var stage_id: String = ordered[i]
-		var pos := Vector2(start_x + i * NODE_SPACING.x, GRAPH_ORIGIN.y)
-		_stage_positions[stage_id] = pos
-		var panel: PanelContainer = _builder.create_stage_node(stage_id, pos, _is_time_stopped())
-		if panel:
-			_node_container.add_child(panel)
-			_stage_nodes[stage_id] = panel
-
-	for stage_id in ordered:
+	for stage_id in all_ids:
 		var data: StageData = StageSystem.get_stage_data(stage_id)
-		if not data:
+		if not _builder.is_polar(data):
 			continue
+		var pos: Vector2 = _builder.compute_node_position(data)
+		_stage_positions[stage_id] = pos
+		polar_ids.append(stage_id)
+		ring_populated[data.radius_ring] = true
+		var dot: PanelContainer = _builder.create_stage_node(
+			stage_id, pos, stopped, _node_container
+		)
+		if dot:
+			_stage_nodes[stage_id] = dot
+
+	for stage_id in polar_ids:
+		var data: StageData = StageSystem.get_stage_data(stage_id)
 		for adj_id in data.adjacent_stages:
-			if _stage_positions.has(adj_id) and stage_id < adj_id:
-				var line: Line2D = _builder.create_connection_line(
-					_stage_positions[stage_id], _stage_positions[adj_id]
-				)
+			if stage_id >= adj_id:
+				continue
+			if not _stage_positions.has(adj_id):
+				continue
+			var adj_data: StageData = StageSystem.get_stage_data(adj_id)
+			var line: Line2D = _builder.create_connection(data, adj_data)
+			if line:
 				_line_container.add_child(line)
 
 	var discovered: Array = StageSystem.get_discovered_checkpoints()
 	var current: String = StageSystem.get_current_stage_id()
 	for cp_id in discovered:
-		if cp_id != current:
+		if cp_id != current and _stage_positions.has(cp_id):
 			_selectable_ids.append(cp_id)
 
 	_refresh_spider_icons()
 	_zone_layout.build_overlay(
-		_zone_container,
-		ordered,
-		_stage_positions,
-		ZONE_LABEL_Y,
-		ZONE_SEPARATOR_TOP,
-		ZONE_SEPARATOR_BOTTOM
+		_zone_container, GraphBuilderScript.RING_CENTER, GraphBuilderScript.RING_RADII, ring_populated
 	)
 	_selected_index = 0
 	_update_selection_highlight()
@@ -200,28 +181,35 @@ func _navigate(direction: int) -> void:
 
 func _update_selection_highlight() -> void:
 	for stage_id in _stage_nodes:
-		var panel: PanelContainer = _stage_nodes[stage_id]
+		var dot: PanelContainer = _stage_nodes[stage_id]
 		var data: StageData = StageSystem.get_stage_data(stage_id)
 		if not data:
 			continue
-		var style: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
+		var style: StyleBoxFlat = dot.get_theme_stylebox("panel") as StyleBoxFlat
 		if style:
 			style.border_color = _builder.get_border_color(stage_id, data)
 			style.set_border_width_all(2)
 
 	if _selectable_ids.is_empty():
-		if _detail_panel:
-			_detail_panel.clear_display()
+		_detail_panel.visible = false
 		return
 	var selected_id: String = _selectable_ids[_selected_index]
 	if _stage_nodes.has(selected_id):
-		var panel: PanelContainer = _stage_nodes[selected_id]
-		var style: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
+		var dot: PanelContainer = _stage_nodes[selected_id]
+		var style: StyleBoxFlat = dot.get_theme_stylebox("panel") as StyleBoxFlat
 		if style:
 			style.border_color = SELECTED_COLOR
 			style.set_border_width_all(3)
-	if _detail_panel:
-		_detail_panel.refresh(selected_id)
+	_detail_panel.refresh(selected_id)
+	var node_pos: Vector2 = _stage_positions.get(selected_id, Vector2.ZERO)
+	var ps: Vector2 = _detail_panel.size
+	var x: float = node_pos.x + 20.0
+	if x + ps.x > 636.0:
+		x = node_pos.x - 20.0 - ps.x
+	_detail_panel.position = Vector2(
+		clamp(x, 4.0, 636.0 - ps.x), clamp(node_pos.y - ps.y / 2.0, 4.0, 356.0 - ps.y)
+	)
+	_detail_panel.visible = true
 
 
 func _update_hint_label() -> void:

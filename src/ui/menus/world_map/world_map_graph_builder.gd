@@ -1,6 +1,8 @@
 extends Node
 
-## 월드맵 그래프 노드/연결선 생성 및 BFS 토폴로지 정렬을 담당하는 헬퍼.
+## 월드맵 그래프 노드/연결선 생성을 담당하는 헬퍼.
+## 극좌표(radius_ring, angle_deg, radius_offset)를 화면 좌표로 변환하고,
+## 같은 링 위 인접 노드는 호(arc), 다른 링/오프셋은 직선으로 연결한다.
 ## WorldMapUI의 자식으로 동작한다.
 
 const CLEAR_COLORS := {
@@ -11,63 +13,55 @@ const CLEAR_COLORS := {
 const CHECKPOINT_COLOR := Color(0.9, 0.75, 0.3)
 const CURRENT_COLOR := Color(0.4, 0.8, 1.0)
 const LOCKED_COLOR := Color(0.6, 0.3, 0.3)
-const NODE_SIZE := Vector2(80, 48)
 
 # 시간 오버레이 톤 (D11: 채도 0 방식 — time_stopped 시 HSV S=0 적용)
 const DAY_TINT := Color(0.58, 0.48, 0.22)  # 12시 중심 따뜻한 톤
 const NIGHT_TINT := Color(0.12, 0.14, 0.28)  # 0시 중심 차가운 톤
 const CHECKPOINT_TINT := Color(0.20, 0.17, 0.12)
 
+# 동심 극좌표 레이아웃 (Step 2 / 아이콘화)
+const RING_CENTER := Vector2(320, 180)
+const RING_RADII := {1: 140, 2: 110, 3: 85, 4: 60, 5: 35}
+const ARC_SAMPLES := 12
+const LINE_COLOR := Color(0.5, 0.5, 0.5, 0.6)
 
-## BFS로 토폴로지 순서를 결정한다. 첫 번째 거점부터 시작.
-func bfs_order(all_ids: Array) -> Array:
-	if all_ids.is_empty():
-		return []
-
-	var start_id: String = ""
-	for sid in all_ids:
-		var data: StageData = StageSystem.get_stage_data(sid)
-		if data and data.is_checkpoint:
-			start_id = sid
-			break
-	if start_id.is_empty():
-		start_id = all_ids[0]
-
-	var visited: Dictionary = {}
-	var queue: Array = [start_id]
-	var ordered: Array = []
-	visited[start_id] = true
-
-	while not queue.is_empty():
-		var current: String = queue.pop_front()
-		ordered.append(current)
-		var data: StageData = StageSystem.get_stage_data(current)
-		if not data:
-			continue
-		for adj_id in data.adjacent_stages:
-			if not visited.has(adj_id) and adj_id in all_ids:
-				visited[adj_id] = true
-				queue.append(adj_id)
-
-	for sid in all_ids:
-		if not visited.has(sid):
-			ordered.append(sid)
-
-	return ordered
+# 오버뷰 노드(작은 원형 아이콘 + 방사 라벨)
+const DOT_SIZE := 16.0
+const DOT_LABEL_SIZE := Vector2(64, 10)
+const DOT_LABEL_GAP := 4.0
+const DOT_LABEL_FONT := 7
 
 
-## 스테이지 노드(PanelContainer)를 생성하여 반환한다.
-## time_stopped=true면 배경에 채도 0 필터 적용(D11).
+## 극좌표 필드가 유효해서 월드맵에 그려야 하는 스테이지인지 판정한다.
+## radius_ring <= 0 은 test_* 등 비표시 대상.
+func is_polar(data: StageData) -> bool:
+	return data != null and data.radius_ring > 0 and RING_RADII.has(data.radius_ring)
+
+
+## StageData의 극좌표를 화면 좌표(Vector2)로 변환한다.
+## 시계 기준(0°=12시, 시계방향 +) → 수학 기준(0°=3시, 반시계 +) 변환: angle - 90°.
+func compute_node_position(data: StageData) -> Vector2:
+	if not is_polar(data):
+		return Vector2.ZERO
+	var r: float = float(RING_RADII[data.radius_ring]) + data.radius_offset
+	var math_rad: float = deg_to_rad(data.angle_deg - 90.0)
+	return RING_CENTER + Vector2(cos(math_rad), sin(math_rad)) * r
+
+
+## 스테이지 오버뷰 노드(작은 원형 dot + 방사 이름 라벨)를 parent 하위에 생성한다.
+## 반환값: dot PanelContainer (StyleBoxFlat "panel" override 적용됨).
+## time_stopped=true면 dot 배경에 채도 0 필터 적용(D11).
 func create_stage_node(
-	stage_id: String, pos: Vector2, time_stopped: bool = false
+	stage_id: String, pos: Vector2, time_stopped: bool, parent: Control
 ) -> PanelContainer:
 	var data: StageData = StageSystem.get_stage_data(stage_id)
 	if not data:
 		return null
 
-	var panel := PanelContainer.new()
-	panel.position = pos - NODE_SIZE / 2.0
-	panel.custom_minimum_size = NODE_SIZE
+	var dot := PanelContainer.new()
+	dot.position = pos - Vector2(DOT_SIZE, DOT_SIZE) / 2.0
+	dot.custom_minimum_size = Vector2(DOT_SIZE, DOT_SIZE)
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = compute_node_bg_color(stage_id, time_stopped)
@@ -76,31 +70,33 @@ func create_stage_node(
 	style.border_width_top = 2
 	style.border_width_bottom = 2
 	style.border_color = get_border_color(stage_id, data)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	panel.add_theme_stylebox_override("panel", style)
+	var radius: int = int(DOT_SIZE / 2.0)
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	dot.add_theme_stylebox_override("panel", style)
+	parent.add_child(dot)
 
-	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := Label.new()
+	label.text = data.display_name
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", DOT_LABEL_FONT)
+	label.size = DOT_LABEL_SIZE
+	# 라벨은 dot 중심에서 방사 방향으로 떨어진 위치. offset < 0 (숨겨진 leaf) 는 안쪽으로.
+	var out_dir: Vector2 = (pos - RING_CENTER).normalized()
+	if out_dir == Vector2.ZERO:
+		out_dir = Vector2(0, 1)
+	if data.radius_offset < 0.0:
+		out_dir = -out_dir
+	var radial: float = DOT_SIZE / 2.0 + DOT_LABEL_GAP + DOT_LABEL_SIZE.y / 2.0
+	var label_center: Vector2 = pos + out_dir * radial
+	label.position = label_center - DOT_LABEL_SIZE / 2.0
+	parent.add_child(label)
 
-	var name_label := Label.new()
-	name_label.text = data.display_name
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.clip_text = true
-	name_label.add_theme_font_size_override("font_size", 8)
-	vbox.add_child(name_label)
-
-	var info_label := Label.new()
-	info_label.text = _build_info_text(stage_id, data)
-	info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	info_label.clip_text = true
-	info_label.add_theme_font_size_override("font_size", 7)
-	vbox.add_child(info_label)
-
-	panel.add_child(vbox)
-	return panel
+	return dot
 
 
 ## 땅거미 위치 아이콘(placeholder)을 생성한다. D12: 단일 "⚠" 스타일.
@@ -110,24 +106,26 @@ func create_spider_icon(pos: Vector2) -> Label:
 	label.text = "⚠"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", 12)
 	label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.35))
-	var icon_size := Vector2(18, 18)
+	var icon_size := Vector2(14, 14)
 	label.size = icon_size
-	# 노드 우측 상단에 겹치기
-	label.position = pos + Vector2(NODE_SIZE.x / 2.0 - icon_size.x, -NODE_SIZE.y / 2.0)
+	# 작은 dot 우상단에 살짝 겹치기
+	label.position = pos + Vector2(DOT_SIZE / 2.0 - 4.0, -DOT_SIZE / 2.0 - icon_size.y + 4.0)
 	label.z_index = 1
 	return label
 
 
-## 인접 스테이지 간 연결선(Line2D)을 생성하여 반환한다.
-func create_connection_line(from: Vector2, to: Vector2) -> Line2D:
-	var line := Line2D.new()
-	line.add_point(from)
-	line.add_point(to)
-	line.width = 2.0
-	line.default_color = Color(0.5, 0.5, 0.5, 0.6)
-	return line
+## 두 스테이지 사이 연결선을 생성한다.
+## 같은 링 + 같은 오프셋(즉 동일 반경) 이면 호, 아니면 직선.
+func create_connection(from_data: StageData, to_data: StageData) -> Line2D:
+	if not is_polar(from_data) or not is_polar(to_data):
+		return null
+	var same_ring: bool = from_data.radius_ring == to_data.radius_ring
+	var same_offset: bool = is_equal_approx(from_data.radius_offset, to_data.radius_offset)
+	if same_ring and same_offset:
+		return _create_arc_line(from_data, to_data)
+	return _create_radial_line(from_data, to_data)
 
 
 ## 스테이지 노드의 테두리 색상을 결정한다.
@@ -186,6 +184,39 @@ func compute_node_bg_color(stage_id: String, time_stopped: bool) -> Color:
 
 
 # --- 내부 ---
+
+
+## 같은 링 + 같은 오프셋 상의 두 점을 짧은쪽 호를 따라 12샘플로 연결한다.
+func _create_arc_line(from_data: StageData, to_data: StageData) -> Line2D:
+	var r: float = float(RING_RADII[from_data.radius_ring]) + from_data.radius_offset
+	var a0: float = from_data.angle_deg
+	var a1: float = to_data.angle_deg
+	var delta: float = a1 - a0
+	# 최단 호 방향 선택 (|delta| <= 180)
+	while delta > 180.0:
+		delta -= 360.0
+	while delta < -180.0:
+		delta += 360.0
+	var line := Line2D.new()
+	line.width = 2.0
+	line.default_color = LINE_COLOR
+	for i in range(ARC_SAMPLES + 1):
+		var t: float = float(i) / float(ARC_SAMPLES)
+		var ang: float = a0 + delta * t
+		var math_rad: float = deg_to_rad(ang - 90.0)
+		var p: Vector2 = RING_CENTER + Vector2(cos(math_rad), sin(math_rad)) * r
+		line.add_point(p)
+	return line
+
+
+## 다른 링/오프셋 조합 두 점을 직선으로 연결한다.
+func _create_radial_line(from_data: StageData, to_data: StageData) -> Line2D:
+	var line := Line2D.new()
+	line.width = 2.0
+	line.default_color = LINE_COLOR
+	line.add_point(compute_node_position(from_data))
+	line.add_point(compute_node_position(to_data))
+	return line
 
 
 func _get_bg_color(stage_id: String, data: StageData) -> Color:

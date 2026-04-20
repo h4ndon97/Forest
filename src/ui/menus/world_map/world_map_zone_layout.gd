@@ -1,69 +1,105 @@
 extends Node
 
-## 월드맵의 구역(zone) 단위 라벨/구분선 레이아웃을 담당한다.
-## BFS 정렬 순서에서 같은 zone_id 연속 구간을 그룹핑해 라벨과 구분선을 배치한다.
+## 월드맵 오버뷰의 구역(zone) 라벨과 미구현 링 placeholder를 담당한다.
+## 동심 극좌표 모델: zone_id ↔ radius_ring 을 1:1로 매핑하며,
+## 각 링마다 12시 방향 바깥에 "N구역 — 이름" 라벨을, 노드가 없는 링은 점선으로 표시한다.
 
 const ZONE_NAMES := {
 	"zone_1": "1구역 — 빛의 숲",
 	"zone_2": "2구역 — 안개 습지",
+	"zone_3": "3구역 — 미정",
+	"zone_4": "4구역 — 미정",
+	"zone_5": "5구역 — 심부",
+}
+const ZONE_RING := {
+	"zone_1": 1,
+	"zone_2": 2,
+	"zone_3": 3,
+	"zone_4": 4,
+	"zone_5": 5,
+}
+# 구역 라벨 배치 각도 (시계 기준, 0°=12시 CW). 나선 회전으로 깊이감과 통로 암시.
+const ZONE_LABEL_ANGLE := {
+	"zone_1": 270.0,
+	"zone_2": 240.0,
+	"zone_3": 210.0,
+	"zone_4": 180.0,
+	"zone_5": 150.0,
 }
 const ZONE_LABEL_COLOR := Color(0.75, 0.70, 0.55)
-const ZONE_SEPARATOR_COLOR := Color(0.4, 0.4, 0.4, 0.5)
+const PLACEHOLDER_COLOR := Color(0.35, 0.35, 0.35, 0.45)
+const PLACEHOLDER_SEGMENTS := 48
+const PLACEHOLDER_DASH := 2  # N개마다 1개만 표시 → 점선 느낌
+const LABEL_OFFSET := 12.0  # 링 바깥으로 라벨을 얼마나 띄울지
+const LABEL_SIZE := Vector2(120, 12)
 
 
-## 구역 라벨과 구분선을 container 하위에 일괄 생성한다.
+## 오버레이를 일괄 생성한다. ring_populated[ring] = bool (노드가 있는지).
 func build_overlay(
 	container: Control,
-	ordered: Array,
-	positions: Dictionary,
-	label_y: float,
-	sep_top: float,
-	sep_bottom: float
+	ring_center: Vector2,
+	ring_radii: Dictionary,
+	ring_populated: Dictionary
 ) -> void:
-	if ordered.is_empty():
-		return
-	var group_zone: String = ""
-	var group_start_x: float = 0.0
-	var group_end_x: float = 0.0
-	var prev_zone: String = ""
-	var prev_x: float = 0.0
-	for stage_id in ordered:
-		var data: StageData = StageSystem.get_stage_data(stage_id)
-		var zone: String = data.zone_id if data else ""
-		var pos: Vector2 = positions.get(stage_id, Vector2.ZERO)
-		if zone != prev_zone:
-			if not group_zone.is_empty():
-				_emit_label(container, group_zone, group_start_x, group_end_x, label_y)
-			if not prev_zone.is_empty() and not zone.is_empty():
-				var sep_x: float = (prev_x + pos.x) / 2.0
-				container.add_child(_create_separator(sep_x, sep_top, sep_bottom))
-			group_zone = zone
-			group_start_x = pos.x
-		group_end_x = pos.x
-		prev_zone = zone
-		prev_x = pos.x
-	if not group_zone.is_empty():
-		_emit_label(container, group_zone, group_start_x, group_end_x, label_y)
+	for zone_id in ZONE_RING:
+		var ring_idx: int = ZONE_RING[zone_id]
+		if not ring_radii.has(ring_idx):
+			continue
+		var radius: float = float(ring_radii[ring_idx])
+		var has_nodes: bool = ring_populated.get(ring_idx, false)
+		if not has_nodes:
+			# 미발견 구역: placeholder 점선만, 라벨은 숨김 (첫 노드 발견 시 자동 표시)
+			container.add_child(_create_placeholder_ring(ring_center, radius))
+			continue
+		container.add_child(_create_leader_tick(zone_id, ring_center, radius))
+		container.add_child(_create_zone_label(zone_id, ring_center, radius))
 
 
-func _emit_label(parent: Control, zone_id: String, start_x: float, end_x: float, y: float) -> void:
-	if not ZONE_NAMES.has(zone_id):
-		return
+func _create_zone_label(zone_id: String, center: Vector2, radius: float) -> Label:
 	var label := Label.new()
-	label.text = ZONE_NAMES[zone_id]
+	label.text = ZONE_NAMES.get(zone_id, zone_id)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 9)
+	label.add_theme_font_size_override("font_size", 8)
 	label.add_theme_color_override("font_color", ZONE_LABEL_COLOR)
-	var label_size := Vector2(160, 14)
-	label.size = label_size
-	label.position = Vector2((start_x + end_x) / 2.0 - label_size.x / 2.0, y)
-	parent.add_child(label)
+	label.size = LABEL_SIZE
+	# 구역별 각도(나선 회전)로 링 바깥에 배치. 라벨이 축정렬 사각형이므로
+	# 방사 방향으로의 외접 길이는 |half_w * cos| + |half_h * sin| 로 계산.
+	var angle: float = ZONE_LABEL_ANGLE.get(zone_id, 0.0)
+	var math_rad: float = deg_to_rad(angle - 90.0)
+	var dir := Vector2(cos(math_rad), sin(math_rad))
+	var half: Vector2 = LABEL_SIZE / 2.0
+	var radial_ext: float = abs(half.x * dir.x) + abs(half.y * dir.y)
+	var label_center: Vector2 = center + dir * (radius + LABEL_OFFSET + radial_ext)
+	label.position = label_center - half
+	return label
 
 
-func _create_separator(x: float, y_top: float, y_bottom: float) -> Line2D:
+## 링 위 해당 zone 각도에서 라벨 방향으로 짧은 tick을 그려 라벨↔링 관계를 시각화.
+func _create_leader_tick(zone_id: String, center: Vector2, radius: float) -> Line2D:
+	var angle: float = ZONE_LABEL_ANGLE.get(zone_id, 0.0)
+	var math_rad: float = deg_to_rad(angle - 90.0)
+	var dir := Vector2(cos(math_rad), sin(math_rad))
 	var line := Line2D.new()
-	line.add_point(Vector2(x, y_top))
-	line.add_point(Vector2(x, y_bottom))
 	line.width = 1.0
-	line.default_color = ZONE_SEPARATOR_COLOR
+	line.default_color = ZONE_LABEL_COLOR
+	line.add_point(center + dir * radius)
+	line.add_point(center + dir * (radius + LABEL_OFFSET))
 	return line
+
+
+## 노드가 없는 링을 점선 원으로 그린다 (Godot Line2D 다중 세그먼트).
+func _create_placeholder_ring(center: Vector2, radius: float) -> Node2D:
+	var holder := Node2D.new()
+	var seg_angle: float = TAU / float(PLACEHOLDER_SEGMENTS)
+	for i in range(PLACEHOLDER_SEGMENTS):
+		if i % PLACEHOLDER_DASH != 0:
+			continue
+		var a0: float = seg_angle * float(i)
+		var a1: float = seg_angle * float(i + 1)
+		var line := Line2D.new()
+		line.width = 1.0
+		line.default_color = PLACEHOLDER_COLOR
+		line.add_point(center + Vector2(cos(a0), sin(a0)) * radius)
+		line.add_point(center + Vector2(cos(a1), sin(a1)) * radius)
+		holder.add_child(line)
+	return holder

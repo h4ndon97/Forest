@@ -40,6 +40,7 @@ InventoryMenu="*res://src/ui/menus/inventory/inventory_menu.gd"
 ShopMenu="*res://src/ui/menus/shop/shop_menu.gd"
 PauseMenu="*res://src/ui/menus/pause/pause_menu.gd"
 KeybindHud="*res://src/ui/hud/KeybindHud.tscn"
+StageNameplate="*res://src/ui/hud/stage_nameplate.gd"
 
 [display]
 

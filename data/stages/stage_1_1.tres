@@ -15,3 +15,6 @@ lock_requirement = ""
 total_enemies = 2
 total_residues = 2
 is_checkpoint = false
+radius_ring = 1
+angle_deg = 146.25
+radius_offset = 0.0

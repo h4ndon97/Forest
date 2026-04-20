@@ -4,8 +4,7 @@ extends PanelContainer
 ## 이름, 구역, 시각, 클리어 상태, 잠금, 땅거미, 인접 수를 실시간 반영.
 
 const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
-const PANEL_SIZE := Vector2(140, 240)
-const PANEL_POS := Vector2(480, 60)
+const PANEL_SIZE := Vector2(140, 150)
 const BG_COLOR := Color(0.05, 0.05, 0.07, 0.9)
 const BORDER_COLOR := Color(0.35, 0.35, 0.40, 0.8)
 const TITLE_COLOR := Color(0.95, 0.92, 0.85)
@@ -20,9 +19,9 @@ var _info_container: VBoxContainer
 
 
 func _ready() -> void:
-	position = PANEL_POS
 	custom_minimum_size = PANEL_SIZE
 	size = PANEL_SIZE
+	visible = false
 	_apply_style()
 	_build_children()
 

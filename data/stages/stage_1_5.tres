@@ -15,3 +15,6 @@ lock_requirement = "stage_1_2"
 total_enemies = 4
 total_residues = 4
 is_checkpoint = false
+radius_ring = 1
+angle_deg = 11.25
+radius_offset = 0.0

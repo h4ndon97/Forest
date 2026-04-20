@@ -15,3 +15,6 @@ lock_requirement = "light_sensor:sensor_1_6_entry"
 total_enemies = 4
 total_residues = 4
 is_checkpoint = false
+radius_ring = 1
+angle_deg = 337.5
+radius_offset = 0.0

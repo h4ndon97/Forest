@@ -38,3 +38,11 @@ enum LockType { NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY }
 @export_group("거점 설정")
 ## 이 스테이지가 거점(체크포인트)인지 여부
 @export var is_checkpoint: bool = false
+
+@export_group("월드맵 위치 (극좌표)")
+## 동심 링 인덱스. 1=외곽(zone_1), 5=심부(zone_5). 0=월드맵 미표시(test_*).
+@export var radius_ring: int = 0
+## 시계 각도 (도). 0°=12시, 시계방향 증가. 0~360.
+@export var angle_deg: float = 0.0
+## 링 반경 오프셋 (픽셀). 음수=안쪽으로 끌어당김(숨겨진 leaf), 양수=바깥쪽.
+@export var radius_offset: float = 0.0
