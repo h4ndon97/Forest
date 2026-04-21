@@ -90,10 +90,11 @@ extends Resource
 @export_range(0.0, 1.0, 0.01) var dusk_vignette_lerp_distance_1: float = 0.5
 ## 거리 변경 시 색·알파 Tween 시간.
 @export var dusk_vignette_transition_duration: float = 0.5
-## 비네트 시작 반경 (셰이더 inner_radius).
-@export_range(0.0, 1.0, 0.01) var dusk_vignette_inner_radius: float = 0.35
-## 비네트 완전 도달 반경 (셰이더 outer_radius).
-@export_range(0.0, 1.5, 0.01) var dusk_vignette_outer_radius: float = 0.95
+## 비네트 시작 반경 (짧은 변 절반=0.5 기준). 셰이더 inner_radius.
+@export_range(0.0, 1.5, 0.01) var dusk_vignette_inner_radius: float = 0.30
+## 비네트 완전 도달 반경 (짧은 변 절반=0.5 기준). 셰이더 outer_radius.
+## 1.05+ 권장 — 코너 너머에서 풀 도달해야 가장자리 라인이 안 보임.
+@export_range(0.0, 2.0, 0.01) var dusk_vignette_outer_radius: float = 1.10
 ## 거리 1맵일 때 화면 경계 셰이크 진폭(px). shake_intensity_mult가 곱해진다.
 @export_range(0.0, 8.0, 0.5) var dusk_warning_shake_amp_distance_1: float = 1.0
 ## 거리 0맵(도착)일 때 화면 경계 셰이크 진폭(px).

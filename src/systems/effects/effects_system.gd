@@ -160,6 +160,14 @@ func debug_toggle_time_stop() -> void:
 		_freezable.apply(next_on)
 
 
+## Pass 4 디버그: 땅거미 거리 경고 순환 (-1 → 2 → 1 → 0 → -1).
+## DuskSpiderSystem 상태는 건드리지 않는다 — EventBus 덮어쓰기 없이 연출만 미리보기.
+func debug_cycle_dusk_distance() -> int:
+	if _dusk_warning == null:
+		return EffectsDuskWarning.DISTANCE_INACTIVE
+	return _dusk_warning.debug_cycle_distance()
+
+
 func resolve_enemy_category(enemy_type: String) -> StringName:
 	match enemy_type:
 		"tree", "flower":

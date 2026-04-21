@@ -1,10 +1,11 @@
 extends Node
 
-## Phase 3-7 Pass 1/3 — 이펙트 시연용 디버그 키.
-## OS.is_debug_build() 시에만 활성화. F6~F9 + F12.
+## Phase 3-7 Pass 1/3/4 — 이펙트 시연용 디버그 키.
+## OS.is_debug_build() 시에만 활성화. F4 + F6~F9 + F12.
 ## EffectsSystem Autoload의 자식으로 등록되거나 별도 시연 씬에서 직접 add_child.
 ## 주의: F10/F11은 InventorySystem 디버그가 선점, F5는 GrowthSystem.
 
+const KEY_DUSK_WARNING: Key = KEY_F4
 const KEY_SHAKE: Key = KEY_F6
 const KEY_HIT_FLASH: Key = KEY_F7
 const KEY_HITSTOP: Key = KEY_F8
@@ -25,6 +26,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key_event: InputEventKey = event
 	match key_event.keycode:
+		KEY_DUSK_WARNING:
+			var next_dist: int = EffectsSystem.debug_cycle_dusk_distance()
+			print("[EffectsDebug] dusk warning distance → %d" % next_dist)
+			get_viewport().set_input_as_handled()
 		KEY_SHAKE:
 			EffectsSystem.request_shake(EffectsSystem.PRESET_HEAVY)
 			print("[EffectsDebug] shake heavy")

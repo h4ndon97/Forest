@@ -35,6 +35,13 @@ func apply_instant(distance: int) -> void:
 	_update_shake(distance)
 
 
+## 디버그 순환: -1 → 2 → 1 → 0 → -1 (실게임 체감 검증용).
+func debug_cycle_distance() -> int:
+	var next_distance: int = _next_debug_distance(_current_distance)
+	apply_transition(next_distance)
+	return next_distance
+
+
 ## 거리 → 목표 색·알파를 Tween으로 보간.
 func apply_transition(distance: int) -> void:
 	if distance == _current_distance:
@@ -52,6 +59,20 @@ func apply_transition(distance: int) -> void:
 
 
 # === 내부 ===
+
+
+static func _next_debug_distance(current: int) -> int:
+	match current:
+		DISTANCE_INACTIVE:
+			return 2
+		2:
+			return 1
+		1:
+			return 0
+		0:
+			return DISTANCE_INACTIVE
+		_:
+			return DISTANCE_INACTIVE
 
 
 func _install_radius() -> void:
