@@ -1,42 +1,51 @@
 extends Node2D
 
-## 스테이지 포탈 아치형 벽돌 구조물 + 덩굴 프로그래밍 아트.
-## 폭 48 × 높이 75, Node2D 원점 중심.
+## 스테이지 포탈 — 스프라이트 + 하이브리드 모션 훅 (코어 글로우 / 갤럭시 회전 / 파티클).
+## PNG 없을 시 단순 플레이스홀더로 fallback.
 ## portals_checkpoints.md §2 준수.
 
 const PORTAL_WIDTH: float = 48.0
 const PORTAL_HEIGHT: float = 75.0
-const WALL_THICKNESS: float = 8.0
-const PILLAR_HEIGHT: float = 50.0
-const ARCH_RADIUS_OUTER: float = 24.0
-const ARCH_RADIUS_MID: float = 20.0
-const ARCH_THICKNESS: float = 8.0
 
-# Node2D 원점 = 포탈 바닥(지면 접지점). 포탈은 원점에서 위로 뻗는다.
-const Y_BOTTOM: float = 0.0
-const Y_TOP: float = -PORTAL_HEIGHT
-const Y_PILLAR_TOP: float = Y_BOTTOM - PILLAR_HEIGHT
-
-const COLOR_STONE_BASE := Color(0.420, 0.400, 0.376, 1.0)
-const COLOR_STONE_HIGHLIGHT := Color(0.541, 0.522, 0.498, 1.0)
-const COLOR_STONE_SHADOW := Color(0.290, 0.271, 0.247, 1.0)
-const COLOR_MORTAR := Color(0.165, 0.145, 0.125, 1.0)
-const COLOR_VINE := Color(0.290, 0.353, 0.188, 1.0)
-const COLOR_LEAF := Color(0.420, 0.561, 0.290, 1.0)
+const COLOR_FALLBACK_STONE := Color(0.420, 0.400, 0.376, 1.0)
 const COLOR_PORTAL_GLOW := Color(0.949, 0.8, 0.4, 0.35)
-const COLOR_PORTAL_CORE := Color(1.0, 0.957, 0.8, 0.25)
+
+# 스프라이트 모드 전용 — 아트의 청록 크리스털에 맞춘 팔레트
+const COLOR_SPRITE_GLOW := Color(0.42, 0.85, 1.0, 1.0)
+const COLOR_SPRITE_KEYSTONE := Color(0.75, 0.98, 1.0, 1.0)
 
 const GLOW_PERIOD: float = 2.4
 const NEAR_LERP_SPEED: float = 3.0
-const NEAR_GLOW_BOOST: float = 1.4
+const NEAR_GLOW_BOOST: float = 1.6
 
-# 스프라이트 모드 코어 글로우 — 포탈 개구부 위에 덮이는 방사형 그라디언트
-const GLOW_WIDTH: int = 32
-const GLOW_HEIGHT: int = 48
-const GLOW_ALPHA_BASE: float = 0.35
-const GLOW_ALPHA_AMP: float = 0.25
+# 배경 halo — 은은하게 개구부를 채움
+const GLOW_WIDTH: int = 64
+const GLOW_HEIGHT: int = 96
+const GLOW_ALPHA_BASE: float = 0.40
+const GLOW_ALPHA_AMP: float = 0.08
+const GLOW_Y_OFFSET: float = 20.0
+
+# 갤럭시 회전 쉐이더 — 개구부 안에서 회전하는 나선팔
+const GALAXY_WIDTH: int = 56
+const GALAXY_HEIGHT: int = 88
+const GALAXY_SHADER_PATH := "res://src/entities/objects/portal/portal_galaxy.gdshader"
+
+# 키스톤 하이라이트 — 아치 상단 청록 블록
+const KEYSTONE_WIDTH: int = 24
+const KEYSTONE_HEIGHT: int = 20
+const KEYSTONE_ALPHA_BASE: float = 0.32
+const KEYSTONE_ALPHA_AMP: float = 0.10
+const KEYSTONE_PHASE_OFFSET: float = PI * 0.5
+const KEYSTONE_Y_OFFSET: float = -38.0
+
+# 부유 파티클 — 개구부 안을 떠다니는 흰 점들
+const PARTICLE_COUNT: int = 16
+const PARTICLE_RADIUS: float = 22.0
+const PARTICLE_LIFETIME: float = 3.6
 
 @export var sprite_path: String = "res://assets/sprites/objects/portal_stage.png"
+## PNG 하단 투명 여백 보정 — 이 값만큼 스프라이트를 아래로 당겨 지면에 정렬.
+@export var sprite_bottom_pad: float = 18.0
 
 var player_nearby: bool = false
 
@@ -44,6 +53,10 @@ var _t: float = 0.0
 var _near_mix: float = 0.0
 var _sprite: Sprite2D
 var _core_glow: Sprite2D
+var _galaxy: Sprite2D
+var _galaxy_mat: ShaderMaterial
+var _keystone_glow: Sprite2D
+var _particles: GPUParticles2D
 
 
 func _ready() -> void:
@@ -61,154 +74,31 @@ func _process(delta: float) -> void:
 
 
 func _update_core_glow() -> void:
-	if _core_glow == null:
-		return
-	var pulse: float = 0.5 + 0.5 * sin(_t * TAU / GLOW_PERIOD)
-	var base_a: float = GLOW_ALPHA_BASE + GLOW_ALPHA_AMP * (pulse * 2.0 - 1.0)
+	var phase: float = _t * TAU / GLOW_PERIOD
 	var near_boost: float = lerpf(1.0, NEAR_GLOW_BOOST, _near_mix)
-	_core_glow.modulate.a = clampf(base_a * near_boost, 0.0, 1.0)
+	if _core_glow != null:
+		var core_a: float = GLOW_ALPHA_BASE + GLOW_ALPHA_AMP * sin(phase)
+		_core_glow.modulate.a = clampf(core_a * near_boost, 0.0, 1.0)
+	if _galaxy_mat != null:
+		_galaxy_mat.set_shader_parameter("near_boost", near_boost)
+	if _keystone_glow != null:
+		var ks_a: float = (KEYSTONE_ALPHA_BASE
+				+ KEYSTONE_ALPHA_AMP * sin(phase + KEYSTONE_PHASE_OFFSET))
+		_keystone_glow.modulate.a = clampf(ks_a * near_boost, 0.0, 1.0)
 
 
 func _draw() -> void:
 	if _sprite != null and _sprite.visible:
 		return
-
-	_draw_portal_interior()
-	_draw_pillars()
-	_draw_arch_top()
-	_draw_stone_edges()
-	_draw_vines()
-
-
-func _draw_portal_interior() -> void:
+	# PNG 부재 시 단순 플레이스홀더 (스톤 벽 + 맥동 글로우)
+	draw_rect(
+		Rect2(-PORTAL_WIDTH * 0.5, -PORTAL_HEIGHT, PORTAL_WIDTH, PORTAL_HEIGHT),
+		COLOR_FALLBACK_STONE, true)
 	var pulse: float = 0.5 + 0.5 * sin(_t * TAU / GLOW_PERIOD)
-	var base_intensity: float = lerpf(0.7, 1.0, pulse)
-	var near_boost: float = lerpf(1.0, NEAR_GLOW_BOOST, _near_mix)
-	var intensity: float = base_intensity * near_boost
-	var center := Vector2(0, (Y_PILLAR_TOP + Y_BOTTOM) * 0.5)
-
-	var halo: Color = COLOR_PORTAL_GLOW
-	halo.a *= intensity * 0.4
-	draw_circle(center, 18.0, halo)
-
-	var mid: Color = COLOR_PORTAL_GLOW
-	mid.a *= intensity
-	draw_circle(center, 12.0, mid)
-
-	var core: Color = COLOR_PORTAL_CORE
-	core.a *= intensity
-	draw_circle(center, 6.0, core)
-
-
-func _draw_pillars() -> void:
-	_draw_one_pillar(-PORTAL_WIDTH * 0.5)
-	_draw_one_pillar(PORTAL_WIDTH * 0.5 - WALL_THICKNESS)
-
-
-func _draw_one_pillar(x_left: float) -> void:
-	draw_rect(Rect2(x_left, Y_PILLAR_TOP, WALL_THICKNESS, PILLAR_HEIGHT), COLOR_STONE_BASE, true)
-	var course_count: int = 5
-	var course_h: float = PILLAR_HEIGHT / float(course_count)
-	for i in range(1, course_count):
-		var y: float = Y_PILLAR_TOP + i * course_h
-		draw_line(
-			Vector2(x_left, y),
-			Vector2(x_left + WALL_THICKNESS, y),
-			COLOR_MORTAR,
-			1.0
-		)
-
-
-func _draw_arch_top() -> void:
-	var center := Vector2(0, Y_PILLAR_TOP)
-	draw_arc(center, ARCH_RADIUS_MID, PI, TAU, 28, COLOR_STONE_BASE, ARCH_THICKNESS, false)
-	var mortar_count: int = 5
-	for i in range(1, mortar_count + 1):
-		var t: float = float(i) / float(mortar_count + 1)
-		var a: float = lerpf(PI, TAU, t)
-		var p0: Vector2 = center + Vector2(cos(a), sin(a)) * (ARCH_RADIUS_MID - ARCH_THICKNESS * 0.5)
-		var p1: Vector2 = center + Vector2(cos(a), sin(a)) * (ARCH_RADIUS_MID + ARCH_THICKNESS * 0.5)
-		draw_line(p0, p1, COLOR_MORTAR, 1.0)
-
-
-func _draw_stone_edges() -> void:
-	var hl_w: float = 1.0
-	draw_rect(
-		Rect2(-PORTAL_WIDTH * 0.5, Y_PILLAR_TOP, hl_w, PILLAR_HEIGHT),
-		COLOR_STONE_HIGHLIGHT,
-		true
-	)
-	draw_rect(
-		Rect2(PORTAL_WIDTH * 0.5 - hl_w, Y_PILLAR_TOP, hl_w, PILLAR_HEIGHT),
-		COLOR_STONE_SHADOW,
-		true
-	)
-	var center := Vector2(0, Y_PILLAR_TOP)
-	draw_arc(
-		center,
-		ARCH_RADIUS_MID + ARCH_THICKNESS * 0.5 - 0.5,
-		PI + 0.15,
-		PI + 1.0,
-		10,
-		COLOR_STONE_HIGHLIGHT,
-		1.0,
-		false
-	)
-
-
-func _draw_vines() -> void:
-	_draw_vine_segment(
-		Vector2(-PORTAL_WIDTH * 0.5 - 2, Y_BOTTOM),
-		Vector2(-PORTAL_WIDTH * 0.5 - 2, Y_PILLAR_TOP),
-		4
-	)
-	_draw_vine_segment(
-		Vector2(PORTAL_WIDTH * 0.5 + 2, Y_BOTTOM),
-		Vector2(PORTAL_WIDTH * 0.5 + 2, Y_PILLAR_TOP),
-		4
-	)
-	_draw_arch_vine()
-
-
-func _draw_vine_segment(start: Vector2, end_p: Vector2, leaf_count: int) -> void:
-	var direction: Vector2 = end_p - start
-	if direction.length() < 1.0:
-		return
-	var normal: Vector2 = direction.rotated(PI * 0.5).normalized()
-	var segments: int = 12
-	var points := PackedVector2Array()
-	for i in range(segments + 1):
-		var t: float = float(i) / float(segments)
-		var wobble: float = sin(t * PI * 3.0) * 2.0
-		points.append(start.lerp(end_p, t) + normal * wobble)
-	draw_polyline(points, COLOR_VINE, 1.5, false)
-
-	for i in range(leaf_count):
-		var t2: float = float(i + 1) / float(leaf_count + 1)
-		var wobble2: float = sin(t2 * PI * 3.0) * 2.0
-		var leaf_pos: Vector2 = start.lerp(end_p, t2) + normal * (wobble2 + 1.5)
-		draw_circle(leaf_pos, 1.8, COLOR_LEAF)
-
-
-func _draw_arch_vine() -> void:
-	var center := Vector2(0, Y_PILLAR_TOP)
-	var base_r: float = ARCH_RADIUS_OUTER + 1.0
-	var segments: int = 20
-	var points := PackedVector2Array()
-	for i in range(segments + 1):
-		var t: float = float(i) / float(segments)
-		var a: float = lerpf(PI, TAU, t)
-		var wobble: float = sin(t * PI * 4.0) * 1.5
-		var r: float = base_r + wobble
-		points.append(center + Vector2(cos(a), sin(a)) * r)
-	draw_polyline(points, COLOR_VINE, 1.5, false)
-
-	var leaf_count: int = 4
-	for i in range(leaf_count):
-		var t: float = float(i + 1) / float(leaf_count + 1)
-		var a: float = lerpf(PI, TAU, t)
-		var pos: Vector2 = center + Vector2(cos(a), sin(a)) * (base_r + 2.5)
-		draw_circle(pos, 1.8, COLOR_LEAF)
+	var intensity: float = lerpf(0.7, 1.0, pulse) * lerpf(1.0, NEAR_GLOW_BOOST, _near_mix)
+	var glow: Color = COLOR_PORTAL_GLOW
+	glow.a *= intensity
+	draw_circle(Vector2(0, -PORTAL_HEIGHT * 0.5), 14.0, glow)
 
 
 func set_player_nearby(value: bool) -> void:
@@ -225,15 +115,68 @@ func _setup_sprite_fallback() -> void:
 	_sprite.name = "PortalSprite"
 	_sprite.texture = tex
 	_sprite.centered = true
-	# PNG 중심이 포탈 중앙이라 가정 — Node2D 원점(바닥)에서 위로 반 높이만큼 오프셋
-	_sprite.position = Vector2(0, -PORTAL_HEIGHT * 0.5)
+	# 캔버스 바닥을 Node2D 원점(지면)에 고정 + PNG 하단 여백 보정
+	var sprite_y: float = -float(tex.get_height()) * 0.5 + sprite_bottom_pad
+	_sprite.position = Vector2(0, sprite_y)
 	add_child(_sprite)
-	_core_glow = _make_radial_glow()
-	_core_glow.position = Vector2(0, (Y_PILLAR_TOP + Y_BOTTOM) * 0.5)
+	_core_glow = _make_radial_glow(GLOW_WIDTH, GLOW_HEIGHT, COLOR_SPRITE_GLOW, "PortalCoreGlow")
+	_core_glow.position = Vector2(0, sprite_y + GLOW_Y_OFFSET)
 	add_child(_core_glow)
+	_galaxy = _make_galaxy(GALAXY_WIDTH, GALAXY_HEIGHT, COLOR_SPRITE_GLOW)
+	_galaxy.position = Vector2(0, sprite_y + GLOW_Y_OFFSET)
+	add_child(_galaxy)
+	_keystone_glow = _make_radial_glow(
+			KEYSTONE_WIDTH, KEYSTONE_HEIGHT, COLOR_SPRITE_KEYSTONE, "PortalKeystoneGlow")
+	_keystone_glow.position = Vector2(0, sprite_y + KEYSTONE_Y_OFFSET + GLOW_Y_OFFSET)
+	add_child(_keystone_glow)
+	_particles = _make_particles()
+	_particles.position = Vector2(0, sprite_y + GLOW_Y_OFFSET)
+	add_child(_particles)
 
 
-func _make_radial_glow() -> Sprite2D:
+func _make_particles() -> GPUParticles2D:
+	var p := GPUParticles2D.new()
+	p.name = "PortalParticles"
+	p.amount = PARTICLE_COUNT
+	p.lifetime = PARTICLE_LIFETIME
+	p.preprocess = 2.0
+	var m := ParticleProcessMaterial.new()
+	m.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	m.emission_sphere_radius = PARTICLE_RADIUS
+	m.gravity = Vector3.ZERO
+	m.initial_velocity_min = 0.0
+	m.initial_velocity_max = 0.0
+	m.orbit_velocity_min = 0.22
+	m.orbit_velocity_max = 0.35
+	m.radial_accel_min = -2.0
+	m.radial_accel_max = 1.0
+	m.damping_min = 0.0
+	m.damping_max = 0.0
+	m.scale_min = 0.6
+	m.scale_max = 1.3
+	m.color = Color(1.0, 1.0, 1.0, 0.75)
+	p.process_material = m
+	return p
+
+
+func _make_galaxy(w: int, h: int, color: Color) -> Sprite2D:
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 1, 1, 1))
+	var spr := Sprite2D.new()
+	spr.name = "PortalGalaxy"
+	spr.texture = ImageTexture.create_from_image(img)
+	spr.centered = true
+	spr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var shader := load(GALAXY_SHADER_PATH) as Shader
+	if shader != null:
+		_galaxy_mat = ShaderMaterial.new()
+		_galaxy_mat.shader = shader
+		_galaxy_mat.set_shader_parameter("tint", color)
+		spr.material = _galaxy_mat
+	return spr
+
+
+func _make_radial_glow(w: int, h: int, color: Color, node_name: String) -> Sprite2D:
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
 	gradient.colors = PackedColorArray([
@@ -246,13 +189,13 @@ func _make_radial_glow() -> Sprite2D:
 	gtex.fill = GradientTexture2D.FILL_RADIAL
 	gtex.fill_from = Vector2(0.5, 0.5)
 	gtex.fill_to = Vector2(1.0, 0.5)
-	gtex.width = GLOW_WIDTH
-	gtex.height = GLOW_HEIGHT
+	gtex.width = w
+	gtex.height = h
 	var spr := Sprite2D.new()
-	spr.name = "PortalCoreGlow"
+	spr.name = node_name
 	spr.texture = gtex
 	spr.centered = true
-	spr.modulate = Color(COLOR_PORTAL_GLOW.r, COLOR_PORTAL_GLOW.g, COLOR_PORTAL_GLOW.b, 0.0)
+	spr.modulate = Color(color.r, color.g, color.b, 0.0)
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD

@@ -3,6 +3,8 @@ extends Area2D
 ## 스테이지 간 이동 포탈.
 ## 플레이어가 영역 안에서 윗방향키를 누르면 전환을 요청한다.
 
+const INWARD_OFFSET_X: float = 24.0
+
 ## 이 포탈이 연결하는 목적지 스테이지 ID
 @export var target_stage_id: String = ""
 ## 포탈 배치 방향 ("left" 또는 "right"). 플레이어 진입 시 반대쪽에서 스폰.
@@ -16,6 +18,17 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	EventBus.stage_access_denied.connect(_on_access_denied)
+	_apply_direction_offset()
+
+
+func _apply_direction_offset() -> void:
+	# 스프라이트 캔버스가 충돌 박스보다 넓어 맵 경계에 잘리는 것을 보완 —
+	# 좌측 포탈은 오른쪽으로, 우측 포탈은 왼쪽으로 시각만 살짝 안쪽 이동.
+	var visual := get_node_or_null("PortalVisual") as Node2D
+	if visual == null:
+		return
+	var sign_x: float = 1.0 if direction == "left" else -1.0
+	visual.position.x = sign_x * INWARD_OFFSET_X
 
 
 func _process(_delta: float) -> void:
