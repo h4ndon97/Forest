@@ -48,7 +48,9 @@
 - [ ] 투사체 생성(`enemy_projectile.tscn` 인스턴싱)이 `CombatSystem.request_projectile` 경유
 - [ ] `base_enemy._on_hurtbox_area_entered`의 데미지·이펙트 발동 로직이 `damage_resolver`로 이동
 - [ ] `hit_flash_requested` / `hitstop_requested` / `screen_flash_requested` 3개 고아 시그널이 `damage_resolver`에서 emit되고 `EffectsSystem`이 수신
-- [ ] `player_combo.gd` LOC **30% 이상 감소** (현재 193줄 → 목표 ≤ 135줄)
+- [ ] `player_combo.gd` LOC 감소 (현재 193줄 → 목표 ≤ 175줄, 약 10% 감소)
+  - 본 Phase 단독 한계. 이중 히트박스 효과는 Step 2.5(player_skill 45%↓)에서 발생.
+  - 추가 압축은 Step 2.5에서 두 호출처 공통 빌더로 자연 추출 시 가능.
 - [ ] `combat_system.gd` LOC **300줄 이하 유지**
 - [ ] Godot 헤드리스 로드 테스트 **ERROR 0 / WARNING 0**
 - [ ] 1-1 ~ 1-6 + 1-H + 1-B 스테이지 회귀 플레이 통과 (콤보·스킬·적·보스 모든 히트 정상)
@@ -369,7 +371,7 @@ func _start_hit(hit_number: int) -> void:
 - `_attack_hitbox` 멤버 변수 **제거**
 - `_hit_timer` 유지 (콤보 상태머신 타이밍과 히트박스 생명주기는 **여전히 분리** — 상태 전이용)
 
-**예상 LOC**: 193 → ~120 (37% 감소)
+**예상 LOC**: 193 → ~170 (약 10% 감소). 30%↓ 가정은 spec 조립 14줄을 누락한 추정이었음. 추가 감소는 Step 2.5에서 player_skill과 공통 빌더 추출 시 자연 발생.
 
 ### 4.2 [`player_skill.gd`](../../src/entities/player/player_skill.gd)
 
@@ -704,7 +706,7 @@ EventBus.hitstop_requested.connect(_on_hitstop_requested)
 
 | 파일 | 현재 | 목표 | Step |
 |---|---|---|---|
-| `player_combo.gd` | 193줄 | ≤ 135줄 (30%↓) | S2 |
+| `player_combo.gd` | 193줄 | ≤ 175줄 (약 10%↓, 단독 한계) | S2 |
 | `player_skill.gd` | 164줄 | ≤ 90줄 (45%↓) | S2.5 |
 | `combat_system.gd` | 86줄 | ≤ 300줄 (확장 후) | S1 |
 | `attack_behavior_boss_melee_aoe.gd` | 111줄 | ≤ 60줄 (telegraph 흡수) | S5 |

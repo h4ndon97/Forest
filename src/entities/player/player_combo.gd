@@ -1,7 +1,9 @@
 extends Node
 
 ## 플레이어 콤보 전투 컴포넌트.
-## 4타 콤보 상태 머신, 히트박스 관리, 입력 버퍼링.
+## 4타 콤보 상태 머신, 입력 버퍼링.
+## Phase 4-0 #1 Step 2: 자체 Area2D 관리 → CombatSystem.request_attack(AttackSpec) 위임.
+## 히트박스 생명주기는 CombatSystem.attack_requests가 spec.active_duration 기반으로 관리.
 
 enum ComboState { IDLE, ATTACKING, WINDOW }
 
@@ -16,8 +18,9 @@ var _sprite: AnimatedSprite2D
 var _movement: Node
 var _config: CombatConfigData
 
-var _attack_hitbox: Area2D
-var _attack_shape: CollisionShape2D
+## 사망/리셋 시 잔존 히트 방지용 안전장치 — active_duration 만료 전 즉시 cancel.
+var _current_attack_area: Area2D = null
+
 var _hit_timer: Timer
 var _window_timer: Timer
 var _reset_timer: Timer
@@ -28,15 +31,12 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	_sprite = parent.get_node("AnimatedSprite2D")
 	_movement = parent.get_node("MovementComponent")
 	_config = config
-
-	_create_attack_hitbox()
 	_create_timers()
 	EventBus.player_died.connect(_on_player_died)
 
 
 func update(input: Node, enemies_active: bool) -> void:
 	_enemies_active = enemies_active
-
 	match _combo_state:
 		ComboState.IDLE:
 			if input.attack_pressed:
@@ -67,20 +67,24 @@ func _start_hit(hit_number: int) -> void:
 	_is_attacking = true
 	_input_buffered = false
 
-	# 히트박스 방향 설정 및 활성화
-	var facing: int = _movement.facing_direction
-	_attack_shape.position.x = absf(_config.hitbox_offset.x) * facing
-	_attack_hitbox.set_meta("hit_number", _combo_count)
-	var damage: float = CombatSystem.get_combo_damage(_combo_count)
-	_attack_hitbox.set_meta("damage", damage)
-	var is_finish: bool = _combo_count >= _config.combo_max_hits
-	_attack_hitbox.set_meta("is_finish", is_finish)
-	_attack_hitbox.set_meta("finish_attribute", _resolve_finish_attribute() if is_finish else "")
 	if _enemies_active:
-		_attack_hitbox.monitoring = true
-		_attack_hitbox.monitorable = true
+		_cancel_current_attack()
+		var spec := AttackSpec.new()
+		spec.attacker = _parent
+		spec.source_group = "player_attack"
+		spec.shape_type = "rect"
+		spec.hitbox_size = _config.hitbox_size
+		spec.hitbox_offset = Vector2(
+			absf(_config.hitbox_offset.x) * _movement.facing_direction,
+			_config.hitbox_offset.y,
+		)
+		spec.active_duration = _config.hit_duration
+		spec.damage = CombatSystem.get_combo_damage(_combo_count)
+		spec.is_finish = _combo_count >= _config.combo_max_hits
+		spec.attribute = _resolve_finish_attribute() if spec.is_finish else "none"
+		spec.tags = PackedStringArray(["combo", "hit_%d" % _combo_count])
+		_current_attack_area = CombatSystem.request_attack(spec)
 
-	# 애니메이션 재생
 	var anim_name := "slash_%d" % hit_number
 	if _sprite and _sprite.sprite_frames:
 		if _sprite.sprite_frames.has_animation(anim_name):
@@ -92,26 +96,18 @@ func _start_hit(hit_number: int) -> void:
 	EventBus.combo_hit_landed.emit(hit_number)
 
 
+# 히트박스 OFF는 CombatSystem.attack_requests가 처리. 본 콜백은 상태 전이 전용.
 func _on_hit_timer_timeout() -> void:
-	# 히트박스 비활성화
-	_attack_hitbox.monitoring = false
-	_attack_hitbox.monitorable = false
-
 	if _combo_count >= _config.combo_max_hits:
-		# 피니시 완료 — 공격 플래그 즉시 해제, 리셋 타이머 후 콤보 초기화
 		_is_attacking = false
 		EventBus.combo_finished.emit(_resolve_finish_attribute())
 		_combo_state = ComboState.IDLE
 		_reset_timer.start()
 		return
-
-	# WINDOW 진입 시 버퍼 확인 — 버퍼된 입력이 있으면 즉시 다음 타 실행
 	if _input_buffered:
 		_input_buffered = false
 		_start_hit(_combo_count + 1)
 		return
-
-	# 버퍼 없으면 입력 대기
 	_combo_state = ComboState.WINDOW
 	_window_timer.start()
 
@@ -142,31 +138,14 @@ func _reset_combo() -> void:
 	_combo_state = ComboState.IDLE
 	_input_buffered = false
 	_is_attacking = false
-	_attack_hitbox.monitoring = false
-	_attack_hitbox.monitorable = false
+	_cancel_current_attack()
 	EventBus.combo_resetted.emit()
 
 
-# === 히트박스/타이머 생성 ===
-
-
-func _create_attack_hitbox() -> void:
-	_attack_hitbox = Area2D.new()
-	_attack_hitbox.name = "AttackHitbox"
-	_attack_hitbox.collision_layer = Constants.LAYER_PLAYER_ATTACK
-	_attack_hitbox.collision_mask = 0
-	_attack_hitbox.monitoring = false
-	_attack_hitbox.monitorable = false
-	_attack_hitbox.add_to_group("player_attack")
-
-	_attack_shape = CollisionShape2D.new()
-	var shape := RectangleShape2D.new()
-	shape.size = _config.hitbox_size
-	_attack_shape.shape = shape
-	_attack_shape.position = _config.hitbox_offset
-	_attack_hitbox.add_child(_attack_shape)
-
-	_parent.add_child(_attack_hitbox)
+func _cancel_current_attack() -> void:
+	if _current_attack_area != null and is_instance_valid(_current_attack_area):
+		CombatSystem.cancel_attack(_current_attack_area)
+	_current_attack_area = null
 
 
 func _create_timers() -> void:
