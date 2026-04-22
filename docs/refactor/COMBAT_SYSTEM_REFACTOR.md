@@ -433,7 +433,7 @@ func _try_use_skill(slot_index: int) -> void:
 - `_skill_hitbox`·`_skill_shape`·`_active_timer`·`_is_active` 멤버 전부 제거
 - 쿨다운/자원 소비 로직은 유지 (**#2에서 SkillExecutor로 이동 예정**)
 
-**예상 LOC**: 164 → ~90 (45% 감소)
+**예상 LOC**: 164 → ~120 (약 27% 감소). 45%↓ 가정은 spec 조립 ~14줄을 누락한 추정. Step 3에서 적 behavior가 세 번째 호출처가 될 때 공통 빌더 추출로 추가 감소 가능.
 
 **이중 히트박스 해소 검증**: `player_combo` + `player_skill` 양쪽 모두 `CombatSystem.request_attack` 1개 경로로 수렴.
 
@@ -707,7 +707,7 @@ EventBus.hitstop_requested.connect(_on_hitstop_requested)
 | 파일 | 현재 | 목표 | Step |
 |---|---|---|---|
 | `player_combo.gd` | 193줄 | ≤ 175줄 (약 10%↓, 단독 한계) | S2 |
-| `player_skill.gd` | 164줄 | ≤ 90줄 (45%↓) | S2.5 |
+| `player_skill.gd` | 164줄 | ≤ 120줄 (약 27%↓, 단독 한계) | S2.5 |
 | `combat_system.gd` | 86줄 | ≤ 300줄 (확장 후) | S1 |
 | `attack_behavior_boss_melee_aoe.gd` | 111줄 | ≤ 60줄 (telegraph 흡수) | S5 |
 | `base_enemy._on_hurtbox_area_entered` | 24줄 | 3줄 | S6 |
