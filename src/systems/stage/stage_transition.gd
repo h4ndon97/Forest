@@ -71,6 +71,7 @@ func set_fade_black() -> void:
 
 # --- 내부 ---
 
+
 func _create_fade_rect() -> void:
 	_fade_rect = ColorRect.new()
 	_fade_rect.name = "FadeRect"
@@ -98,7 +99,9 @@ func _reinsert_player(player: CharacterBody2D) -> void:
 	root.add_child(player)
 
 	# 진입 방향에 따라 스폰 위치 결정
-	var viewport_width := float(ProjectSettings.get_setting("display/window/size/viewport_width", 640))
+	var viewport_width := float(
+		ProjectSettings.get_setting("display/window/size/viewport_width", 640)
+	)
 
 	if _pending_entry_direction == "left":
 		player.global_position = Vector2(SPAWN_MARGIN, SPAWN_Y_FLOOR)
@@ -111,3 +114,6 @@ func _reinsert_player(player: CharacterBody2D) -> void:
 
 	# 리스폰 포인트 갱신
 	EventBus.spawn_point_set.emit(player.global_position)
+
+	# 카메라 limit 재적용 — Stage._ready 시점엔 player가 트리에 없어 skip되므로 reinsert 후 1회 더.
+	StageCamera.apply(StageSystem.get_current_stage_id())
