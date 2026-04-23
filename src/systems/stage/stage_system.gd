@@ -51,6 +51,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		_save_manager.delete_save()
 		_last_checkpoint_id = ""
 		push_warning("StageSystem: 세이브 삭제됨 (재시작 시 반영)")
+		return
+
+	# 디버그 빌드 한정 점프 핫키 — 가변 룸/카메라/회귀 테스트용.
+	if not OS.is_debug_build():
+		return
+	if event.is_action_pressed("debug_jump_test_checkpoint"):
+		EventBus.stage_transition_requested.emit("test_checkpoint", "checkpoint")
+	elif event.is_action_pressed("debug_jump_start_village"):
+		EventBus.stage_transition_requested.emit("start_village", "checkpoint")
 
 
 func get_current_stage_id() -> String:
