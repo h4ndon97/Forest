@@ -16,23 +16,10 @@ func _ready() -> void:
 	EventBus.stage_enemies_sync_requested.connect(_on_enemies_sync)
 	EventBus.stage_entered.emit(STAGE_ID)
 	EventBus.spawn_point_set.emit(SPAWN_POSITION)
-	_setup_camera_limits()
+	StageCamera.apply(STAGE_ID)
 	_try_apply_background()
 	_try_apply_ground()
 	_try_apply_platforms()
-
-
-func _setup_camera_limits() -> void:
-	var player := get_tree().get_first_node_in_group("player") as CharacterBody2D
-	if not player:
-		return
-	var camera := player.get_node_or_null("Camera2D") as Camera2D
-	if not camera:
-		return
-	camera.limit_left = 0
-	camera.limit_top = 0
-	camera.limit_right = 640
-	camera.limit_bottom = 360
 
 
 func _try_apply_background() -> void:

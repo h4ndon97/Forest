@@ -11,20 +11,10 @@ func _ready() -> void:
 	EventBus.stage_enemies_sync_requested.connect(_on_enemies_sync)
 	EventBus.stage_entered.emit("test_stage")
 	EventBus.spawn_point_set.emit(Vector2(128, 320))
-	_setup_camera_limits()
+	StageCamera.apply("test_stage")
 	_try_apply_background()
 	_try_apply_ground()
 	_try_apply_platforms()
-
-
-func _setup_camera_limits() -> void:
-	var camera := $Player.get_node_or_null("Camera2D") as Camera2D
-	if not camera:
-		return
-	camera.limit_left = 0
-	camera.limit_top = 0
-	camera.limit_right = 640
-	camera.limit_bottom = 360
 
 
 func _try_apply_background() -> void:

@@ -6,8 +6,7 @@ extends Node2D
 
 const STAGE_ID := "stage_1_b"
 const SPAWN_POSITION := Vector2(80, 320)
-const STAGE_WIDTH := 960
-const STAGE_HEIGHT := 360
+const ARENA_WIDTH := 960  # 바닥 타일 가로 폭 — room_size와 동기 유지 (stage_1_b.tres)
 const BG_PATH := "res://assets/backgrounds/bg_stage_1_b.png"
 const GROUND_TILE_PATH := "res://assets/tiles/tile_ground_zone1.png"
 
@@ -17,24 +16,11 @@ var _trigger_consumed: bool = false
 func _ready() -> void:
 	EventBus.stage_entered.emit(STAGE_ID)
 	EventBus.spawn_point_set.emit(SPAWN_POSITION)
-	_setup_camera_limits()
+	StageCamera.apply(STAGE_ID)
 	_setup_boss()
 	_setup_arena_trigger()
 	_try_apply_background()
 	_try_apply_ground()
-
-
-func _setup_camera_limits() -> void:
-	var player := get_tree().get_first_node_in_group("player") as CharacterBody2D
-	if not player:
-		return
-	var camera := player.get_node_or_null("Camera2D") as Camera2D
-	if not camera:
-		return
-	camera.limit_left = 0
-	camera.limit_top = 0
-	camera.limit_right = STAGE_WIDTH
-	camera.limit_bottom = STAGE_HEIGHT
 
 
 func _setup_boss() -> void:
@@ -94,7 +80,7 @@ func _try_apply_ground() -> void:
 	var tex_rect := TextureRect.new()
 	tex_rect.texture = tex
 	tex_rect.stretch_mode = TextureRect.STRETCH_TILE
-	tex_rect.size = Vector2(STAGE_WIDTH, 64)
+	tex_rect.size = Vector2(ARENA_WIDTH, 64)
 	tex_rect.position = Vector2(0, 328)
 	add_child(tex_rect)
 	$Floor/FloorSprite.visible = false

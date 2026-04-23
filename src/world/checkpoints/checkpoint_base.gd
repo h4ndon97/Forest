@@ -2,16 +2,11 @@ extends Node2D
 
 ## 거점 씬 공통 베이스.
 ## - stage_entered + spawn_point_set 방송
-## - 플레이어 카메라를 640x360에 고정
+## - 플레이어 카메라를 StageData.room_size에 맞춰 고정
 ## - BG/Ground 텍스처 fallback 적용 (리소스 있을 때만)
 ##
 ## 진입 시 완전 회복 + 세이브는 StageSystem이 is_checkpoint 플래그로 자동 처리한다.
 ## 파생 스크립트가 필요 없으면 씬 루트에 이 스크립트를 직접 붙여도 된다.
-
-const CAMERA_LEFT: int = 0
-const CAMERA_TOP: int = 0
-const CAMERA_RIGHT: int = 640
-const CAMERA_BOTTOM: int = 360
 
 const GROUND_SIZE: Vector2 = Vector2(640, 64)
 const GROUND_POSITION: Vector2 = Vector2(0, 328)
@@ -30,7 +25,7 @@ func _ready() -> void:
 	_ensure_player_spawned()
 	EventBus.stage_entered.emit(stage_id)
 	EventBus.spawn_point_set.emit(spawn_point)
-	_setup_camera_limits()
+	StageCamera.apply(stage_id)
 	_try_apply_background()
 	_try_apply_ground()
 
@@ -46,19 +41,6 @@ func _ensure_player_spawned() -> void:
 	var player: CharacterBody2D = player_scene.instantiate() as CharacterBody2D
 	player.global_position = spawn_point
 	add_child(player)
-
-
-func _setup_camera_limits() -> void:
-	var player := get_tree().get_first_node_in_group("player") as CharacterBody2D
-	if not player:
-		return
-	var camera := player.get_node_or_null("Camera2D") as Camera2D
-	if not camera:
-		return
-	camera.limit_left = CAMERA_LEFT
-	camera.limit_top = CAMERA_TOP
-	camera.limit_right = CAMERA_RIGHT
-	camera.limit_bottom = CAMERA_BOTTOM
 
 
 func _try_apply_background() -> void:

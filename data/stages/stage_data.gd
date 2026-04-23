@@ -39,6 +39,11 @@ enum LockType { NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY }
 ## 이 스테이지가 거점(체크포인트)인지 여부
 @export var is_checkpoint: bool = false
 
+@export_group("카메라/룸")
+## 카메라 limit 영역 크기 (픽셀). 한 화면 = 640x360. 가로 스크롤 룸은 width 확장.
+## 카메라는 (0, 0) ~ room_size 사이로 제한된다.
+@export var room_size: Vector2 = Vector2(640, 360)
+
 @export_group("월드맵 위치 (극좌표)")
 ## 동심 링 인덱스. 1=외곽(zone_1), 5=심부(zone_5). 0=월드맵 미표시(test_*).
 @export var radius_ring: int = 0

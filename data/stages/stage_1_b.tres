@@ -15,6 +15,7 @@ lock_requirement = ""
 total_enemies = 1
 total_residues = 0
 is_checkpoint = false
+room_size = Vector2(960, 360)
 radius_ring = 1
 angle_deg = 303.75
 radius_offset = 0.0
