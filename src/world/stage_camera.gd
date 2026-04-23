@@ -52,3 +52,7 @@ static func _set_limits(camera: Camera2D, size: Vector2) -> void:
 	camera.limit_top = 0
 	camera.limit_right = int(size.x)
 	camera.limit_bottom = int(size.y)
+	# stage tscn에 박혀있는 Player의 Camera2D가 첫 _enter_tree에서 자동 current가 되고,
+	# _reinsert_player의 queue_free는 deferred이므로 같은 프레임에 잔류 카메라가
+	# current로 남는 경우가 있다. 명시적으로 player의 Camera2D를 current로 강제.
+	camera.make_current()
