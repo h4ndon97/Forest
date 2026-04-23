@@ -1,51 +1,46 @@
 extends "res://src/entities/enemies/base/behaviors/attack_behavior_base.gd"
 
 ## 근접 공격 행동.
-## stats_data의 hitbox_size/offset/duration으로 히트박스 형상을 파라미터화한다.
-## hitbox_active_duration > 0이면 활성 시간 만료 시 자동으로 비활성화.
+## Phase 4-0 #1 Step 3: 자체 Hitbox 의존 제거 → CombatSystem.request_attack(AttackSpec) 위임.
+## hitbox_active_duration > 0이면 spec.active_duration으로 사용. 0이면 _DEFAULT_ACTIVE_DURATION
+## 상한 + on_attack_exit이 cancel하는 방식으로 ATTACK 상태 동안만 유효 유지.
 
-var _hitbox_shape_node: CollisionShape2D
-var _active_timer: float = 0.0
-var _is_active: bool = false
+const _DEFAULT_ACTIVE_DURATION := 0.5
 
-
-func _on_setup() -> void:
-	_hitbox_shape_node = _hitbox.get_node_or_null("HitboxShape") as CollisionShape2D
-	if _hitbox_shape_node == null:
-		push_warning("AttackBehaviorMelee: HitboxShape not found under Hitbox")
-		return
-	_apply_shape()
+## ATTACK 중도 이탈 시 잔존 히트 방지용 안전장치.
+var _current_attack_area: Area2D = null
 
 
 func on_attack_enter() -> void:
-	_is_active = true
-	_active_timer = 0.0
-	_hitbox.set_deferred("monitoring", true)
-	_hitbox.set_deferred("monitorable", true)
+	_cancel_current_attack()
+
+	var spec := AttackSpec.new()
+	spec.attacker = _enemy_root
+	spec.source_group = "enemy_attack"
+	spec.shape_type = "rect"
+	spec.hitbox_size = _stats_data.hitbox_size
+	spec.hitbox_offset = Vector2(
+		absf(_stats_data.hitbox_offset.x) * _enemy_root.movement_comp.facing,
+		_stats_data.hitbox_offset.y,
+	)
+	spec.active_duration = (
+		_stats_data.hitbox_active_duration
+		if _stats_data.hitbox_active_duration > 0.0
+		else _DEFAULT_ACTIVE_DURATION
+	)
+	spec.damage = _enemy_root.stats_comp.get_attack()
+	spec.is_finish = false
+	spec.attribute = "none"
+	spec.tags = PackedStringArray(["enemy_melee"])
+
+	_current_attack_area = CombatSystem.request_attack(spec)
 
 
 func on_attack_exit() -> void:
-	_is_active = false
-	_hitbox.set_deferred("monitoring", false)
-	_hitbox.set_deferred("monitorable", false)
+	_cancel_current_attack()
 
 
-func on_state_update(delta: float) -> void:
-	if not _is_active:
-		return
-	if _stats_data.hitbox_active_duration <= 0.0:
-		return
-	_active_timer += delta
-	if _active_timer >= _stats_data.hitbox_active_duration:
-		_is_active = false
-		_hitbox.set_deferred("monitoring", false)
-		_hitbox.set_deferred("monitorable", false)
-
-
-func _apply_shape() -> void:
-	var rect := _hitbox_shape_node.shape as RectangleShape2D
-	if rect == null:
-		rect = RectangleShape2D.new()
-		_hitbox_shape_node.shape = rect
-	rect.size = _stats_data.hitbox_size
-	_hitbox_shape_node.position = _stats_data.hitbox_offset
+func _cancel_current_attack() -> void:
+	if _current_attack_area != null and is_instance_valid(_current_attack_area):
+		CombatSystem.cancel_attack(_current_attack_area)
+	_current_attack_area = null

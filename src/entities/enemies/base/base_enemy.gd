@@ -9,11 +9,12 @@ const EnemyStateMachine = preload("res://src/entities/enemies/base/enemy_state_m
 const EnemyHPBarScript = preload("res://src/entities/enemies/base/enemy_hp_bar.gd")
 const EnemyDefenseScript = preload("res://src/entities/enemies/base/enemy_defense.gd")
 const AttackBehaviorMeleeScript = preload(
-		"res://src/entities/enemies/base/behaviors/attack_behavior_melee.gd")
+	"res://src/entities/enemies/base/behaviors/attack_behavior_melee.gd"
+)
 const AttackBehaviorNoneScript = preload(
-		"res://src/entities/enemies/base/behaviors/attack_behavior_none.gd")
-const SplitSpawnerScript = preload(
-		"res://src/entities/enemies/base/behaviors/split_spawner.gd")
+	"res://src/entities/enemies/base/behaviors/attack_behavior_none.gd"
+)
+const SplitSpawnerScript = preload("res://src/entities/enemies/base/behaviors/split_spawner.gd")
 
 @export var stats_data: EnemyStatsData
 
@@ -31,7 +32,6 @@ var _revive_attack_ratio: float = 1.0
 @onready var feedback_comp: Node = $FeedbackController
 @onready var detect_area: Area2D = $DetectArea
 @onready var hurtbox: Area2D = $Hurtbox
-@onready var hitbox: Area2D = $Hitbox
 @onready var attack_behavior: Node = $AttackBehavior
 @onready var death_behavior: Node = $DeathBehavior
 @onready var defense: Node = $Defense
@@ -49,14 +49,15 @@ func _ready() -> void:
 
 	_inject_behaviors()
 
-	stats_comp.setup(stats_data, EnemySystem.get_current_intensity(),
-			_revive_hp_ratio, _revive_attack_ratio)
+	stats_comp.setup(
+		stats_data, EnemySystem.get_current_intensity(), _revive_hp_ratio, _revive_attack_ratio
+	)
 	movement_comp.setup(stats_data, stats_comp)
 	state_machine.setup(self)
 	animation_comp.setup($AnimatedSprite2D)
 	feedback_comp.setup(self, animation_comp)
 	defense.setup(stats_data)
-	attack_behavior.setup(self, stats_data, hitbox)
+	attack_behavior.setup(self, stats_data)
 	if death_behavior.has_method("setup"):
 		death_behavior.setup(self, stats_data)
 
@@ -72,9 +73,6 @@ func _ready() -> void:
 	detect_area.body_entered.connect(_on_detect_body_entered)
 	detect_area.body_exited.connect(_on_detect_body_exited)
 	hurtbox.area_entered.connect(_on_hurtbox_area_entered)
-
-	hitbox.monitoring = false
-	hitbox.monitorable = false
 
 	if not EnemySystem.are_enemies_active():
 		deactivate()
@@ -118,6 +116,13 @@ func _physics_process(delta: float) -> void:
 
 func activate() -> void:
 	state_machine.activate()
+	# DORMANT 동안 들어온 body_entered는 _target만 세팅하고 transition을 보류한다.
+	# 활성 직후 DetectArea 재검사로 영역 안의 플레이어를 즉시 CHASE로 인지시킨다.
+	if state_machine.current_state == EnemyStateMachine.State.IDLE:
+		for body in detect_area.get_overlapping_bodies():
+			if body.is_in_group("player"):
+				state_machine.on_player_detected(body)
+				break
 
 
 func deactivate() -> void:
@@ -149,7 +154,8 @@ func trigger_split(fallback_spore_path: String, count: int, spread_radius: float
 	var use_count: int = count if count > 0 else stats_data.spore_count
 	var use_radius: float = spread_radius if spread_radius > 0.0 else stats_data.spore_spread_radius
 	var spawned: Array = SplitSpawnerScript.spawn_spores(
-			self, spore_path, fallback_spore_path, use_count, use_radius)
+		self, spore_path, fallback_spore_path, use_count, use_radius
+	)
 	if spawned.size() > 0:
 		EventBus.enemy_split_spawned.emit(global_position, spawned.size())
 		EnemySystem.on_enemy_died(enemy_id, global_position)
@@ -159,12 +165,14 @@ func trigger_split(fallback_spore_path: String, count: int, spread_radius: float
 
 # --- 내부 ---
 
+
 func _inject_behaviors() -> void:
 	var attack_type: String = stats_data.attack_behavior if stats_data else "melee"
 	match attack_type:
 		"ranged":
-			attack_behavior.set_script(load(
-					"res://src/entities/enemies/base/behaviors/attack_behavior_ranged.gd"))
+			attack_behavior.set_script(
+				load("res://src/entities/enemies/base/behaviors/attack_behavior_ranged.gd")
+			)
 		"none":
 			attack_behavior.set_script(AttackBehaviorNoneScript)
 		_:
@@ -176,8 +184,9 @@ func _inject_behaviors() -> void:
 		death_type = "none"
 	match death_type:
 		"split":
-			death_behavior.set_script(load(
-					"res://src/entities/enemies/base/behaviors/death_behavior_split.gd"))
+			death_behavior.set_script(
+				load("res://src/entities/enemies/base/behaviors/death_behavior_split.gd")
+			)
 		_:
 			pass
 
@@ -185,9 +194,10 @@ func _inject_behaviors() -> void:
 
 
 func _on_died() -> void:
+	# state_machine.on_death() → DEAD 전이가 _on_state_changed에서 attack_behavior.on_attack_exit()
+	# 호출을 발생시켜 잔존 공격 히트박스를 cancel하므로 별도 처리 불필요.
 	state_machine.on_death()
 	set_physics_process(false)
-	hitbox.set_deferred("monitoring", false)
 	hurtbox.set_deferred("monitoring", false)
 	var killed_during_day: bool = EnemySystem.on_enemy_died(enemy_id, global_position)
 	EventBus.enemy_drop_requested.emit(global_position, stats_data.enemy_name)
@@ -216,16 +226,15 @@ func _spawn_residue(killed_during_day: bool) -> void:
 
 
 func _on_state_changed(old_state: int, new_state: int) -> void:
-	var entered_attack: bool = (new_state == EnemyStateMachine.State.ATTACK)
-	var exited_attack: bool = (old_state == EnemyStateMachine.State.ATTACK)
+	var entered_attack: bool = new_state == EnemyStateMachine.State.ATTACK
+	var exited_attack: bool = old_state == EnemyStateMachine.State.ATTACK
 	if entered_attack:
 		attack_behavior.on_attack_enter()
 	elif exited_attack:
 		attack_behavior.on_attack_exit()
 
 	var entered_hurt: bool = (
-		new_state == EnemyStateMachine.State.HURT
-		and old_state != EnemyStateMachine.State.HURT
+		new_state == EnemyStateMachine.State.HURT and old_state != EnemyStateMachine.State.HURT
 	)
 	if entered_hurt:
 		feedback_comp.play_stagger_shake()

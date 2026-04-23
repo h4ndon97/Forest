@@ -18,7 +18,6 @@ func _ready() -> void:
 func _on_died() -> void:
 	state_machine.on_death()
 	set_physics_process(false)
-	hitbox.set_deferred("monitoring", false)
 	hurtbox.set_deferred("monitoring", false)
 	EnemySystem.on_enemy_died(enemy_id, global_position)
 	if spider_id >= 0:

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/entities/enemies/base/base_enemy.gd" id="1"]
 [ext_resource type="Script" path="res://src/entities/enemies/base/enemy_state_machine.gd" id="2"]
@@ -16,9 +16,6 @@ radius = 150.0
 
 [sub_resource type="RectangleShape2D" id="hurtbox_shape"]
 size = Vector2(18, 26)
-
-[sub_resource type="RectangleShape2D" id="hitbox_shape"]
-size = Vector2(30, 20)
 
 [node name="BaseEnemy" type="CharacterBody2D"]
 collision_layer = 4
@@ -63,15 +60,6 @@ monitorable = false
 [node name="HurtboxShape" type="CollisionShape2D" parent="Hurtbox"]
 position = Vector2(0, -14)
 shape = SubResource("hurtbox_shape")
-
-[node name="Hitbox" type="Area2D" parent="."]
-collision_layer = 16
-collision_mask = 0
-monitoring = false
-
-[node name="HitboxShape" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(20, -14)
-shape = SubResource("hitbox_shape")
 
 [node name="ShadowCaster" type="Node2D" parent="."]
 script = ExtResource("6")
