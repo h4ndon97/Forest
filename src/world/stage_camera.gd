@@ -52,7 +52,3 @@ static func _set_limits(camera: Camera2D, size: Vector2) -> void:
 	camera.limit_top = 0
 	camera.limit_right = int(size.x)
 	camera.limit_bottom = int(size.y)
-	# Camera2D._camera_pos는 _process에서 갱신되므로 같은 프레임의 reset_smoothing은
-	# 직전 위치(stale)로 동기화돼 첫 프레임 lerp가 발생한다. 다음 idle frame으로 미뤄
-	# 새 _camera_pos 기준으로 reset되게 한다.
-	camera.call_deferred("reset_smoothing")

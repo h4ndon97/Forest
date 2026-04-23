@@ -59,15 +59,6 @@ func execute(scene_path: String, entry_direction: String) -> void:
 	get_tree().paused = false
 	_is_transitioning = false
 
-	# 카메라 smoothing 최종 reset — paused 동안 Camera2D._process가 멈춰
-	# _camera_pos가 stale이므로 paused 해제 후 한 프레임 진행한 뒤 재동기화.
-	# (StageCamera._set_limits의 deferred reset은 paused 동안 stale 값으로 sync되어 보정 필요)
-	await get_tree().process_frame
-	if player:
-		var camera := player.get_node_or_null("Camera2D") as Camera2D
-		if camera:
-			camera.reset_smoothing()
-
 
 func is_transitioning() -> bool:
 	return _is_transitioning
