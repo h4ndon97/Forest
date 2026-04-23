@@ -1,8 +1,10 @@
 extends Node2D
 
 ## 다섯 번째 테스트 스테이지. 심야(03시), LIGHT 잠금, 적 1.
-## 넓은 아레나 구조. 단일 강적과의 1:1 전투 테스트.
+## 가변 룸 데모 — 1280x360 (가로 2화면). 카메라 스크롤 동작 확인용.
+## room_size는 test_stage_5.tres에서, 바닥 타일 폭은 ARENA_WIDTH 상수와 동기 유지.
 
+const ARENA_WIDTH := 1280
 const BG_PATH := "res://assets/backgrounds/bg_test_stage_5.png"
 const GROUND_TILE_PATH := "res://assets/tiles/tile_ground_test.png"
 
@@ -39,7 +41,7 @@ func _try_apply_ground() -> void:
 	var tex_rect := TextureRect.new()
 	tex_rect.texture = tex
 	tex_rect.stretch_mode = TextureRect.STRETCH_TILE
-	tex_rect.size = Vector2(640, 64)
+	tex_rect.size = Vector2(ARENA_WIDTH, 64)
 	tex_rect.position = Vector2(0, 328)
 	add_child(tex_rect)
 	$Floor/FloorSprite.visible = false

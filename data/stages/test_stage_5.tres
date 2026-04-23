@@ -13,3 +13,4 @@ lock_type = 1
 lock_requirement = ""
 total_enemies = 1
 total_residues = 1
+room_size = Vector2(1280, 360)
