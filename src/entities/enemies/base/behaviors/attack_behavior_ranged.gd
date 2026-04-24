@@ -2,8 +2,8 @@ extends "res://src/entities/enemies/base/behaviors/attack_behavior_base.gd"
 
 ## 원거리 공격 행동.
 ## ATTACK 상태 진입 → 선딜 경과 후 투사체 1발 발사.
-## Phase 4-0 #1 Step 3: BaseEnemy의 자체 Hitbox 노드가 제거되어 강제 비활성 코드도 함께 삭제됨.
-## 투사체 발사 자체는 #1 Step 4에서 CombatSystem.request_projectile로 이전 예정.
+## Phase 4-0 #1 Step 4: 투사체 발사를 CombatSystem.request_projectile(ProjectileSpec)로 위임.
+## (Step 3에서 BaseEnemy 자체 Hitbox 강제 비활성 코드 제거 완료.)
 
 const DEFAULT_PROJECTILE_PATH := "res://src/entities/enemies/projectile/EnemyProjectile.tscn"
 
@@ -45,15 +45,20 @@ func _fire() -> void:
 	if _projectile_scene == null:
 		return
 	var direction: Vector2 = _resolve_direction()
-	var projectile: Node = _projectile_scene.instantiate()
-	projectile.global_position = _enemy_root.global_position + Vector2(0.0, -14.0)
-	var damage: float = _enemy_root.stats_comp.get_attack()
-	if projectile.has_method("setup"):
-		projectile.setup(
-			direction, _stats_data.projectile_speed, damage, _stats_data.projectile_lifetime
-		)
-	_enemy_root.get_parent().add_child(projectile)
-	EventBus.enemy_projectile_fired.emit(_enemy_root.global_position, direction)
+	var origin: Vector2 = _enemy_root.global_position
+	var spec := ProjectileSpec.new()
+	spec.attacker = _enemy_root
+	spec.source_group = "enemy_projectile"
+	spec.scene = _projectile_scene
+	spec.spawn_position = origin + Vector2(0.0, -14.0)
+	spec.direction = direction
+	spec.speed = _stats_data.projectile_speed
+	spec.lifetime = _stats_data.projectile_lifetime
+	spec.damage = _enemy_root.stats_comp.get_attack()
+	spec.tags = PackedStringArray(["enemy", "ranged"])
+	var projectile: Node2D = CombatSystem.request_projectile(spec)
+	if projectile != null:
+		EventBus.enemy_projectile_fired.emit(origin, direction)
 
 
 func _resolve_direction() -> Vector2:
