@@ -24,7 +24,8 @@ var _selection_rect: MenuSelectionRect
 var _return_hint_label: Label
 var _buttons: Array[Button] = []
 var _selected_index: int = 0
-var _input_active: bool = true
+## PauseMenu가 열렸을 때만 true. Autoload 컨트롤러가 닫힌 상태에서도 입력을 소비하지 않도록 기본 false.
+var _input_active: bool = false
 
 
 func setup(parent_layer: CanvasLayer) -> void:

@@ -134,6 +134,7 @@ func _close() -> void:
 	_is_open = false
 	visible = false
 	get_tree().paused = false
+	_controller.set_input_active(false)
 	_restore_bgm()
 	EventBus.game_resumed.emit()
 
@@ -162,6 +163,7 @@ func _on_return_title() -> void:
 	_is_open = false
 	visible = false
 	get_tree().paused = false
+	_controller.set_input_active(false)
 	_restore_bgm()
 	EventBus.game_resumed.emit()
 	EventBus.return_to_title_requested.emit()
