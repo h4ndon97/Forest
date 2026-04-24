@@ -102,6 +102,17 @@ extends Resource
 ## 한 사이클 시간(초). 4단계 cycle이라 한 단계 = period/4.
 @export_range(0.04, 0.5, 0.01) var dusk_warning_shake_period: float = 0.16
 
+# === UI 감성 (Pass 5 Step 1) ===
+@export_group("UI Feedback (Pass 5)")
+## 빈사 크랙 임계 HP 비율 (기본 0.20 = HP 20% 이하).
+@export_range(0.0, 1.0, 0.01) var hp_crack_threshold: float = 0.20
+## 빈사 크랙 최대 알파(풀 밀도 시점).
+@export_range(0.0, 1.0, 0.01) var hp_crack_max_alpha: float = 0.85
+## HP 변화 시 크랙 알파 Tween 시간(초).
+@export var hp_crack_transition_duration: float = 0.25
+## 메뉴/씬 전환 디졸브 기본 duration(초).
+@export var dissolve_transition_duration: float = 0.30
+
 # === 접근성 (Phase 5-2에서 UI 노출) ===
 @export_group("Accessibility")
 ## 0.0 = 쉐이크 OFF

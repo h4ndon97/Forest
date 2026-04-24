@@ -20,6 +20,7 @@ const TimeStopScript = preload("res://src/systems/effects/effects_time_stop.gd")
 const FreezableScript = preload("res://src/systems/effects/effects_freezable.gd")
 const AfterimageScript = preload("res://src/systems/effects/effects_afterimage.gd")
 const DuskWarningScript = preload("res://src/systems/effects/effects_dusk_warning.gd")
+const HpCrackScript = preload("res://src/systems/effects/effects_hp_crack.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
@@ -44,6 +45,7 @@ var _time_stop: EffectsTimeStop
 var _freezable: EffectsFreezable
 var _afterimage: EffectsAfterimage
 var _dusk_warning: EffectsDuskWarning
+var _hp_crack: EffectsHpCrack
 
 
 func _ready() -> void:
@@ -58,6 +60,7 @@ func _ready() -> void:
 	_freezable = FreezableScript.new(self)
 	_afterimage = AfterimageScript.new(self)
 	_dusk_warning = DuskWarningScript.new(self, _config)
+	_hp_crack = HpCrackScript.new(self, _config)
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
@@ -114,6 +117,15 @@ func request_screen_flash(
 	var color_to_use: Color = color_value if color_value.a > 0.0 else _config.flash_default_color
 	var dur: float = duration if duration > 0.0 else _config.flash_default_duration
 	OverlaySystem.flash_screen(color_to_use, dur)
+
+
+# === 공개 API: 디졸브 (Pass 5 Step 1) ===
+
+
+## cover=true: 화면을 디졸브 색으로 덮음(메뉴 진입). false: 걷기(퇴장).
+func request_dissolve(duration: float = -1.0, cover: bool = true) -> void:
+	var dur: float = duration if duration > 0.0 else _config.dissolve_transition_duration
+	OverlaySystem.play_dissolve(dur, cover)
 
 
 # === 공개 API: 기타 ===

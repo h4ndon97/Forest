@@ -31,8 +31,14 @@ const LOW_HP_PERIOD: float = 0.8
 const LOW_HP_THRESHOLD: float = 0.2
 const LOW_HP_TINT := Color(0.9, 0.275, 0.275, 1.0)  # #E64646
 
+# Pass 5 Step 1 ② — 딜레이드 HP pip: 피격 시 잠시 밝기 유지 후 서서히 꺼짐.
+const PIP_FADE_DELAY: float = 0.30
+const PIP_FADE_DURATION: float = 0.20
+
 var _combo_dots: Array[ColorRect] = []
 var _hp_pips: Array[ColorRect] = []
+var _pip_fade_tweens: Array[Tween] = []
+var _pip_empty: Array[bool] = []
 var _max_hp: float = MAX_HP_DEFAULT
 var _current_hp: float = MAX_HP_DEFAULT
 var _time_state: int = TimeStateMachine.TimeState.STOPPED
@@ -75,6 +81,8 @@ func _collect_children() -> void:
 	for child in hp_pips_container.get_children():
 		if child is ColorRect:
 			_hp_pips.append(child)
+	_pip_fade_tweens.resize(_hp_pips.size())
+	_pip_empty.resize(_hp_pips.size())
 
 
 func _create_death_overlay() -> void:
@@ -113,8 +121,50 @@ func _apply_pip_state() -> void:
 	var filled_count: int = int(ceil(_current_hp / HP_PER_PIP))
 	filled_count = clamp(filled_count, 0, _hp_pips.size())
 	for i in _hp_pips.size():
-		_hp_pips[i].color = PIP_COLOR_FULL if i < filled_count else PIP_COLOR_EMPTY
+		var pip: ColorRect = _hp_pips[i]
+		var should_be_filled: bool = i < filled_count
+		_kill_pip_tween(i)
+		if should_be_filled:
+			pip.color = PIP_COLOR_FULL
+			pip.modulate = Color.WHITE
+			_pip_empty[i] = false
+		else:
+			if _pip_empty[i]:
+				pip.modulate = Color.WHITE
+				continue
+			pip.color = PIP_COLOR_FULL
+			pip.modulate = Color.WHITE
+			_start_pip_fadeout(i)
 	_apply_pip_pulse()
+
+
+func _start_pip_fadeout(i: int) -> void:
+	var pip: ColorRect = _hp_pips[i]
+	var fade: Tween = create_tween()
+	fade.set_ignore_time_scale(true)
+	fade.tween_interval(PIP_FADE_DELAY)
+	fade.tween_property(pip, "modulate:a", 0.0, PIP_FADE_DURATION)
+	fade.tween_callback(_on_pip_fade_complete.bind(i))
+	_pip_fade_tweens[i] = fade
+
+
+func _on_pip_fade_complete(i: int) -> void:
+	if i >= _hp_pips.size():
+		return
+	var pip: ColorRect = _hp_pips[i]
+	pip.color = PIP_COLOR_EMPTY
+	pip.modulate = Color.WHITE
+	_pip_empty[i] = true
+	_pip_fade_tweens[i] = null
+
+
+func _kill_pip_tween(i: int) -> void:
+	if i >= _pip_fade_tweens.size():
+		return
+	var prev: Tween = _pip_fade_tweens[i]
+	if prev != null and prev.is_valid():
+		prev.kill()
+	_pip_fade_tweens[i] = null
 
 
 func _apply_pip_pulse() -> void:
@@ -129,6 +179,9 @@ func _apply_pip_pulse() -> void:
 	filled_count = clamp(filled_count, 0, _hp_pips.size())
 
 	for i in _hp_pips.size():
+		# 딜레이드 fade tween이 modulate를 제어 중이면 건드리지 않음.
+		if i < _pip_fade_tweens.size() and _pip_fade_tweens[i] != null:
+			continue
 		var pip := _hp_pips[i]
 		if i >= filled_count:
 			pip.modulate = Color.WHITE

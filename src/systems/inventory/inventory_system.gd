@@ -11,6 +11,7 @@ const ConsumableScript = preload("res://src/systems/inventory/consumable_manager
 const StatCalcScript = preload("res://src/systems/inventory/equipment_stat_calculator.gd")
 const ITEM_DROP_SCENE := preload("res://src/entities/objects/item_drop/ItemDrop.tscn")
 const HUD_PATH := "res://src/ui/hud/ConsumableHud.tscn"
+const PICKUP_POPUP_PATH := "res://src/ui/hud/ItemPickupPopup.tscn"
 
 var _registry: Node
 var _equipment: Node
@@ -264,13 +265,18 @@ func _recalculate_stats() -> void:
 
 
 func _load_hud() -> void:
-	if not ResourceLoader.exists(HUD_PATH):
-		return
-	var hud_scene: PackedScene = load(HUD_PATH)
-	if hud_scene:
-		var hud := hud_scene.instantiate()
-		get_tree().root.add_child(hud)
-		hud.add_to_group("game_hud")
+	if ResourceLoader.exists(HUD_PATH):
+		var hud_scene: PackedScene = load(HUD_PATH)
+		if hud_scene:
+			var hud := hud_scene.instantiate()
+			get_tree().root.add_child(hud)
+			hud.add_to_group("game_hud")
+	if ResourceLoader.exists(PICKUP_POPUP_PATH):
+		var popup_scene: PackedScene = load(PICKUP_POPUP_PATH)
+		if popup_scene:
+			var popup := popup_scene.instantiate()
+			get_tree().root.add_child(popup)
+			popup.add_to_group("game_hud")
 
 
 func _debug_give_starter_items() -> void:

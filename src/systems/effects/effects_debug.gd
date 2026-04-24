@@ -5,12 +5,15 @@ extends Node
 ## EffectsSystem Autoload의 자식으로 등록되거나 별도 시연 씬에서 직접 add_child.
 ## 주의: F10/F11은 InventorySystem 디버그가 선점, F5는 GrowthSystem.
 
+const KEY_DISSOLVE: Key = KEY_F3
 const KEY_DUSK_WARNING: Key = KEY_F4
 const KEY_SHAKE: Key = KEY_F6
 const KEY_HIT_FLASH: Key = KEY_F7
 const KEY_HITSTOP: Key = KEY_F8
 const KEY_SCREEN_FLASH: Key = KEY_F9
 const KEY_TIME_STOP: Key = KEY_F12
+
+var _dissolve_covered: bool = false
 
 
 func _ready() -> void:
@@ -26,6 +29,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key_event: InputEventKey = event
 	match key_event.keycode:
+		KEY_DISSOLVE:
+			_dissolve_covered = not _dissolve_covered
+			EffectsSystem.request_dissolve(0.3, _dissolve_covered)
+			print("[EffectsDebug] dissolve cover=%s" % _dissolve_covered)
+			get_viewport().set_input_as_handled()
 		KEY_DUSK_WARNING:
 			var next_dist: int = EffectsSystem.debug_cycle_dusk_distance()
 			print("[EffectsDebug] dusk warning distance → %d" % next_dist)
