@@ -33,7 +33,6 @@ static func create_attack_hitbox(spec: AttackSpec) -> Area2D:
 	area.monitorable = false
 	area.add_to_group(spec.source_group)
 	area.set_meta(_META_ATTACK_SPEC, spec)
-	_apply_legacy_meta(area, spec)
 
 	var shape_node := CollisionShape2D.new()
 	_apply_shape(shape_node, spec)
@@ -41,16 +40,6 @@ static func create_attack_hitbox(spec: AttackSpec) -> Area2D:
 
 	spec.attacker.add_child(area)
 	return area
-
-
-## Step 2~5 호환 — 기존 base_enemy._on_hurtbox_area_entered가 직접 읽는 메타 필드를 같이 채운다.
-## Step 6에서 damage_resolver로 수신 경로 이전 시 본 함수와 호출부 한 줄을 함께 제거.
-static func _apply_legacy_meta(area: Area2D, spec: AttackSpec) -> void:
-	area.set_meta("damage", spec.damage)
-	area.set_meta("is_finish", spec.is_finish)
-	# legacy는 빈 문자열을 "속성 없음"으로 취급. AttackSpec의 "none"을 ""로 매핑.
-	var legacy_attr: String = "" if spec.attribute == "none" else spec.attribute
-	area.set_meta("finish_attribute", legacy_attr)
 
 
 ## 런타임에 spec의 형상·위치가 변하면 (예: 플레이어 방향 전환) 재적용.

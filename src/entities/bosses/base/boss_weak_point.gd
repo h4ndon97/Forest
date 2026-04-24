@@ -1,8 +1,10 @@
 extends Area2D
 
 ## 보스 약점 Area2D.
-## 노출 상태(exposed=true)에서만 player_attack 감지 → boss.apply_player_hit(.., is_weak_point=true).
+## 노출 상태(exposed=true)에서만 player_attack 감지 → DamageResolver.resolve_hit_weak_point 위임.
 ## 노출은 base_boss가 EventBus.boss_weak_point_exposed 시그널을 받아 set_exposed로 토글.
+
+const DamageResolverScript = preload("res://src/systems/combat/damage_resolver.gd")
 
 const PULSE_BASE_ALPHA := 0.55
 const PULSE_AMP_ALPHA := 0.25
@@ -70,10 +72,4 @@ func _on_area_entered(area: Area2D) -> void:
 		return
 	if _boss == null or not is_instance_valid(_boss):
 		return
-	var damage: float = area.get_meta("damage", 0.0)
-	if damage <= 0.0:
-		return
-	var is_finish: bool = area.get_meta("is_finish", false)
-	var attribute: String = area.get_meta("finish_attribute", "")
-	if _boss.has_method("apply_player_hit"):
-		_boss.apply_player_hit(damage, is_finish, true, attribute)
+	DamageResolverScript.resolve_hit_weak_point(_boss, area)

@@ -7,6 +7,7 @@ const BossStateMachine = preload("res://src/entities/bosses/base/boss_state_mach
 const BossHPBarScript = preload("res://src/entities/bosses/base/boss_hp_bar.gd")
 const EnemyDefenseScript = preload("res://src/entities/enemies/base/enemy_defense.gd")
 const DamageNumberScript = preload("res://src/ui/common/damage_number.gd")
+const DamageResolverScript = preload("res://src/systems/combat/damage_resolver.gd")
 
 @export var boss_data: BossStatsData
 
@@ -142,38 +143,42 @@ func take_damage(amount: float, is_weak_point: bool = false) -> float:
 	return final_damage
 
 
-## Hurtbox / WeakPoint 양쪽이 호출. 데미지 적용 + 데미지 숫자 + 이벤트 emit 일원화.
-func apply_player_hit(
-	damage: float, is_finish: bool, is_weak_point: bool, finish_attribute: String = ""
-) -> void:
-	var final_damage: float = take_damage(damage, is_weak_point)
-	if final_damage <= 0.0:
-		return
-	_play_hit_feedback(is_finish, is_weak_point, finish_attribute)
-	_spawn_damage_number(final_damage, is_finish, is_weak_point, finish_attribute)
-	EventBus.damage_dealt.emit(boss_id, final_damage)
+# --- DamageResolver 컨트랙트 훅 (Phase 4-0 #1 Step 6) ---
+# get_hit_flash_target은 damage_resolver 기본값(AnimatedSprite2D)과 동일하므로 생략.
+# apply_hit_damage 반환값 <= 0이면 damage_resolver가 연출·숫자·이벤트를 모두 스킵한다
+# (기존 apply_player_hit 조기 반환 정책 유지).
 
 
-func _play_hit_feedback(is_finish: bool, is_weak_point: bool, finish_attribute: String) -> void:
-	var cfg: EffectsConfigData = EffectsSystem.get_config()
-	var sprite: CanvasItem = get_node_or_null("AnimatedSprite2D") as CanvasItem
-	if sprite != null:
-		var color: Color = cfg.boss_hit_color
-		if is_finish and finish_attribute != "":
-			color = EffectsSystem.get_finish_color(finish_attribute)
-		EffectsSystem.request_hit_flash(sprite, color, cfg.boss_hit_duration)
-	if is_finish:
-		EffectsSystem.request_shake(EffectsSystem.PRESET_FINISH)
-		EffectsSystem.request_hitstop(EffectsSystem.PRESET_FINISH)
-	elif is_weak_point:
-		EffectsSystem.request_shake(EffectsSystem.PRESET_HEAVY)
-		EffectsSystem.request_hitstop(EffectsSystem.PRESET_CRITICAL)
-	else:
-		EffectsSystem.request_shake(EffectsSystem.PRESET_MEDIUM)
-		EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
-	EffectsSystem.request_hit_particle(
-		global_position, EffectsSystem.CATEGORY_SHADOW, is_finish, finish_attribute
-	)
+func apply_hit_damage(amount: float, is_weak_point: bool) -> float:
+	return take_damage(amount, is_weak_point)
+
+
+func get_hit_flash_duration() -> float:
+	return EffectsSystem.get_config().boss_hit_duration
+
+
+func get_hit_flash_base_color() -> Color:
+	return EffectsSystem.get_config().boss_hit_color
+
+
+func get_hit_particle_category() -> StringName:
+	return EffectsSystem.CATEGORY_SHADOW
+
+
+func get_hit_particle_offset() -> Vector2:
+	return Vector2.ZERO
+
+
+func get_damage_number_offset() -> Vector2:
+	return Vector2(0, -64)
+
+
+func get_entity_id() -> int:
+	return boss_id
+
+
+func get_shake_preset_normal() -> StringName:
+	return EffectsSystem.PRESET_MEDIUM
 
 
 ## PhaseController가 호출 — 공격 행동 스크립트를 런타임 swap한다.
@@ -232,10 +237,7 @@ func _on_detect_body_exited(body: Node2D) -> void:
 func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if not area.is_in_group("player_attack"):
 		return
-	var damage: float = area.get_meta("damage", 0.0)
-	var is_finish: bool = area.get_meta("is_finish", false)
-	var attribute: String = area.get_meta("finish_attribute", "")
-	apply_player_hit(damage, is_finish, false, attribute)
+	DamageResolverScript.resolve_hit(self, area)
 
 
 func _on_weak_point_exposed(target_boss_id: String, exposed: bool) -> void:
@@ -268,11 +270,12 @@ func _setup_hp_bar() -> void:
 		)
 
 
-func _spawn_damage_number(
-	amount: float, is_finish: bool, is_critical: bool = false, attribute: String = ""
+## damage_resolver에서 호출 — is_critical은 약점 피격 시 true.
+func spawn_damage_number(
+	amount: float, is_finish: bool, is_critical: bool, attribute: String
 ) -> void:
 	var dmg_num: Node2D = Node2D.new()
 	dmg_num.set_script(DamageNumberScript)
-	dmg_num.global_position = global_position + Vector2(0, -64)
+	dmg_num.global_position = global_position + get_damage_number_offset()
 	get_parent().add_child(dmg_num)
 	dmg_num.setup(amount, is_finish, is_critical, attribute)

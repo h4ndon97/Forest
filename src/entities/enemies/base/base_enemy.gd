@@ -5,6 +5,7 @@ extends CharacterBody2D
 
 const RESIDUE_PATH := "res://src/entities/enemies/shadow_residue/ShadowResidue.tscn"
 const DamageNumberScript = preload("res://src/ui/common/damage_number.gd")
+const DamageResolverScript = preload("res://src/systems/combat/damage_resolver.gd")
 const EnemyStateMachine = preload("res://src/entities/enemies/base/enemy_state_machine.gd")
 const EnemyHPBarScript = preload("res://src/entities/enemies/base/enemy_hp_bar.gd")
 const EnemyDefenseScript = preload("res://src/entities/enemies/base/enemy_defense.gd")
@@ -252,33 +253,48 @@ func _on_detect_body_exited(body: Node2D) -> void:
 
 func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if area.is_in_group("player_attack"):
-		var damage: float = area.get_meta("damage", 0.0)
-		var is_finish: bool = area.get_meta("is_finish", false)
-		var attribute: String = area.get_meta("finish_attribute", "")
-		var flash_color: Color = Color(0.0, 0.0, 0.0, 0.0)
-		if is_finish and attribute != "":
-			flash_color = EffectsSystem.get_finish_color(attribute)
-		feedback_comp.play_hit_flash(flash_color)
-		if is_finish:
-			EffectsSystem.request_shake(EffectsSystem.PRESET_FINISH)
-			EffectsSystem.request_hitstop(EffectsSystem.PRESET_FINISH)
-		else:
-			EffectsSystem.request_shake(EffectsSystem.PRESET_LIGHT)
-			EffectsSystem.request_hitstop(EffectsSystem.PRESET_HIT)
-		var category: StringName = EffectsSystem.resolve_enemy_category(
-			stats_data.enemy_type if stats_data else ""
-		)
-		EffectsSystem.request_hit_particle(
-			global_position + Vector2(0, -8), category, is_finish, attribute
-		)
-		take_damage(damage)
-		_spawn_damage_number(damage, is_finish, attribute)
-		EventBus.damage_dealt.emit(enemy_id, damage)
+		DamageResolverScript.resolve_hit(self, area)
 
 
-func _spawn_damage_number(amount: float, is_finish: bool, attribute: String = "") -> void:
+# --- DamageResolver 컨트랙트 훅 (Phase 4-0 #1 Step 6) ---
+# get_hit_flash_target / get_shake_preset_normal은 damage_resolver 기본값(AnimatedSprite2D / LIGHT)
+# 과 동일하므로 생략한다.
+
+
+func apply_hit_damage(amount: float, _is_weak_point: bool) -> float:
+	take_damage(amount)
+	return amount
+
+
+func get_hit_flash_duration() -> float:
+	return EffectsSystem.get_config().enemy_hit_duration
+
+
+func get_hit_flash_base_color() -> Color:
+	return EffectsSystem.get_config().enemy_hit_color
+
+
+func get_hit_particle_category() -> StringName:
+	return EffectsSystem.resolve_enemy_category(stats_data.enemy_type if stats_data else "")
+
+
+func get_hit_particle_offset() -> Vector2:
+	return Vector2(0, -8)
+
+
+func get_damage_number_offset() -> Vector2:
+	return Vector2(0, -28)
+
+
+func get_entity_id() -> int:
+	return enemy_id
+
+
+func spawn_damage_number(
+	amount: float, is_finish: bool, _is_critical: bool, attribute: String
+) -> void:
 	var dmg_num := Node2D.new()
 	dmg_num.set_script(DamageNumberScript)
-	dmg_num.global_position = global_position + Vector2(0, -28)
+	dmg_num.global_position = global_position + get_damage_number_offset()
 	get_parent().add_child(dmg_num)
 	dmg_num.setup(amount, is_finish, false, attribute)

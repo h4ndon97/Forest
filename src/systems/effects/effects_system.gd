@@ -61,6 +61,11 @@ func _ready() -> void:
 	_afterimage = AfterimageScript.new(self)
 	_dusk_warning = DuskWarningScript.new(self, _config)
 	_hp_crack = HpCrackScript.new(self, _config)
+	# Phase 4-0 #1 Step 6: 고아 시그널 2종 부활 — damage_resolver가 발행하는 신호를 구독해
+	# 내부 request_* 로 포워딩. screen_shake_requested는 이미 pass 1에서 연결돼 있고,
+	# screen_flash_requested는 #3 속성 피니시에서 emit 예정(이번 Step 미연결).
+	EventBus.hit_flash_requested.connect(_on_hit_flash_requested)
+	EventBus.hitstop_requested.connect(_on_hitstop_requested)
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
@@ -106,6 +111,11 @@ func request_hitstop_duration(duration: float, scale_override: float = -1.0) -> 
 	if _hitstop == null:
 		return
 	_hitstop.apply(duration, scale_override)
+
+
+## Step 6: damage_resolver가 preset→duration 변환 후 EventBus emit 하기 위한 공개 조회.
+func resolve_hitstop_preset_duration(preset: StringName) -> float:
+	return _resolve_hitstop_preset(preset)
 
 
 # === 공개 API: 스크린 플래시 ===
@@ -218,6 +228,16 @@ func get_finish_color(attribute: String) -> Color:
 
 
 # === 내부 ===
+
+
+## Step 6: damage_resolver가 EventBus.hit_flash_requested emit → 여기서 수신 후 헬퍼로 포워딩.
+func _on_hit_flash_requested(target: CanvasItem, color: Color, duration: float) -> void:
+	request_hit_flash(target, color, duration)
+
+
+## Step 6: damage_resolver가 EventBus.hitstop_requested emit → 여기서 수신 후 헬퍼로 포워딩.
+func _on_hitstop_requested(duration: float, scale: float) -> void:
+	request_hitstop_duration(duration, scale)
 
 
 func _load_config() -> void:

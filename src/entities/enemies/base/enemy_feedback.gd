@@ -1,12 +1,13 @@
 extends Node
 
-## 적 피격/경직/사망 시각 반영 (교보재).
+## 적 경직/사망 시각 반영 (교보재).
 ##
 ## 기능:
-## - 피격 플래시: EffectsSystem(셰이더 기반)에 위임 (Phase 3-7 Pass 1)
 ## - 경직 흔들기: X축 랜덤 오프셋 + 감쇠 (0.3s)
 ## - 사망 디졸브: 페이드 + 축소 (0.4s)
 ##
+## 피격 플래시는 Phase 4-0 #1 Step 6에서 damage_resolver가 EventBus 경유로 직접 발행한다
+## (타깃의 get_hit_flash_target() 훅이 AnimatedSprite2D를 반환하므로 본 컴포넌트 불필요).
 ## 경직/사망은 modulate / position 만 건드리며 전투 로직과 무관하다.
 ## 픽셀아트 교체 후에도 동일하게 적용된다.
 
@@ -17,8 +18,6 @@ const DEATH_DURATION: float = 0.4
 const DEATH_SCALE := Vector2(0.6, 0.6)
 
 var _owner: CanvasItem
-## flash 셰이더는 AnimatedSprite2D에 부착해야 한다 (modulate=대상이 동일 노드)
-var _flash_target: CanvasItem
 var _animation_comp: Node
 var _base_modulate: Color = Color.WHITE
 var _shake_tween: Tween
@@ -31,17 +30,6 @@ func setup(p_owner: CanvasItem, p_animation_comp: Node) -> void:
 	_animation_comp = p_animation_comp
 	if _owner != null:
 		_base_modulate = _owner.modulate
-		_flash_target = _owner.get_node_or_null("AnimatedSprite2D") as CanvasItem
-		if _flash_target == null:
-			_flash_target = _owner
-
-
-func play_hit_flash(color_override: Color = Color(0.0, 0.0, 0.0, 0.0)) -> void:
-	if _flash_target == null:
-		return
-	var cfg: EffectsConfigData = EffectsSystem.get_config()
-	var color: Color = color_override if color_override.a > 0.0 else cfg.enemy_hit_color
-	EffectsSystem.request_hit_flash(_flash_target, color, cfg.enemy_hit_duration)
 
 
 func play_stagger_shake() -> void:
