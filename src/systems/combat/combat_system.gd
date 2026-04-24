@@ -108,13 +108,15 @@ func request_projectile(spec: ProjectileSpec) -> Node2D:
 		push_warning("CombatSystem.request_projectile: scene root is not Node2D")
 		return null
 	projectile.global_position = spec.spawn_position
+	# setup을 add_child 전에 호출 — _ready의 _update_visual_facing 등이 _velocity를 보고
+	# 좌우 flip을 결정하므로 _ready 진입 전에 setup이 끝나야 한다.
+	if projectile.has_method("setup"):
+		projectile.call("setup", spec.direction, spec.speed, spec.damage, spec.lifetime)
 	# 투사체는 공격자가 아닌 공격자의 부모(스테이지)에 부착 — 공격자 사망 시에도 비행 유지.
 	var attach_parent: Node = spec.attacker.get_parent()
 	if attach_parent == null:
 		attach_parent = get_tree().current_scene
 	attach_parent.add_child(projectile)
-	if projectile.has_method("setup"):
-		projectile.call("setup", spec.direction, spec.speed, spec.damage, spec.lifetime)
 	return projectile
 
 
