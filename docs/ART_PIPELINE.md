@@ -70,6 +70,10 @@
 | 프레임 속도 | FPS 또는 ms/프레임 |
 | 내보내기 형식 | 스프라이트 시트 PNG |
 | 네이밍 규칙 | 파일명 컨벤션 |
+| **발광 레이어 구성** | **§6.7 발광 3레이어 규약 적용 여부. 적용 시 base/core/halo 각 레이어의 제작 가이드 포함** |
+| **속성 매핑** | **발광 대상인 경우 `core`/`halo`에 사용할 속성색 (light=흰 / shadow=보라 / hybrid=금)** |
+
+> **캐릭터/적/보스/광원 오브젝트의 아트 명세서는 반드시 §6.7 발광 레이어 구성 섹션을 포함**한다. 템플릿: [art_specs/_character_spec_template.md](art_specs/_character_spec_template.md)
 
 ### 미결 사항
 - [ ] 명세서 작성 시점 (프로토타입 이후 본격 작성)
@@ -127,6 +131,110 @@ assets/ui/                   # UI/HUD 이펙트
   hud_*.png                  # HUD 전용 요소 (크랙 등)
 ```
 
+---
+
+### 6.7 발광 스프라이트 3레이어 제작 규약 (2026-04-22 잠정 확정)
+
+> **배경**: INARI 수준의 발광 이펙트는 블룸 활성화만으론 나오지 않는다. 스프라이트 자체가 **코어(순백) + 할로(고채도)**로 분리 제작되어야 HDR 블룸이 이를 "뜨겁게" 만든다. 자세한 맥락: [art_specs/effects_pass3_step4_inari_ref.md](art_specs/effects_pass3_step4_inari_ref.md) §3 블룸의 성격 / §1.5 Pass 5 진입 블로커.
+>
+> **잠정 확정**: 아트 작업 중 재조정 가능 (UI 설계 결정 가변성 원칙). 단 본격 제작 전 합의된 원칙으로 취급한다.
+
+#### 6.7.1 적용 대상
+
+**3레이어 필수**:
+- 플레이어, 적(일반/엘리트), 보스
+- 광원 오브젝트 (횃불, 등불, 수정, 거울, 반사 바닥, 포탈)
+
+**단일 레이어 유지** (불필요 — 이펙트 자체가 발광):
+- 공격 이펙트 스프라이트 (슬래시 트레일, 스킬 이펙트)
+- 환경 타일 (나무, 바위, 지면)
+- UI (HUD pip 포함 — HDR 발광 아님)
+- 파티클 텍스처
+
+#### 6.7.2 Aseprite 레이어 구조
+
+```
+sprite_name.aseprite
+├── halo     (고채도 외곽 발광, 블룸이 확산하는 주체)
+├── core     (순백 또는 속성색 코어, 피니시/크리티컬 시만 보임)
+└── base     (평상 스프라이트, 항상 보임)
+```
+
+**레이어 역할**:
+| 레이어 | 색상 | 표시 조건 | 제작 가이드 |
+|---|---|---|---|
+| `base` | 스프라이트 원래 팔레트 | **항상 표시** | 평상시 보이는 캐릭터. 기존 제작 방식 그대로 |
+| `core` | 순백(`#FFFFFF`) 또는 속성색 | 피니시/크리티컬/강조 이벤트 시만 | `base`의 내부 1~2px 두께, "발광의 중심" |
+| `halo` | 고채도 속성색 HDR 후보 | 피니시/크리티컬/강조 이벤트 시만 | `base` 외곽 1~2px 바깥, 반투명/블러 느낌 |
+
+**속성색 매핑** (이미 확정된 D7-2 디렉션):
+- `light` = `#FFFFFF` 순백 HDR
+- `shadow` = `#8B2FC6` 보라 HDR
+- `hybrid` = `#F2CC66` 금 HDR
+
+#### 6.7.3 Aseprite Export
+
+레이어별 PNG 분리:
+```bash
+aseprite --batch input.ase --layer "base"  --sheet base.png
+aseprite --batch input.ase --layer "core"  --sheet core.png
+aseprite --batch input.ase --layer "halo"  --sheet halo.png
+```
+
+**파일 명명**:
+```
+assets/sprites/player/
+  player_base.png
+  player_core.png     (피니시 대상이므로 생성)
+  player_halo.png
+  player_spritesheet.json   (프레임 정보 — 3레이어 공통)
+```
+
+**JSON 메타데이터**: base 기준 1회만 생성. core/halo는 동일 프레임 레이아웃을 공유하므로 중복 불필요.
+
+#### 6.7.4 Godot 구조
+
+```
+Player (CharacterBody2D)
+└── Visual (Node2D)
+    ├── Base (AnimatedSprite2D, z=0, visible=true)
+    ├── Core (AnimatedSprite2D, z=1, visible=false, blend=normal)
+    └── Halo (AnimatedSprite2D, z=2, visible=false, blend=add)
+```
+
+**3개 AnimatedSprite2D 모두 같은 animation 이름 공유** (`idle`, `run`, `hurt` 등). 세 레이어가 동기화되어 재생되도록 Core/Halo의 `frame_changed`는 Base 따라감(또는 동일 SpriteFrames 에셋을 셰어).
+
+**피니시/크리티컬 시**:
+```gdscript
+# 2레이어 활성화 + 속성색 modulate + Tween 페이드
+core.visible = true
+halo.visible = true
+core.modulate = EffectsSystem.get_finish_color(attr)
+halo.modulate = EffectsSystem.get_finish_color(attr)
+# ...Tween으로 alpha 1→0 페이드 (지속 시간 Pass 5 값 튜닝)
+```
+
+실제 구현 API는 Pass 5에서 `EffectsSystem.request_finish_glow(target_visual, attribute)` 형태로 추상화 예정.
+
+#### 6.7.5 Phase별 도입 계획
+
+| Phase | 적용 대상 | 비고 |
+|---|---|---|
+| **Phase 3-7 ~ 4-0 (현재)** | **새로 제작하는 적/보스/광원**부터 3레이어 | 기존 플레이어/꽃 적은 유지 |
+| **Phase 3-7 1구역 본격 아트 리비전** | 플레이어 재작업 시 3레이어로 합류 | 재작업 타이밍에 맞춰 |
+| **Pass 5 (이펙트 본진)** | Core/Halo 활성화 로직 코드 구현 | HDR 블룸 베이스라인(E1-5) 선행 필요 |
+
+#### 6.7.6 검증 체크리스트
+
+신규 발광 대상 스프라이트 제작 시:
+- [ ] Aseprite 파일에 `base` / `core` / `halo` 세 레이어 존재
+- [ ] `core`는 `base`의 내부 1~2px 두께
+- [ ] `halo`는 `base` 외곽 1~2px 바깥
+- [ ] 세 레이어 모두 동일 애니메이션 태그 (tag명 통일)
+- [ ] Export 시 3개 PNG 분리 (`*_base.png` / `*_core.png` / `*_halo.png`)
+- [ ] `core`/`halo`에 순백/속성색 기본값만 사용 (세부 음영 금지 — 셰이더가 처리)
+
 ### 미결 사항
 - [ ] 이펙트 팔레트 정의 (힛 플래시/파티클 색상 체계)
 - [ ] 비트맵 폰트 사용 여부 (데미지 넘버)
+- [ ] `core`/`halo` 프레임별 위치가 `base`와 정확히 일치하지 않을 때의 조정 방법 (Aseprite 레이어 동기화 규약)
