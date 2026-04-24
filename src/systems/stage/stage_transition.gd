@@ -91,9 +91,13 @@ func _reinsert_player(player: CharacterBody2D) -> void:
 		push_warning("StageTransition: 현재 씬이 없음")
 		return
 
-	# 새 씬에 이미 Player 노드가 있으면 제거 (중복 방지)
+	# 새 씬에 이미 Player 노드가 있으면 제거 (중복 방지).
+	# queue_free는 deferred이므로 같은 프레임에 잔존하며 group 조회를 방해한다.
+	# remove_child로 즉시 트리에서 분리 → StageCamera.apply의 get_first_node_in_group이 Player B만 찾도록.
 	var existing_player := get_tree().get_first_node_in_group("player")
 	if existing_player and existing_player != player:
+		if existing_player.get_parent():
+			existing_player.get_parent().remove_child(existing_player)
 		existing_player.queue_free()
 
 	root.add_child(player)
