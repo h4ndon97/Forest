@@ -60,6 +60,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		EventBus.stage_transition_requested.emit("test_checkpoint", "checkpoint")
 	elif event.is_action_pressed("debug_jump_start_village"):
 		EventBus.stage_transition_requested.emit("start_village", "checkpoint")
+	elif event.is_action_pressed("debug_jump_boss_1b"):
+		EventBus.stage_transition_requested.emit("stage_1_b", "checkpoint")
 
 
 func get_current_stage_id() -> String:
