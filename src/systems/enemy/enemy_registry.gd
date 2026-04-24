@@ -59,8 +59,13 @@ func reset_all_hp() -> void:
 		if not is_instance_valid(enemy):
 			continue
 		var stats_node: Node = enemy.get_node_or_null("Stats")
-		if stats_node and stats_node.has_method("reset_hp"):
-			stats_node.reset_hp()
+		if stats_node == null or not stats_node.has_method("reset_hp"):
+			continue
+		# 보스는 현재 페이즈의 시작 HP 비율로 리셋. 일반 적은 1.0(풀) 기본값.
+		var ratio: float = 1.0
+		if enemy.has_method("get_hp_reset_ratio"):
+			ratio = float(enemy.call("get_hp_reset_ratio"))
+		stats_node.reset_hp(ratio)
 
 
 func update_all_intensity(intensity: float) -> void:

@@ -21,6 +21,9 @@ var _boss_root: Node = null
 var _hurt_duration: float = 0.3
 var _intro_duration: float = 1.5
 var _transition_duration: float = 1.8
+## 아레나 진입 최초 1회만 INTRO 연출 재생. 이후 재활성(시간 정지→재개)은 IDLE 직행.
+## Why: 시간 정지 전술을 쓸 때마다 1.5s 무적이 덮이면 플레이 감각 저하.
+var _has_played_intro: bool = false
 
 
 func setup(boss_root: Node) -> void:
@@ -43,15 +46,26 @@ func is_invincible() -> bool:
 
 
 func activate() -> void:
-	if current_state == State.DORMANT:
+	if current_state != State.DORMANT:
+		return
+	if _has_played_intro:
+		_transition(State.IDLE)
+	else:
+		_has_played_intro = true
 		_intro_timer = 0.0
 		_transition(State.INTRO)
 
 
 func deactivate() -> void:
-	if current_state != State.DEFEATED:
-		_target = null
-		_transition(State.DORMANT)
+	if current_state == State.DEFEATED:
+		return
+	# PHASE_TRANSITION 중 시간 정지로 중단되면 phase_transition_finished가 영원히 emit되지 않아
+	# boss_hp_bar/phase_controller의 _is_transitioning 플래그가 영구 고정되는 문제 방지.
+	# 강제로 emit해 listener들이 정상 종료 경로를 타도록 한다.
+	if current_state == State.PHASE_TRANSITION:
+		phase_transition_finished.emit()
+	_target = null
+	_transition(State.DORMANT)
 
 
 func update(delta: float) -> void:
@@ -104,6 +118,7 @@ func get_target() -> Node2D:
 
 
 # --- 내부 ---
+
 
 func _update_intro(delta: float) -> void:
 	_intro_timer += delta

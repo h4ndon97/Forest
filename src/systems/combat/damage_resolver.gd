@@ -45,9 +45,16 @@ static func _resolve_internal(target: Node, attacker_area: Area2D, is_weak_point
 		push_warning("DamageResolver: target %s missing apply_hit_damage hook" % target)
 		return
 
-	# 1) 데미지 적용 — 반환값 <= 0 이면 무적/사망으로 간주, 연출·숫자·이벤트 전부 스킵.
+	# 1) 데미지 적용 — 반환값 <= 0 이면 무적/사망으로 간주, 연출·이벤트는 스킵.
 	var display_damage: float = target.apply_hit_damage(spec.damage, is_weak_point)
 	if display_damage <= 0.0:
+		# 무적 방어 피드백(β): "0" 데미지 숫자만 띄워 플레이어에게 "막힘" 전달.
+		# 일반 미스(타깃이 이미 죽음 등)는 무음 유지.
+		var is_invincible: bool = (
+			target.has_method("is_hit_invincible") and target.call("is_hit_invincible")
+		)
+		if is_invincible and target.has_method("spawn_damage_number"):
+			target.call("spawn_damage_number", 0.0, false, false, "")
 		return
 
 	# 2) 연출 5종 (플래시/쉐이크/힛스톱/파티클) 발행

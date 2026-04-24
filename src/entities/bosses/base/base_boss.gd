@@ -181,6 +181,28 @@ func get_shake_preset_normal() -> StringName:
 	return EffectsSystem.PRESET_MEDIUM
 
 
+## damage_resolver가 0 데미지 히트가 "무적 방어"인지 "일반 미스"인지 구분할 때 호출.
+## 무적 방어면 "0" 데미지 숫자로 방어 피드백 제공.
+func is_hit_invincible() -> bool:
+	return state_machine != null and state_machine.is_invincible()
+
+
+## EnemySystem 재활성 시 리셋 HP 비율 — 보스는 현재 페이즈의 시작값으로.
+## phase 0 → 1.0(풀), phase 1 → thresholds[0], phase 2 → thresholds[1] ...
+## HP 바가 페이즈별 정규화 구간을 쓰므로 절대 최대값(1.0)으로 리셋하면 바가 clamp에 걸려
+## "꽉 찬 상태"로 고정돼 플레이어가 데미지 적용 여부를 체감하지 못한다.
+func get_hp_reset_ratio() -> float:
+	if phase_controller == null or boss_data == null:
+		return 1.0
+	var phase: int = phase_controller.get_current_phase()
+	if phase <= 0:
+		return 1.0
+	var thresholds: PackedFloat32Array = boss_data.phase_hp_thresholds
+	if phase - 1 < thresholds.size():
+		return thresholds[phase - 1]
+	return 1.0
+
+
 ## PhaseController가 호출 — 공격 행동 스크립트를 런타임 swap한다.
 ## Phase 4-0 #1 Step 5c: hitbox 인자 제거 — 보스 behavior는 CombatSystem.request_attack 위임.
 func swap_attack_behavior(

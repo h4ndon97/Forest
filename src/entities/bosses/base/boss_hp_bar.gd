@@ -124,6 +124,10 @@ func on_phase_entered(phase_index: int) -> void:
 	_refresh_phase_indicator_colors()
 	# phase_transition_duration 종료 후 emit되므로 안전하게 transition 종료.
 	_is_transitioning = false
+	# 시간 정지로 중단된 전환 케이스: 리필 tween이 아직 돌고 있으면 kill.
+	# (정상 종료 시엔 이미 끝나 있어 kill은 no-op)
+	if _refill_tween != null and _refill_tween.is_valid():
+		_refill_tween.kill()
 
 
 ## boss_phase_controller.phase_transition_started → HP 바 0→100% 리필.

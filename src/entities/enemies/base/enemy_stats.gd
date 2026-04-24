@@ -47,8 +47,9 @@ func take_damage(amount: float) -> void:
 		died.emit()
 
 
-func reset_hp() -> void:
-	_current_hp = _max_hp
+## 시간 재개 시 EnemySystem이 일괄 호출. ratio=1.0이면 풀 리셋(일반 적), 보스는 페이즈 시작값.
+func reset_hp(ratio: float = 1.0) -> void:
+	_current_hp = _max_hp * clampf(ratio, 0.0, 1.0)
 	health_changed.emit(_current_hp, _max_hp)
 
 
