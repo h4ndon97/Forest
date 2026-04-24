@@ -4,6 +4,7 @@ extends "res://src/entities/enemies/base/behaviors/attack_behavior_base.gd"
 ## 텔레그래프 동안 부채꼴 예고선(N개) 표시 → 발사 → 동시에 N발 발사.
 ## 패턴에서 projectile_scene_path/speed/spread_count/spread_angle/telegraph_durations[i] 참조.
 ## projectile_lifetime은 base_stats에서 가져온다.
+## Phase 4-0 #1 Step 5b: 투사체 발사를 CombatSystem.request_projectile(ProjectileSpec)로 위임.
 
 const DEFAULT_PROJECTILE_PATH := "res://src/entities/enemies/projectile/EnemyProjectile.tscn"
 const TELEGRAPH_LINE_LENGTH := 96.0
@@ -21,9 +22,11 @@ var _aim_direction: Vector2 = Vector2.RIGHT
 var _telegraph_lines: Array = []
 
 
-func setup_with_pattern(boss_root: Node2D, base_stats: EnemyStatsData,
-		hitbox: Area2D, pattern: BossPhasePattern, attack_index: int = 0) -> void:
-	setup(boss_root, base_stats, hitbox)
+## Step 5c: hitbox 인자 시그니처에서 제거 — base_boss가 더 이상 hitbox 멤버를 보유하지 않음.
+func setup_with_pattern(
+	boss_root: Node2D, base_stats: EnemyStatsData, pattern: BossPhasePattern, attack_index: int = 0
+) -> void:
+	setup(boss_root, base_stats)
 	_pattern = pattern
 	if pattern == null:
 		return
@@ -35,10 +38,7 @@ func setup_with_pattern(boss_root: Node2D, base_stats: EnemyStatsData,
 	_load_projectile_scene()
 
 
-func _on_setup() -> void:
-	# 근접 히트박스 사용 안 함 — 강제 OFF.
-	_hitbox.monitoring = false
-	_hitbox.monitorable = false
+# _on_setup 제거 — Step 3에서 BaseEnemy의 자체 Hitbox 노드가 제거되어 강제 OFF 코드 불필요.
 
 
 func on_attack_enter() -> void:
@@ -66,6 +66,7 @@ func on_state_update(delta: float) -> void:
 
 
 # --- 내부 ---
+
 
 func _load_projectile_scene() -> void:
 	var path: String = _pattern.projectile_scene_path
@@ -139,9 +140,16 @@ func _fire_spread() -> void:
 	if lifetime <= 0.0:
 		lifetime = 3.0
 	for dir in _spread_directions():
-		var projectile: Node = _projectile_scene.instantiate()
-		projectile.global_position = origin
-		if projectile.has_method("setup"):
-			projectile.setup(dir, speed, damage, lifetime)
-		_enemy_root.get_parent().add_child(projectile)
-		EventBus.enemy_projectile_fired.emit(origin, dir)
+		var spec := ProjectileSpec.new()
+		spec.attacker = _enemy_root
+		spec.source_group = "enemy_projectile"
+		spec.scene = _projectile_scene
+		spec.spawn_position = origin
+		spec.direction = dir
+		spec.speed = speed
+		spec.lifetime = lifetime
+		spec.damage = damage
+		spec.tags = PackedStringArray(["boss", "ranged_spread"])
+		var projectile: Node2D = CombatSystem.request_projectile(spec)
+		if projectile != null:
+			EventBus.enemy_projectile_fired.emit(origin, dir)

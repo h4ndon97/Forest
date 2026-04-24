@@ -23,7 +23,6 @@ var _current_phase: int = 0
 @onready var animation_comp: Node = $AnimationController
 @onready var detect_area: Area2D = $DetectArea
 @onready var hurtbox: Area2D = $Hurtbox
-@onready var hitbox: Area2D = $Hitbox
 @onready var attack_behavior: Node = $AttackBehavior
 @onready var defense: Node = $Defense
 @onready var weak_point: Area2D = $WeakPoint
@@ -59,6 +58,8 @@ func _ready() -> void:
 	detect_area.body_exited.connect(_on_detect_body_exited)
 	hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 	phase_controller.phase_entered.connect(_on_phase_entered)
+	phase_controller.phase_entered.connect(_hp_bar_node.on_phase_entered)
+	phase_controller.phase_transition_started.connect(_hp_bar_node.on_phase_transition_started)
 
 	if weak_point and weak_point.has_method("setup"):
 		weak_point.setup(self, boss_data.weak_point_offset, boss_data.weak_point_radius)
@@ -69,9 +70,6 @@ func _ready() -> void:
 		if visual.has_method("configure"):
 			var size := Vector2(base_stats.collision_width, base_stats.collision_height)
 			visual.configure(size, boss_data.weak_point_offset)
-
-	hitbox.monitoring = false
-	hitbox.monitorable = false
 
 	# 초기 페이즈 0 패턴 주입 (INTRO 종료 후 ATTACK 시 사용)
 	phase_controller.enter_phase(0)
@@ -179,8 +177,10 @@ func _play_hit_feedback(is_finish: bool, is_weak_point: bool, finish_attribute: 
 
 
 ## PhaseController가 호출 — 공격 행동 스크립트를 런타임 swap한다.
-func swap_attack_behavior(script_path: String, pattern: BossPhasePattern,
-		attack_index: int = 0) -> void:
+## Phase 4-0 #1 Step 5c: hitbox 인자 제거 — 보스 behavior는 CombatSystem.request_attack 위임.
+func swap_attack_behavior(
+	script_path: String, pattern: BossPhasePattern, attack_index: int = 0
+) -> void:
 	if script_path.is_empty():
 		return
 	if not ResourceLoader.exists(script_path):
@@ -188,16 +188,18 @@ func swap_attack_behavior(script_path: String, pattern: BossPhasePattern,
 		return
 	attack_behavior.set_script(load(script_path))
 	if attack_behavior.has_method("setup_with_pattern"):
-		attack_behavior.setup_with_pattern(self, boss_data.base_stats, hitbox, pattern, attack_index)
+		attack_behavior.setup_with_pattern(self, boss_data.base_stats, pattern, attack_index)
 
 
 # --- 시그널 핸들러 ---
 
+
 func _on_died() -> void:
 	state_machine.on_death()
 	set_physics_process(false)
-	hitbox.set_deferred("monitoring", false)
 	hurtbox.set_deferred("monitoring", false)
+	if attack_behavior and attack_behavior.has_method("on_attack_exit"):
+		attack_behavior.on_attack_exit()
 	EnemySystem.on_enemy_died(boss_id, global_position)
 	if boss_data:
 		EventBus.enemy_drop_requested.emit(global_position, boss_data.boss_id)
@@ -206,8 +208,8 @@ func _on_died() -> void:
 
 
 func _on_state_changed(old_state: int, new_state: int) -> void:
-	var entered_attack: bool = (new_state == BossStateMachine.State.ATTACK)
-	var exited_attack: bool = (old_state == BossStateMachine.State.ATTACK)
+	var entered_attack: bool = new_state == BossStateMachine.State.ATTACK
+	var exited_attack: bool = old_state == BossStateMachine.State.ATTACK
 	if entered_attack:
 		if phase_controller and phase_controller.has_method("on_attack_starting"):
 			phase_controller.on_attack_starting()
@@ -252,6 +254,7 @@ func _on_phase_entered(phase_index: int) -> void:
 
 # --- 내부 ---
 
+
 func _setup_hp_bar() -> void:
 	_hp_bar_layer = CanvasLayer.new()
 	_hp_bar_layer.layer = 5
@@ -260,7 +263,9 @@ func _setup_hp_bar() -> void:
 	_hp_bar_layer.add_child(_hp_bar_node)
 	add_child(_hp_bar_layer)
 	if boss_data:
-		_hp_bar_node.setup(boss_data.display_name)
+		_hp_bar_node.setup(
+			boss_data.display_name, boss_data.phase_count, boss_data.phase_hp_thresholds
+		)
 
 
 func _spawn_damage_number(

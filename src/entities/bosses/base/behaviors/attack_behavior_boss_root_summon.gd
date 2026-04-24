@@ -3,6 +3,8 @@ extends "res://src/entities/enemies/base/behaviors/attack_behavior_base.gd"
 ## 보스 뿌리 소환 공격.
 ## 텔레그래프 동안 지면 표식 표시 → 표식 위치에 root_count만큼 적 소환.
 ## 소환 위치: 플레이어 기준 좌우 root_spacing 간격으로 분산.
+## Phase 4-0 #1 Step 5c: 자체 hitbox 의존 제거. 공격 판정은 소환된 적 자신이 담당하므로
+## 본 behavior는 request_attack/request_projectile 호출 안 함 (소환만 직접 처리).
 
 const BASE_ENEMY_SCENE := "res://src/entities/enemies/base/BaseEnemy.tscn"
 const FLOOR_Y := 312.0
@@ -21,9 +23,11 @@ var _spawn_positions: Array = []
 var _markers: Array = []
 
 
-func setup_with_pattern(boss_root: Node2D, base_stats: EnemyStatsData,
-		hitbox: Area2D, pattern: BossPhasePattern, attack_index: int = 0) -> void:
-	setup(boss_root, base_stats, hitbox)
+## Step 5c: hitbox 인자 시그니처에서 제거 — base_boss가 더 이상 hitbox 멤버를 보유하지 않음.
+func setup_with_pattern(
+	boss_root: Node2D, base_stats: EnemyStatsData, pattern: BossPhasePattern, attack_index: int = 0
+) -> void:
+	setup(boss_root, base_stats)
 	_pattern = pattern
 	if pattern == null:
 		return
@@ -35,9 +39,7 @@ func setup_with_pattern(boss_root: Node2D, base_stats: EnemyStatsData,
 	_load_resources()
 
 
-func _on_setup() -> void:
-	_hitbox.monitoring = false
-	_hitbox.monitorable = false
+# _on_setup 제거 — Step 3에서 BaseEnemy의 자체 Hitbox 노드가 제거되어 강제 OFF 코드 불필요.
 
 
 func on_attack_enter() -> void:
@@ -64,6 +66,7 @@ func on_state_update(delta: float) -> void:
 
 
 # --- 내부 ---
+
 
 func _load_resources() -> void:
 	if not ResourceLoader.exists(BASE_ENEMY_SCENE):
