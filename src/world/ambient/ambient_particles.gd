@@ -8,6 +8,11 @@ extends Node2D
 
 const FADE_DURATION: float = 1.0
 
+# 아트 드롭인 경로 (파일 없으면 코드 4×4 단색 fallback).
+# 아트 추가 시 바로 반영됨 (ART_RESOURCE_LIST #52 / #53).
+const DAY_TEXTURE_PATH: String = "res://assets/sprites/effects/particle_ambient_day.png"
+const NIGHT_TEXTURE_PATH: String = "res://assets/sprites/effects/particle_ambient_night.png"
+
 const DAY_COLOR := Color(0.95, 0.95, 0.9, 0.7)
 const DAY_AMOUNT: int = 8
 const DAY_LIFETIME: float = 8.0
@@ -32,10 +37,18 @@ var _tween: Tween
 
 func _ready() -> void:
 	_setup_particle(
-		_day, DAY_AMOUNT, DAY_LIFETIME, DAY_COLOR, DAY_VELOCITY_MIN, DAY_VELOCITY_MAX, DAY_GRAVITY
+		_day,
+		DAY_TEXTURE_PATH,
+		DAY_AMOUNT,
+		DAY_LIFETIME,
+		DAY_COLOR,
+		DAY_VELOCITY_MIN,
+		DAY_VELOCITY_MAX,
+		DAY_GRAVITY
 	)
 	_setup_particle(
 		_night,
+		NIGHT_TEXTURE_PATH,
 		NIGHT_AMOUNT,
 		NIGHT_LIFETIME,
 		NIGHT_COLOR,
@@ -49,9 +62,10 @@ func _ready() -> void:
 
 func _setup_particle(
 	particles: GPUParticles2D,
+	texture_path: String,
 	amount: int,
 	lifetime: float,
-	color: Color,
+	fallback_color: Color,
 	vel_min: float,
 	vel_max: float,
 	gravity: Vector3
@@ -62,8 +76,17 @@ func _setup_particle(
 	particles.randomness = 0.5
 	particles.preprocess = lifetime * 0.5
 	particles.local_coords = false
-	particles.texture = _make_particle_texture(color)
+	particles.texture = _resolve_texture(texture_path, fallback_color)
 	particles.process_material = _make_particle_material(vel_min, vel_max, gravity)
+
+
+## 경로에 PNG가 있으면 로드, 없으면 색 기반 4×4 단색 fallback.
+func _resolve_texture(path: String, fallback_color: Color) -> Texture2D:
+	if ResourceLoader.exists(path):
+		var tex: Texture2D = load(path) as Texture2D
+		if tex != null:
+			return tex
+	return _make_particle_texture(fallback_color)
 
 
 func _make_particle_texture(color: Color) -> Texture2D:
