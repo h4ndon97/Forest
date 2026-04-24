@@ -35,6 +35,7 @@ hp_crack_threshold = 0.20
 hp_crack_max_alpha = 0.85
 hp_crack_transition_duration = 0.25
 dissolve_transition_duration = 0.30
+dissolve_flash_half_duration = 0.15
 shake_intensity_mult = 1.0
 hitstop_enabled = true
 flash_intensity_mult = 1.0

@@ -109,6 +109,22 @@ func play_dissolve(duration: float, cover: bool) -> void:
 		_dissolve_tween.tween_callback(_on_dissolve_reveal_complete)
 
 
+## 메뉴 진입/퇴장용 짧은 cover→reveal 풀 사이클. 총 half_duration*2 소요.
+## OverlaySystem이 모든 메뉴 layer보다 위라 메뉴 "등장/퇴장 플래시" 연출로 사용.
+func flash_dissolve(half_duration: float) -> void:
+	if _dissolve == null or _dissolve_material == null:
+		return
+	if _dissolve_tween != null and _dissolve_tween.is_valid():
+		_dissolve_tween.kill()
+	_dissolve.visible = true
+	_apply_dissolve_weight(0.0)
+	_dissolve_tween = create_tween()
+	_dissolve_tween.set_ignore_time_scale(true)
+	_dissolve_tween.tween_method(_apply_dissolve_weight, 0.0, 1.0, half_duration)
+	_dissolve_tween.tween_method(_apply_dissolve_weight, 1.0, 0.0, half_duration)
+	_dissolve_tween.tween_callback(_on_dissolve_reveal_complete)
+
+
 # === 스크린 플래시 (Pass 1에서 즉시 사용) ===
 
 

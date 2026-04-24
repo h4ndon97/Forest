@@ -120,12 +120,14 @@ func _open() -> void:
 	_equipment_tab.refresh()
 	_skill_tab.refresh()
 	_apply_active_tab()
+	EffectsSystem.request_dissolve_flash()
 	EventBus.inventory_opened.emit()
 
 
 func _close() -> void:
 	_is_open = false
 	visible = false
+	EffectsSystem.request_dissolve_flash()
 	EventBus.inventory_closed.emit()
 
 

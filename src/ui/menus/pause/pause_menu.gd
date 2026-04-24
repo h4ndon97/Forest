@@ -127,6 +127,7 @@ func _open() -> void:
 		AudioServer.set_bus_volume_db(_master_bus_index, _original_master_db + BGM_DUCK_DB)
 	_controller.set_input_active(true)
 	_controller.set_selected_index(0)
+	EffectsSystem.request_dissolve_flash()
 	EventBus.game_paused.emit()
 
 
@@ -136,6 +137,7 @@ func _close() -> void:
 	get_tree().paused = false
 	_controller.set_input_active(false)
 	_restore_bgm()
+	EffectsSystem.request_dissolve_flash()
 	EventBus.game_resumed.emit()
 
 
@@ -165,5 +167,6 @@ func _on_return_title() -> void:
 	get_tree().paused = false
 	_controller.set_input_active(false)
 	_restore_bgm()
+	EffectsSystem.request_dissolve_flash()
 	EventBus.game_resumed.emit()
 	EventBus.return_to_title_requested.emit()

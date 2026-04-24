@@ -112,6 +112,8 @@ extends Resource
 @export var hp_crack_transition_duration: float = 0.25
 ## 메뉴/씬 전환 디졸브 기본 duration(초).
 @export var dissolve_transition_duration: float = 0.30
+## 메뉴 진입/퇴장 플래시의 half duration(총 소요=half×2).
+@export var dissolve_flash_half_duration: float = 0.15
 
 # === 접근성 (Phase 5-2에서 UI 노출) ===
 @export_group("Accessibility")

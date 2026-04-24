@@ -128,6 +128,14 @@ func request_dissolve(duration: float = -1.0, cover: bool = true) -> void:
 	OverlaySystem.play_dissolve(dur, cover)
 
 
+## 메뉴 진입/퇴장 플래시 — cover→reveal 풀 사이클. 기본값(-1)은 config 값 사용.
+func request_dissolve_flash(half_duration: float = -1.0) -> void:
+	var half: float = (
+		half_duration if half_duration > 0.0 else _config.dissolve_flash_half_duration
+	)
+	OverlaySystem.flash_dissolve(half)
+
+
 # === 공개 API: 기타 ===
 
 
