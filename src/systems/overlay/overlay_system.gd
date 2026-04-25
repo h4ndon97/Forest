@@ -17,6 +17,9 @@ var _hp_crack: OverlayHpCrack
 var _dissolve: ColorRect
 var _dissolve_material: ShaderMaterial
 var _dissolve_tween: Tween
+var _cinematic_bar_top: ColorRect
+var _cinematic_bar_bottom: ColorRect
+var _cinematic_bars_tween: Tween
 var _screen_flash: ColorRect
 var _flash_tween: Tween
 
@@ -28,6 +31,7 @@ func _ready() -> void:
 	_build_vignette_slot()
 	_build_hp_crack_slot()
 	_build_dissolve_slot()
+	_build_cinematic_bars_slot()
 	_build_screen_flash_slot()
 
 
@@ -125,6 +129,40 @@ func flash_dissolve(half_duration: float) -> void:
 	_dissolve_tween.tween_callback(_on_dissolve_reveal_complete)
 
 
+# === 시네마틱 블랙바 (Pass 5 Step 4 피니시 컷인) ===
+
+
+## slide_in → hold → slide_out 풀 사이클. 총 slide_duration×2 + hold_duration.
+func play_cinematic_bars(slide_duration: float, hold_duration: float, thickness: float) -> void:
+	if _cinematic_bar_top == null or _cinematic_bar_bottom == null:
+		return
+	if _cinematic_bars_tween != null and _cinematic_bars_tween.is_valid():
+		_cinematic_bars_tween.kill()
+	var viewport: Vector2 = get_viewport().get_visible_rect().size
+	_cinematic_bar_top.size = Vector2(viewport.x, thickness)
+	_cinematic_bar_top.position = Vector2(0.0, -thickness)
+	_cinematic_bar_top.visible = true
+	_cinematic_bar_bottom.size = Vector2(viewport.x, thickness)
+	_cinematic_bar_bottom.position = Vector2(0.0, viewport.y)
+	_cinematic_bar_bottom.visible = true
+	_cinematic_bars_tween = create_tween()
+	_cinematic_bars_tween.set_ignore_time_scale(true)
+	_cinematic_bars_tween.set_parallel(true)
+	_cinematic_bars_tween.tween_property(_cinematic_bar_top, "position:y", 0.0, slide_duration)
+	_cinematic_bars_tween.tween_property(
+		_cinematic_bar_bottom, "position:y", viewport.y - thickness, slide_duration
+	)
+	_cinematic_bars_tween.chain().tween_interval(hold_duration)
+	_cinematic_bars_tween.chain().set_parallel(true)
+	_cinematic_bars_tween.tween_property(
+		_cinematic_bar_top, "position:y", -thickness, slide_duration
+	)
+	_cinematic_bars_tween.tween_property(
+		_cinematic_bar_bottom, "position:y", viewport.y, slide_duration
+	)
+	_cinematic_bars_tween.chain().tween_callback(_on_cinematic_bars_complete)
+
+
 # === 스크린 플래시 (Pass 1에서 즉시 사용) ===
 
 
@@ -192,6 +230,28 @@ func _apply_dissolve_weight(value: float) -> void:
 func _on_dissolve_reveal_complete() -> void:
 	if _dissolve != null:
 		_dissolve.visible = false
+
+
+func _build_cinematic_bars_slot() -> void:
+	_cinematic_bar_top = ColorRect.new()
+	_cinematic_bar_top.name = "CinematicBarTop"
+	_cinematic_bar_top.color = Color.BLACK
+	_cinematic_bar_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cinematic_bar_top.visible = false
+	add_child(_cinematic_bar_top)
+	_cinematic_bar_bottom = ColorRect.new()
+	_cinematic_bar_bottom.name = "CinematicBarBottom"
+	_cinematic_bar_bottom.color = Color.BLACK
+	_cinematic_bar_bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cinematic_bar_bottom.visible = false
+	add_child(_cinematic_bar_bottom)
+
+
+func _on_cinematic_bars_complete() -> void:
+	if _cinematic_bar_top != null:
+		_cinematic_bar_top.visible = false
+	if _cinematic_bar_bottom != null:
+		_cinematic_bar_bottom.visible = false
 
 
 func _build_screen_flash_slot() -> void:

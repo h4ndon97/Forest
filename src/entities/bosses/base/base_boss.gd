@@ -228,6 +228,7 @@ func _on_died() -> void:
 	if attack_behavior and attack_behavior.has_method("on_attack_exit"):
 		attack_behavior.on_attack_exit()
 	EnemySystem.on_enemy_died(boss_id, global_position)
+	EffectsSystem.request_finish_cutin(global_position, "")
 	if boss_data:
 		EventBus.enemy_drop_requested.emit(global_position, boss_data.boss_id)
 		EventBus.boss_defeated.emit(boss_data.boss_id)

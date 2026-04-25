@@ -115,6 +115,19 @@ extends Resource
 ## 메뉴 진입/퇴장 플래시의 half duration(총 소요=half×2).
 @export var dissolve_flash_half_duration: float = 0.15
 
+# === 피니시 컷인 (Pass 5 Step 4) ===
+@export_subgroup("Finish Cutin")
+## 줌 목표 스케일 (카메라 zoom property는 "배율의 역수" 개념 — 큰 값=당겨옴).
+@export var finish_cutin_zoom_target: Vector2 = Vector2(1.4, 1.4)
+## 줌 인/아웃 각 단계 duration(초).
+@export var finish_cutin_zoom_duration: float = 0.2
+## 슬로우모션 time_scale (0.2=극저속).
+@export_range(0.0, 1.0, 0.01) var finish_cutin_slowmo_scale: float = 0.2
+## 슬로우모션 유지 시간(초, 실시간).
+@export var finish_cutin_slowmo_duration: float = 0.4
+## 상·하단 블랙바 두께(px, 640×360 기준).
+@export var finish_cutin_bar_thickness: float = 16.0
+
 # === 접근성 (Phase 5-2에서 UI 노출) ===
 @export_group("Accessibility")
 ## 0.0 = 쉐이크 OFF

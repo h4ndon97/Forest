@@ -21,6 +21,7 @@ const FreezableScript = preload("res://src/systems/effects/effects_freezable.gd"
 const AfterimageScript = preload("res://src/systems/effects/effects_afterimage.gd")
 const DuskWarningScript = preload("res://src/systems/effects/effects_dusk_warning.gd")
 const HpCrackScript = preload("res://src/systems/effects/effects_hp_crack.gd")
+const FinishCutinScript = preload("res://src/systems/effects/effects_finish_cutin.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
@@ -46,6 +47,7 @@ var _freezable: EffectsFreezable
 var _afterimage: EffectsAfterimage
 var _dusk_warning: EffectsDuskWarning
 var _hp_crack: EffectsHpCrack
+var _finish_cutin: EffectsFinishCutin
 
 
 func _ready() -> void:
@@ -61,6 +63,7 @@ func _ready() -> void:
 	_afterimage = AfterimageScript.new(self)
 	_dusk_warning = DuskWarningScript.new(self, _config)
 	_hp_crack = HpCrackScript.new(self, _config)
+	_finish_cutin = FinishCutinScript.new(self, _config)
 	# Phase 4-0 #1 Step 6: 고아 시그널 2종 부활 — damage_resolver가 발행하는 신호를 구독해
 	# 내부 request_* 로 포워딩. screen_shake_requested는 이미 pass 1에서 연결돼 있고,
 	# screen_flash_requested는 #3 속성 피니시에서 emit 예정(이번 Step 미연결).
@@ -144,6 +147,16 @@ func request_dissolve_flash(half_duration: float = -1.0) -> void:
 		half_duration if half_duration > 0.0 else _config.dissolve_flash_half_duration
 	)
 	OverlaySystem.flash_dissolve(half)
+
+
+# === 공개 API: 피니시 컷인 (Pass 5 Step 4) ===
+
+
+## 보스/엘리트 처치 순간 컷인. 0.6s 시퀀스 (zoom + slowmo + bars + burst + flash).
+func request_finish_cutin(world_pos: Vector2, attribute: String = "") -> void:
+	if _finish_cutin == null:
+		return
+	_finish_cutin.request(world_pos, attribute)
 
 
 # === 공개 API: 기타 ===
