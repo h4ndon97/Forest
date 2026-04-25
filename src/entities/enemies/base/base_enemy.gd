@@ -174,6 +174,10 @@ func _inject_behaviors() -> void:
 			attack_behavior.set_script(
 				load("res://src/entities/enemies/base/behaviors/attack_behavior_ranged.gd")
 			)
+		"ground_tether":
+			attack_behavior.set_script(
+				load("res://src/entities/enemies/base/behaviors/attack_behavior_ground_tether.gd")
+			)
 		"none":
 			attack_behavior.set_script(AttackBehaviorNoneScript)
 		_:

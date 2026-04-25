@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "늪 촉수"
+enemy_type = "tendril"
+base_hp = 60.0
+base_attack = 10.0
+attack_range = 80.0
+attack_cooldown = 1.8
+base_speed = 0.0
+patrol_speed = 0.0
+detect_range = 100.0
+lose_range = 160.0
+min_intensity = 0.2
+max_intensity = 1.5
+collision_width = 16.0
+collision_height = 24.0
+gravity_scale = 1.0
+leaves_residue = true
+attack_behavior = "ground_tether"
+hitbox_size = Vector2(70.0, 16.0)
+hitbox_offset = Vector2(40.0, -8.0)
+hitbox_active_duration = 0.4
+projectile_telegraph = 0.35

@@ -36,8 +36,8 @@ extends Resource
 @export var leaves_residue: bool = true
 
 @export_group("행동 타입")
-## 공격 행동 (melee / ranged / none)
-@export_enum("melee", "ranged", "none") var attack_behavior: String = "melee"
+## 공격 행동 (melee / ranged / none / ground_tether)
+@export_enum("melee", "ranged", "none", "ground_tether") var attack_behavior: String = "melee"
 ## 사망 행동 (none / split)
 @export_enum("none", "split") var death_behavior: String = "none"
 
