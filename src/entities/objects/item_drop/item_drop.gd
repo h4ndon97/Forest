@@ -19,13 +19,29 @@ var _collected: bool = false
 
 func _ready() -> void:
 	collision_layer = 0
-	collision_mask = 1  # Player physics body (layer 1)
-	monitoring = true
-	monitorable = false
+	# Player CharacterBody2D는 collision_layer = 2 (Player.tscn).
+	collision_mask = 2
+	# 적 사망 콜백 도중 spawn되면 physics query flushing 중이라 즉시 변경 불가 → deferred.
+	set_deferred("monitoring", true)
+	set_deferred("monitorable", false)
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	_setup_visual()
-	_setup_collision()
+	_setup_collision.call_deferred()
+	# spawn 시 이미 player가 area 안에 있으면 body_entered가 안 뜸 — 직접 검사.
+	_check_initial_overlap.call_deferred()
+
+
+## 적이 player 가까이에서 죽으면 ItemDrop이 player 위에 spawn될 수 있다.
+## body_entered는 진입 시에만 emit하므로 이미 안에 있는 body는 직접 검사해야 한다.
+func _check_initial_overlap() -> void:
+	# collision shape + monitoring 적용 대기 (set_deferred / call_deferred로 등록됨).
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	for body in get_overlapping_bodies():
+		if body.is_in_group("player"):
+			_player_in_range = true
+			return
 
 
 func _process(_delta: float) -> void:
@@ -74,7 +90,8 @@ func _setup_visual() -> void:
 func _setup_collision() -> void:
 	var shape_node := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = SIZE * 1.5
+	# 픽업 영역을 시각 박스보다 넉넉히 — 옆에 살짝 떨어져도 감지.
+	shape.size = SIZE * 3.0
 	shape_node.shape = shape
 	add_child(shape_node)
 

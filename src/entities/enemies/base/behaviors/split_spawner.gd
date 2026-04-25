@@ -11,11 +11,12 @@ const BASE_ENEMY_SCENE := "res://src/entities/enemies/base/BaseEnemy.tscn"
 ## spore_stats_path가 비면 fallback_spore_path 사용. 둘 다 없으면 0 반환.
 ## 반환: 생성된 분열체의 instance_id 배열.
 static func spawn_spores(
-		source_enemy: Node2D,
-		spore_stats_path: String,
-		fallback_spore_path: String,
-		count: int,
-		spread_radius: float) -> Array:
+	source_enemy: Node2D,
+	spore_stats_path: String,
+	fallback_spore_path: String,
+	count: int,
+	spread_radius: float
+) -> Array:
 	var result: Array = []
 	if source_enemy == null:
 		return result
@@ -43,7 +44,8 @@ static func spawn_spores(
 		var spore: Node = base_scene.instantiate()
 		spore.stats_data = spore_stats
 		spore.global_position = origin + _random_offset(spread_radius)
-		parent.add_child(spore)
+		# 적 사망 콜백 도중이면 physics query flushing 중 — deferred로 트리 삽입.
+		parent.add_child.call_deferred(spore)
 		result.append(spore.get_instance_id())
 
 	return result

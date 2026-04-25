@@ -25,8 +25,9 @@ var _bag: Array[String] = []
 func _ready() -> void:
 	_create_components()
 	_connect_signals()
-	_debug_give_starter_items.call_deferred()
+	# load_hud(popup 포함)을 먼저 — starter items emit이 popup connect 후에 가도록.
 	_load_hud.call_deferred()
+	_debug_give_starter_items.call_deferred()
 
 
 # === Public API: 아이템 소지 ===
@@ -37,7 +38,13 @@ func acquire_item(item_id: String) -> bool:
 	if data == null:
 		return false
 	if data is ConsumableDataClass:
-		return _consumables.add(item_id)
+		var added: bool = _consumables.add(item_id)
+		if added:
+			EventBus.item_acquired.emit(item_id)
+		else:
+			# 소모품 슬롯 가득 — popup이 사용자에게 알림.
+			EventBus.item_pickup_full.emit(item_id)
+		return added
 	_bag.append(item_id)
 	EventBus.item_acquired.emit(item_id)
 	print("[Inventory] Acquired: %s" % data.display_name)
@@ -280,10 +287,13 @@ func _load_hud() -> void:
 
 
 func _debug_give_starter_items() -> void:
-	acquire_item("sword_basic")
-	acquire_item("sword_shadow")
-	acquire_item("leather_vest")
-	acquire_item("ring_of_strength")
+	# Silent — popup 억제. 게임 시작 시 stage_transition 페이드 뒤에 숨거나 도배되는 걸 막음.
+	for id in ["sword_basic", "sword_shadow", "leather_vest", "ring_of_strength"]:
+		var data: Resource = _registry.get_item(id)
+		if data == null or data is ConsumableDataClass:
+			continue
+		_bag.append(id)
+		print("[Inventory] Starter (silent): %s" % data.display_name)
 	_consumables.refill_all()
 	auto_equip("sword_basic")
 	print("[Inventory] Starter items given. F10=cycle weapon, F11=use consumables")
