@@ -89,17 +89,24 @@
 - 발견 시 즉각적 혜택, 이후 구역 보스 해금의 필수 조건
 - 플레이어가 힌트를 통해 스스로 알아내야 함
 
-### 추가조작 방향 (초안)
+### 추가조작 (구역별 진행)
 
-| 구역 | 테마 | 추가조작 방향 |
-|---|---|---|
-| 1구역 | 빛의 숲 | 고대 등불대 점화 → 이후 구역에 빛 경로 생성 |
-| 2구역 | 안개 습지 | 수문 조작 → 이후 구역의 물 반사면 활성화 |
-| 3구역 | 폐허의 숲 | 봉인 제단 활성화 → 이후 구역 잠금 해제 |
-| 4구역 | 그림자 숲 | 그림자 결정 조작 → 5구역 최종 보스실 진입 조건 |
+| 구역 | 테마 | 추가조작 | 상태 |
+|---|---|---|---|
+| 1구역 | 빛의 숲 | 고대 등불대 점화 → 이후 구역에 빛 경로 생성 | ✅ 확정 (1-H) |
+| 2구역 | 안개 습지 | **수문 조작** (`Floodgate`) → `world.zone2.floodgate_opened` flag set → zone3+ HiddenRevealer 구독으로 막힌 경로/물 반사면 노출 | ✅ 확정 (Phase 4-A, 2-H) |
+| 3구역 | 폐허의 숲 | 봉인 제단 활성화 → 이후 구역 잠금 해제 | ⏳ 초안 (Phase 4-B 진입 시 확정) |
+| 4구역 | 그림자 숲 | 그림자 결정 조작 → 5구역 최종 보스실 진입 조건 | ⏳ 초안 (Phase 4-C 진입 시 확정) |
 
-- 초안 수준. 개발 진행하며 구역에 어울리는 안으로 구체화/교체 가능.
+#### 2구역 수문 (Phase 4-A 확정)
+- **Floodgate 컴포넌트**: `src/entities/objects/environment/floodgate/floodgate.gd` (45줄). `environment_object` 베이스 상속. STOPPED 중 interact로 토글.
+- **데이터**: `data/environment/floodgate_data.gd` + `floodgate_basic.tres` (flag_id="world.zone2.floodgate_opened").
+- **위치**: stage_2_h "잠긴 수문" 본체 1개. stage_2_6 "안개 갈림길"에서 Lens → LightSensor(`sensor_2_6_hidden`) → HiddenRevealer가 PortalHidden 노출 → 진입.
+- **토글 시 동작**: StateFlags `world.zone2.floodgate_opened` 영속 set + `EventBus.environment_interacted` 신호. 재진입 시 자동 복원.
+- **zone3+ 구독**: zone3 콘텐츠 진입 시 결정 — HiddenRevealer(FLAG 조건)가 해당 플래그 구독해 경로 또는 물 반사면 노출.
 
 ### 미결 사항
-- [ ] 추가조작 구체 내용 (개발 중 확정)
-- [ ] 힌트 전달 방식 (개발 중 확정)
+- [x] 1구역 추가조작 구체 내용 (등불대 — Phase 3-1)
+- [x] 2구역 추가조작 구체 내용 (수문 — Phase 4-A)
+- [ ] 3~4구역 추가조작 구체 내용 (개발 중 확정)
+- [ ] 힌트 전달 방식 (1구역·2구역 모두 *Lens 회전 → LightSensor 활성화* 패턴으로 시작 — 환경 단서 위주. NPC 대사 또는 명시적 튜토리얼 추가 여부는 Phase 5 폴리싱)

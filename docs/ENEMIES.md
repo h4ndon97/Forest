@@ -117,12 +117,39 @@
 | `homing_turn_rate` | 3.0 | airborne의 조향 lerp factor (rad/s 근사) |
 | `homing_max_speed` | 60.0 | airborne의 최대 이동 속도 (px/s) |
 
+### 2구역 서브 타입 + 고유 적 (Phase 4-A 완료, 2026-04-25)
+
+**서브 타입 4종** — `data/enemies/zone2/`
+
+| 베이스 | 2구역 서브 타입 | 주요 델타 (zone1 → zone2, 약 ×1.3~1.5) |
+|---|---|---|
+| 나무 | **젖은 버드나무** (`weeping_willow.tres`) | HP 90→130, 공격력 9→13, 히트박스 40x24→44x26, attack_range 42→44 |
+| 바위 | **수렁 돌멩이** (`mire_stone.tres`) | HP 130→180, 공격력 7→9, `hurt_resistance_chance` 0.6→0.7, `damage_reduction_flat=3` 유지 |
+| 꽃 | **독안개 백합** (`miasma_lily.tres`) | HP 45→65, 공격력 5→7, `spore_count` 3 유지, `spore_stats_path`는 zone1 `pollen_spore.tres` 재활용, `spread_radius` 24→26 |
+| 돌기둥 | **젖은 비석** (`drowned_pillar.tres`) | HP 70→100, 공격력 12→14, `projectile_speed` 140→160, `projectile_telegraph` 0.6→0.55, `attack_cooldown` 2.8→2.5 |
+
+**구역 고유 적 — 늪 촉수** (`marsh_tendril.tres`)
+
+- **지면 고정형**: `base_speed=0` / `patrol_speed=0` — 이동 안 함. 사거리 내 플레이어 통과 시점에만 위협.
+- **신규 행동 카테고리**: `attack_behavior="ground_tether"` (60줄 신규 모듈, `attack_behavior_ground_tether.gd`).
+  - ranged의 `projectile_telegraph`(0.35s) 재사용 + melee의 hitbox(70×16, 긴 촉수) 합성.
+  - telegraph 동안 촉수 *뻗기 시각* (현재는 ColorRect fallback) → telegraph 종료 시 hitbox 활성.
+- HP 60 / 공격력 10 / `hitbox_active_duration=0.4` — *지나갈 때 회피* 강제.
+- `enemy_type="tendril"` — 신규 카테고리 (zone2 시그니처).
+
+**`EnemyStatsData.attack_behavior` enum 확장 (Phase 4-A)**: `"melee" / "ranged" / "none"` → **`+"ground_tether"`** 추가.
+
+**`base_enemy._inject_behaviors()` 디스패치** — `match attack_type`에 `"ground_tether"` 케이스 추가 (`attack_behavior_ground_tether.gd` 동적 로드).
+
 ### 미결 사항
-- **스케줄**: 서브 타입 + 구역 고유 적 설계는 각 구역 Phase 진입 시 확정 — 1구역 ✅ (Phase 3-2), 2~5구역은 Phase 4-A/B/C/D 각 진입 시.
+- **스케줄**: 서브 타입 + 구역 고유 적 설계는 각 구역 Phase 진입 시 확정 — 1구역 ✅ (Phase 3-2), 2구역 ✅ (Phase 4-A), 3~5구역은 Phase 4-B/C/D 각 진입 시.
 - [x] 1구역 서브 타입 목록 + 공격 패턴 + 고유 적 + 그림자 반응 수치
-- [ ] 2~5구역 서브 타입 목록
-- [ ] 2~5구역 고유 오브젝트 및 신규 적 종류
-- [ ] Phase 5 밸런싱: 나무 히트박스 크기, 바위 방어 수치, 돌기둥 투사체 속도/선딜, 꽃 분열체 개수/HP, 빛가루 포자 조향/최대 속도
+- [x] 2구역 서브 타입 목록 + 공격 패턴 + 고유 적 (늪 촉수, 신규 ground_tether 행동)
+- [ ] 3~5구역 서브 타입 목록
+- [ ] 3~5구역 고유 오브젝트 및 신규 적 종류
+- [ ] Phase 5 밸런싱:
+  - 1구역: 나무 히트박스 크기, 바위 방어 수치, 돌기둥 투사체 속도/선딜, 꽃 분열체 개수/HP, 빛가루 포자 조향/최대 속도
+  - 2구역: 늪 촉수 hitbox 길이/telegraph, 젖은 비석 투사체 속도, 독안개 백합 분열체 수, zone2 전체 HP·공격력 ×1.3~1.5 계단식 검증
 
 ---
 

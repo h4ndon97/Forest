@@ -3,9 +3,10 @@
 > 이 문서는 구역별 보스의 구조, 전투 방식, 보상을 정의한다.
 > 전투 시스템(COMBAT.md), 적 시스템(ENEMIES.md), 핵심 로직(CORE_SYSTEMS.md) 위에서 설계된다.
 
-> **현재 구현 상태 (2026-04-18)**: 구현 1/5 (1구역 — **거대 고목**, Phase 3-3 완료).
+> **현재 구현 상태 (2026-04-25)**: 구현 2/5 (1구역 + 2구역).
 > - 1구역 보스 → **Phase 3-3 완료** — `ancient_oakheart.tres` / 2페이즈 / 약점 lens_focus / 보상 빛 대시
-> - 2~4구역 보스 → Phase 4-A / 4-B / 4-C
+> - 2구역 보스 → **Phase 4-A 완료** — `mire_mother.tres` / 2페이즈 / 약점 lens_focus(임시) / 보상 그림자 통과
+> - 3~4구역 보스 → Phase 4-B / 4-C
 > - 5구역 최종 보스 → Phase 4-D
 
 ---
@@ -47,12 +48,12 @@
 ## 2. 구역별 보스
 
 ### 구현 상태
-- 구현: **0/5**
+- 구현: **2/5** — 1구역 ✅ / 2구역 ✅
 - 상세 설계 착수 일정: 각 구역 Phase 진입 시점
 
 ### 미결 사항
-- [ ] 1구역 보스 — Phase 3-3 확정 (2페이즈, 거대 오브젝트 괴물화)
-- [ ] 2구역 보스 — Phase 4-A 확정 (2페이즈, 안개 습지 테마)
+- [x] 1구역 보스 — Phase 3-3 확정 (2페이즈, 거대 오브젝트 괴물화)
+- [x] 2구역 보스 — Phase 4-A 확정 (2페이즈, 안개 습지 테마)
 - [ ] 3구역 보스 — Phase 4-B 확정 (3페이즈, 중반 전환점 — 그림자 왕가 흔적 결합)
 - [ ] 4구역 보스 — Phase 4-C 확정 (3페이즈, 괴물화 + 그림자 왕가 결합)
 - [ ] 5구역 보스 — Phase 4-D 확정 (4페이즈, 두 왕가의 불완전한 결합체, 최종)
@@ -92,3 +93,22 @@
 - **페이즈 2**: 그림자 뿌리 + 원거리 포자 투사체 (3-2 빛가루 포자 인프라 재사용) — `phase_2_branch_storm.tres`
 - **약점**: 오프셋 (0, -56), 반경 22, 배율 2.5배, 트리거 소스 `lens_focus`
 - **보상**: `reward_ability_id="light_dash"` / `reward_growth_points=5` / `reward_story_flag="story.zone1.oakheart_defeated"` / `reward_next_zone_flag="stage_progress.zone2_unlocked"`
+
+### 2구역 보스 — 늪의 어머니 (Mire Mother)
+
+- **데이터**: `data/bosses/zone2/mire_mother.tres` — HP 850 / ATK 22 / 접근 범위 150 / 2페이즈 (zone1 ×1.4 ATK ×1.5)
+- **페이즈 1**: 안개 방출 + 광역 — `phase_1_fog_release.tres`
+  - **신규 패턴** `boss_fog_release.gd` (130줄, `boss_melee_aoe` 답습 + 잔존 안개 ColorRect 8s 페이드)
+  - hitbox 240×100 광역, telegraph 0.7s, attribute=`shadow`
+- **페이즈 2**: 반사면 텔레포트 + 원거리 포자 wave — `phase_2_reflection_storm.tres`
+  - **신규 패턴 1** `boss_reflection_teleport.gd` (75줄, fade_out → 플레이어 ±200px 텔포 → invisible → fade_in)
+  - **재활용 패턴** `boss_ranged_spread.gd` (zone1 패턴 재사용, projectile 200px/s 3way 22°)
+  - 두 패턴 cycle (`attack_scripts` 2개 순환)
+- **약점**: 오프셋 (0, -56), 반경 22, 배율 2.5배, 트리거 소스 `lens_focus` *(임시 재활용)*
+- **보상**: `reward_ability_id="shadow_phase"` / `reward_growth_points=7` / `reward_item_ids=["mire_pendant"]` / `reward_story_flag="story.zone2.mire_mother_defeated"` / `reward_next_zone_flag="stage_progress.zone3_unlocked"`
+- **보스 인스턴스 씬**: `src/entities/bosses/zone2/MireMother.tscn` — AncientOakheart.tscn 패턴 답습. **Visual은 fallback ColorRect** (mire_mother_visual.gd 미작성, 추후 art-spec 작업).
+
+#### 2구역 보스 미결 (인게임 검증·튜닝 시 결정)
+- ReflectiveFloor 위치 쿼리 인프라 부재 → 텔포 위치는 임시 *플레이어 ±200px 랜덤*. 인게임 단조로움 발견 시 `ReflectiveFloor.get_nearest_anchor()` API 추가 (반나절)
+- 약점 reveal_source `lens_focus` 임시 재활용 — Mire Mother 정체성은 *등불 트리거*가 자연. 등불 트리거 인프라 (`BossWeakPoint` 신규 source 추가)는 Phase 4-B 진입 시
+- `mire_mother_visual.gd` 미작성 — 푸른 늪 톤 시각 정체성. art-spec 작업으로 분리

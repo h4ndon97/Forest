@@ -52,7 +52,7 @@
 
 | ID | 표시명(잠정) | 시간 | 잠금 | 적 / 잔류 | 기믹/환경 | 추가조작/숨김 | 스토리 비트 | 상태 |
 |---|---|---|---|---|---|---|---|---|
-| `stage_2_1` | 안개의 문턱 | 16 | ABILITY(`light_dash`) | 3 / 3 | 안개 도입(FogOverlay ColorRect 반투명) | PortalRight → 2-2 ✅ | "발 밑이 젖어 있다" *(미적용)* | ✅ Step 1+5 |
+| `stage_2_1` | 안개의 문턱 | 16 | ABILITY(`light_dash`) | 3 / 3 | 안개 도입(FogOverlay ColorRect 반투명). 적: zone2 (weeping_willow + mire_stone + miasma_lily) ✅ | PortalRight → 2-2 ✅ | "발 밑이 젖어 있다" *(미적용)* | ✅ Step 1+5+7 |
 | `stage_2_2` | 물웅덩이 | 18 | NONE | 3 / 3 | 안개 + ReflectiveFloor 학습. 적: weeping_willow + miasma_lily + drowned_pillar | — | — | ✅ Step 5 |
 | `stage_2_3` | 가라앉은 길 | 22 | LIGHT | 4 / 4 | 짙은 안개(α 0.28), 등불 강제. 적 4 + marsh_tendril 도입. **Lens + LightSensor(sensor_2_4_pool)** — 2-4 진입 게이트 활성화 | — | — | ✅ Step 5 |
 | `stage_2_4` | 거울 늪 | 14 | ENVIRONMENT(`light_sensor:sensor_2_4_pool`) | 4 / 4 | ReflectiveFloor 본격(RF×2). 적: weeping_willow + miasma_lily + marsh_tendril + drowned_pillar. sensor는 stage_2_3 안의 Lens 회전으로 활성화 | — | — | ✅ Step 5 |
@@ -163,3 +163,4 @@
 | 2026-04-25 | Step 5-6 — stage_2_7 '마지막 늪' (LIGHT 잠금) 양산. 적 5 = zone2 5종 모두 종합 검증. 짙은 안개 α 0.30. 2-6 PortalRight 추가. gdlint max-line-length 1건 fix. |
 | 2026-04-25 | Step 5-7 — stage_2_h '잠긴 수문' 양산. Floodgate 1개 + marsh_tendril×2. 8시 아침 — 휴식·발견 분위기. 통상 7개 + 숨김 1 = 8개 zone2 일반 스테이지 모두 양산 완료. |
 | 2026-04-25 | Step 5-8 — stage_2_b '늪의 어머니의 뜰' + MireMother.tscn 양산. AncientOakheart.tscn + stage_1_b.gd 패턴 답습. room_size 960×360 보스 아레나. Lens×2 + BossArenaTrigger. Visual은 fallback ColorRect (mire_mother_visual.gd 미작성). 2-7 PortalRight 추가. **zone2 9 스테이지 모두 양산 완료**. |
+| 2026-04-25 | Step 7 — 본 문서 마이그레이션 + stage_2_1 적 zone2 교체. ENEMIES.md / BOSSES.md / STORY.md / WORLD_DESIGN.md 4 문서에 zone2 결정사항 미결→확정. Step 6은 사용자 수시 진행 통과. |

@@ -2,7 +2,7 @@ extends Node2D
 
 ## 2-1 '안개의 문턱' — 2구역 진입 스테이지.
 ## 황혼 16시, ABILITY(light_dash) 잠금 — 1구역 보스 보상으로 해금.
-## 적 3 (oak_sapling, moss_rock, light_flower — Step 1 zone1 placeholder).
+## 적 3 (zone2 — weeping_willow + mire_stone + miasma_lily).
 ## 안개 시각: FogOverlay ColorRect 반투명 (Pass 5에서 셰이더 업그레이드 옵션).
 ## 아트 리소스가 있으면 적용, 없으면 ColorRect 플레이스홀더 유지.
 

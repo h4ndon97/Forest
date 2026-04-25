@@ -3,9 +3,9 @@
 [ext_resource type="PackedScene" path="res://src/entities/player/Player.tscn" id="1"]
 [ext_resource type="Script" path="res://src/world/stages/stage_2_1.gd" id="stage_script"]
 [ext_resource type="PackedScene" path="res://src/entities/enemies/base/BaseEnemy.tscn" id="enemy_base"]
-[ext_resource type="Resource" path="res://data/enemies/zone1/oak_sapling.tres" id="tree_stats"]
-[ext_resource type="Resource" path="res://data/enemies/zone1/moss_rock.tres" id="rock_stats"]
-[ext_resource type="Resource" path="res://data/enemies/zone1/light_flower.tres" id="flower_stats"]
+[ext_resource type="Resource" path="res://data/enemies/zone2/weeping_willow.tres" id="tree_stats"]
+[ext_resource type="Resource" path="res://data/enemies/zone2/mire_stone.tres" id="rock_stats"]
+[ext_resource type="Resource" path="res://data/enemies/zone2/miasma_lily.tres" id="flower_stats"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
 
 [sub_resource type="RectangleShape2D" id="floor_shape"]
@@ -86,15 +86,15 @@ direction = "right"
 
 [node name="Enemies" type="Node2D" parent="."]
 
-[node name="OakSapling1" parent="Enemies" instance=ExtResource("enemy_base")]
+[node name="WeepingWillow1" parent="Enemies" instance=ExtResource("enemy_base")]
 position = Vector2(280, 320)
 stats_data = ExtResource("tree_stats")
 
-[node name="MossRock1" parent="Enemies" instance=ExtResource("enemy_base")]
+[node name="MireStone1" parent="Enemies" instance=ExtResource("enemy_base")]
 position = Vector2(420, 320)
 stats_data = ExtResource("rock_stats")
 
-[node name="LightFlower1" parent="Enemies" instance=ExtResource("enemy_base")]
+[node name="MiasmaLily1" parent="Enemies" instance=ExtResource("enemy_base")]
 position = Vector2(560, 320)
 stats_data = ExtResource("flower_stats")
 

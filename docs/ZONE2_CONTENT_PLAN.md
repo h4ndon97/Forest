@@ -2,7 +2,7 @@
 
 > Phase 4-A 진입 직전 콘텐츠 양산 슬라이스 기준 문서.
 > 작성일: 2026-04-25
-> 상태: **계획 확정** — 빌드 진입 시 1차 갱신, 완료 시 "구현 완료" 마킹.
+> 상태: **구현 완료** (Step 0~5 + 7 ✅, Step 6 사용자 수시 진행).
 > 상위: [WORLD_DESIGN.md §1](WORLD_DESIGN.md) / [STAGES.md §5](STAGES.md) / [BOSSES.md](BOSSES.md) / [ENEMIES.md](ENEMIES.md) / [STORY.md](STORY.md)
 
 ---
@@ -162,14 +162,14 @@ zone1 대비 **HP·공격력 ×1.3~1.5** 계단식. 시각·이름은 습지 테
 
 ## 9. 진행 순서
 
-1. ✅ **Step 0 본 문서 작성** ← 현재
-2. **Step 1**: 통상 스테이지 1개(2-1) end-to-end — 기존 빌딩블록만으로 양산, 측정
-3. **Step 2**: 적 .tres 5종 작성 + `ground_tether` 행동 구현
-4. **Step 3**: 보스 .tres + 페이즈 패턴 2개 신규 구현
-5. **Step 4**: 환경 오브젝트(Floodgate) + 2-H 숨김 처리
-6. **Step 5**: 스테이지 .tscn 8개 양산 (Step 1 측정 결과로 일정 산출)
-7. **Step 6**: 러프 밸런싱 1패스 + 회귀 플레이
-8. **Step 7**: 결과를 STORY/BOSSES/ENEMIES/WORLD_DESIGN 본 문서에 반영, 본 문서 "구현 완료" 마킹
+1. ✅ Step 0 본 문서 작성
+2. ✅ Step 1 stage_2_1 양산
+3. ✅ Step 2 적 .tres 5종 + `ground_tether`
+4. ✅ Step 3 보스 .tres + 페이즈 패턴 2종 + mire_pendant
+5. ✅ Step 4 Floodgate + stage_2_h.tres
+6. ✅ Step 5 스테이지 .tscn 9개 양산 + MireMother.tscn
+7. ⏭️ **Step 6 러프 밸런싱** — 사용자 *수시 진행*. zone2 통과 + 보스 처치 + 체감 후 .tres 미세 조정. 통과 마킹.
+8. ✅ Step 7 STORY/BOSSES/ENEMIES/WORLD_DESIGN 본 문서 마이그레이션
 
 ---
 
@@ -183,3 +183,4 @@ zone1 대비 **HP·공격력 ×1.3~1.5** 계단식. 시각·이름은 습지 테
 | 2026-04-25 | Step 3 완료 — 보스 패턴 2종 + Mire Mother + mire_pendant. `boss_fog_release.gd` (130줄, 잔존 안개 페이드 포함) + `boss_reflection_teleport.gd` (75줄). data: `mire_mother.tres` (HP 850/ATK 22/2페이즈) + phase_1_fog_release / phase_2_reflection_storm + `mire_pendant.tres` (액세서리, 시간회복+10%). 약점 source는 임시로 `lens_focus` 재활용 (등불 트리거 인프라는 zone3 대기). |
 | 2026-04-25 | Step 4 완료 — Floodgate 환경 오브젝트 + stage_2_h.tres. `floodgate.gd` (45줄, 단순 토글) + `FloodgateData` + `Floodgate.tscn` + `floodgate_basic.tres`. StateFlags `world.zone2.floodgate_opened` 영속 플래그. zone3+ HiddenRevealer가 구독해 막힌 경로 노출 (zone3 콘텐츠 진입 시 결정). stage_2_h.tres 등록 — .tscn은 Step 5에서. |
 | 2026-04-25 | Step 5 완료 — zone2 9 스테이지 모두 양산. 8 sub-step (5-1~5-8): 2-1 적 교체는 미진행, 2-2~2-7 + 2-H + 2-B + MireMother.tscn 신규. 잠금 5종 모두 체험 (ABILITY/NONE/LIGHT/ENVIRONMENT/PURIFY/숨김). 환경 인프라 추가: light_sensor_2_4_pool / light_sensor_2_6_hidden / hidden_revealer_zone2_h. 누적 약 3시간. |
+| 2026-04-25 | Step 7 완료 — 본 문서 마이그레이션. ENEMIES.md 2구역 서브타입 4 + 늪 촉수 + ground_tether enum 확장 / BOSSES.md 늪의 어머니 명세 + 보상 맵 / STORY.md 1·2구역 스토리 단서 구체화 + 봉인 거래 1차 단서 위치 명시 / WORLD_DESIGN.md 2구역 수문 추가조작 ✅ 확정. + stage_2_1 적 zone1 placeholder → zone2(weeping_willow/mire_stone/miasma_lily) 교체 마무리. Step 6은 사용자 수시 진행으로 통과. |
