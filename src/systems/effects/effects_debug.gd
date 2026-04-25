@@ -5,6 +5,7 @@ extends Node
 ## EffectsSystem Autoload의 자식으로 등록되거나 별도 시연 씬에서 직접 add_child.
 ## 주의: F10/F11은 InventorySystem 디버그가 선점, F5는 GrowthSystem.
 
+const KEY_TIMELINE_TEST: Key = KEY_F2
 const KEY_DISSOLVE: Key = KEY_F3
 const KEY_DUSK_WARNING: Key = KEY_F4
 const KEY_SHAKE: Key = KEY_F6
@@ -29,6 +30,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var key_event: InputEventKey = event
 	match key_event.keycode:
+		KEY_TIMELINE_TEST:
+			_test_timeline_pipeline()
+			get_viewport().set_input_as_handled()
 		KEY_DISSOLVE:
 			_dissolve_covered = not _dissolve_covered
 			EffectsSystem.request_dissolve(0.3, _dissolve_covered)
@@ -57,6 +61,40 @@ func _unhandled_input(event: InputEvent) -> void:
 			EffectsSystem.debug_toggle_time_stop()
 			print("[EffectsDebug] time stop toggle")
 			get_viewport().set_input_as_handled()
+
+
+## Step 1 scaffolding 검증: 동적 합성 timeline으로 end-to-end 파이프라인 실행.
+## shake(0s) + screen_flash(0.05s) + hitstop(0.08s) 3 cue — 기존 Layer 2 API 단순 연쇄 확인.
+func _test_timeline_pipeline() -> void:
+	var timeline := EffectTimeline.new()
+	timeline.display_name = "DebugSynthetic"
+	timeline.time_policy = "ignore"
+	timeline.expected_duration = 0.2
+
+	var shake_cue := EffectCue.new()
+	shake_cue.offset_sec = 0.0
+	shake_cue.cue_type = "shake"
+	shake_cue.shake_preset = "medium"
+
+	var flash_cue := EffectCue.new()
+	flash_cue.offset_sec = 0.05
+	flash_cue.cue_type = "screen_flash"
+	flash_cue.screen_flash_color = Color(0.4, 0.9, 1.0, 0.35)
+	flash_cue.screen_flash_duration = 0.12
+
+	var hitstop_cue := EffectCue.new()
+	hitstop_cue.offset_sec = 0.08
+	hitstop_cue.cue_type = "hitstop"
+	hitstop_cue.hitstop_preset = "hit"
+
+	timeline.cues = [shake_cue, flash_cue, hitstop_cue]
+	var handle: EffectsTimelinePlayer = EffectsSystem.request_timeline(timeline, {})
+	print(
+		(
+			"[EffectsDebug] timeline test fired → %s (handle=%s)"
+			% [timeline.display_name, "ok" if handle else "null"]
+		)
+	)
 
 
 func _flash_nearest_enemy() -> void:
