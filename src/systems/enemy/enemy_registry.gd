@@ -35,6 +35,21 @@ func get_count() -> int:
 	return _enemies.size()
 
 
+## pos에서 max_dist 내의 최근접 살아있는 적을 반환. 없으면 null.
+## shadow 피니시 텔포 좌표 계산용. 단순 거리 기반(방향 가중 없음).
+func get_nearest(pos: Vector2, max_dist: float) -> Node:
+	var best: Node = null
+	var best_dist_sq: float = max_dist * max_dist
+	for enemy in _enemies.values():
+		if not is_instance_valid(enemy) or not (enemy is Node2D):
+			continue
+		var d_sq: float = pos.distance_squared_to((enemy as Node2D).global_position)
+		if d_sq < best_dist_sq:
+			best_dist_sq = d_sq
+			best = enemy
+	return best
+
+
 func activate_all() -> void:
 	for enemy in _enemies.values():
 		if is_instance_valid(enemy) and enemy.has_method("activate"):

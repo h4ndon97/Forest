@@ -20,6 +20,8 @@ extends RefCounted
 ##   get_shake_preset_normal()
 
 const _META_ATTACK_SPEC := "attack_spec"
+## light 피니시 전체 화면 플래시 지속(s). D11: 초기 상수, Phase 5 밸런싱에서 .tres 이전.
+const LIGHT_FINISH_FLASH_DURATION := 0.12
 
 
 ## 일반 hurtbox 접촉. base_enemy/base_boss의 _on_hurtbox_area_entered에서 호출.
@@ -104,8 +106,11 @@ static func _apply_effects(target: Node, spec: AttackSpec, is_weak_point: bool) 
 			category = target.call("get_hit_particle_category")
 		EffectsSystem.request_hit_particle(world_pos, category, spec.is_finish, spec.attribute)
 
-	# TODO(Phase 4-0 #3): spec.attribute == "light" 피니시 시
-	#   EventBus.screen_flash_requested.emit(light_flash_color, duration)
+	# light 피니시 순간 전체 화면 플래시 — 고아 시그널 screen_flash_requested 부활.
+	if spec.is_finish and spec.attribute == "light":
+		EventBus.screen_flash_requested.emit(
+			EffectsSystem.get_finish_color(spec.attribute), LIGHT_FINISH_FLASH_DURATION
+		)
 
 
 static func _resolve_flash_color(target: Node, spec: AttackSpec) -> Color:

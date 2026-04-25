@@ -64,11 +64,11 @@ func _ready() -> void:
 	_dusk_warning = DuskWarningScript.new(self, _config)
 	_hp_crack = HpCrackScript.new(self, _config)
 	_finish_cutin = FinishCutinScript.new(self, _config)
-	# Phase 4-0 #1 Step 6: 고아 시그널 2종 부활 — damage_resolver가 발행하는 신호를 구독해
-	# 내부 request_* 로 포워딩. screen_shake_requested는 이미 pass 1에서 연결돼 있고,
-	# screen_flash_requested는 #3 속성 피니시에서 emit 예정(이번 Step 미연결).
+	# Phase 4-0 #1 Step 6 + #3: 고아 시그널 3종 부활 — damage_resolver가 발행하는 신호를 구독해
+	# 내부 request_* 로 포워딩. screen_shake_requested는 이미 pass 1에서 연결돼 있음.
 	EventBus.hit_flash_requested.connect(_on_hit_flash_requested)
 	EventBus.hitstop_requested.connect(_on_hitstop_requested)
+	EventBus.screen_flash_requested.connect(_on_screen_flash_requested)
 	if OS.is_debug_build():
 		var debug_node: Node = Node.new()
 		debug_node.name = "EffectsDebug"
@@ -143,9 +143,7 @@ func request_dissolve(duration: float = -1.0, cover: bool = true) -> void:
 
 ## 메뉴 진입/퇴장 플래시 — cover→reveal 풀 사이클. 기본값(-1)은 config 값 사용.
 func request_dissolve_flash(half_duration: float = -1.0) -> void:
-	var half: float = (
-		half_duration if half_duration > 0.0 else _config.dissolve_flash_half_duration
-	)
+	var half: float = half_duration if half_duration > 0.0 else _config.dissolve_flash_half_duration
 	OverlaySystem.flash_dissolve(half)
 
 
@@ -251,6 +249,11 @@ func _on_hit_flash_requested(target: CanvasItem, color: Color, duration: float) 
 ## Step 6: damage_resolver가 EventBus.hitstop_requested emit → 여기서 수신 후 헬퍼로 포워딩.
 func _on_hitstop_requested(duration: float, scale: float) -> void:
 	request_hitstop_duration(duration, scale)
+
+
+## #3: damage_resolver가 light 피니시 시 EventBus.screen_flash_requested emit → 여기서 수신.
+func _on_screen_flash_requested(color: Color, duration: float) -> void:
+	request_screen_flash(color, duration)
 
 
 func _load_config() -> void:

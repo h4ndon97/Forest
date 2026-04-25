@@ -2,9 +2,9 @@ extends Node
 
 ## 플레이어 행동 상태를 관리하고 전이를 결정한다.
 
-enum State { IDLE, RUN, JUMP, FALL, DASH, LIGHT_DASH }
-
 signal state_changed(old_state: State, new_state: State)
+
+enum State { IDLE, RUN, JUMP, FALL, DASH, LIGHT_DASH }
 
 var current_state: State = State.IDLE
 var air_jump_count: int = 0
@@ -203,6 +203,13 @@ func _on_light_dash_duration_timeout() -> void:
 
 func _on_light_dash_cooldown_timeout() -> void:
 	can_light_dash = true
+
+
+## 외부(4타 피니시 light 속성)가 능력 해금·쿨다운 무관하게 LIGHT_DASH 상태로 강제 전이.
+## 이동·i-frame·afterimage는 기존 LIGHT_DASH 경로(player_movement + player_light_dash) 재사용.
+func force_light_dash() -> void:
+	var is_on_floor: bool = true  # 피니시 상태 종료 시 착지 처리는 다음 update에서 자연 해소.
+	_transition(State.LIGHT_DASH, is_on_floor)
 
 
 func _get_max_air_jumps() -> int:

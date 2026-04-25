@@ -3,9 +3,15 @@ extends Node
 ## 플레이어 콤보 전투 컴포넌트.
 ## 4타 콤보 상태 머신, 입력 버퍼링.
 ## Phase 4-0 #1 Step 2: 자체 Area2D 관리 → CombatSystem.request_attack(AttackSpec) 위임.
+## Phase 4-0 #3: 피니시(4타) 발동 시 FinishStrategy 패턴으로 속성 분기(light/shadow/hybrid/neutral).
 ## 히트박스 생명주기는 CombatSystem.attack_requests가 spec.active_duration 기반으로 관리.
 
 enum ComboState { IDLE, ATTACKING, WINDOW }
+
+const FinishNeutralScript = preload("res://src/entities/player/finish/finish_neutral.gd")
+const FinishHybridScript = preload("res://src/entities/player/finish/finish_hybrid.gd")
+const FinishLightScript = preload("res://src/entities/player/finish/finish_light.gd")
+const FinishShadowScript = preload("res://src/entities/player/finish/finish_shadow.gd")
 
 var _combo_count: int = 0
 var _combo_state: int = ComboState.IDLE
@@ -69,21 +75,10 @@ func _start_hit(hit_number: int) -> void:
 
 	if _enemies_active:
 		_cancel_current_attack()
-		var spec := AttackSpec.new()
-		spec.attacker = _parent
-		spec.source_group = "player_attack"
-		spec.shape_type = "rect"
-		spec.hitbox_size = _config.hitbox_size
-		spec.hitbox_offset = Vector2(
-			absf(_config.hitbox_offset.x) * _movement.facing_direction,
-			_config.hitbox_offset.y,
-		)
-		spec.active_duration = _config.hit_duration
-		spec.damage = CombatSystem.get_combo_damage(_combo_count)
-		spec.is_finish = _combo_count >= _config.combo_max_hits
-		spec.attribute = _resolve_finish_attribute() if spec.is_finish else "none"
-		spec.tags = PackedStringArray(["combo", "hit_%d" % _combo_count])
-		_current_attack_area = CombatSystem.request_attack(spec)
+		if _combo_count >= _config.combo_max_hits:
+			_execute_finish()
+		else:
+			_execute_normal_hit()
 
 	var anim_name := "slash_%d" % hit_number
 	if _sprite and _sprite.sprite_frames:
@@ -94,6 +89,47 @@ func _start_hit(hit_number: int) -> void:
 
 	_hit_timer.start()
 	EventBus.combo_hit_landed.emit(hit_number)
+
+
+func _execute_normal_hit() -> void:
+	var spec := AttackSpec.new()
+	spec.attacker = _parent
+	spec.source_group = "player_attack"
+	spec.shape_type = "rect"
+	spec.hitbox_size = _config.hitbox_size
+	spec.hitbox_offset = Vector2(
+		absf(_config.hitbox_offset.x) * _movement.facing_direction,
+		_config.hitbox_offset.y,
+	)
+	spec.active_duration = _config.hit_duration
+	spec.damage = CombatSystem.get_combo_damage(_combo_count)
+	spec.is_finish = false
+	spec.attribute = "none"
+	spec.tags = PackedStringArray(["combo", "hit_%d" % _combo_count])
+	_current_attack_area = CombatSystem.request_attack(spec)
+
+
+func _execute_finish() -> void:
+	var attribute: String = _resolve_finish_attribute()
+	var ctx: Dictionary = {
+		FinishStrategy.KEY_PLAYER: _parent,
+		FinishStrategy.KEY_MOVEMENT: _movement,
+		FinishStrategy.KEY_HEALTH: _parent.get_node_or_null("Health"),
+		FinishStrategy.KEY_DAMAGE: CombatSystem.get_combo_damage(_combo_count),
+		FinishStrategy.KEY_CONFIG: _config,
+		FinishStrategy.KEY_ATTRIBUTE: attribute,
+	}
+	# 피니시는 전략 내부에서 다단히트(shadow)를 포함할 수 있어 단일 Area2D 추적 불가.
+	# _current_attack_area는 normal hit 전용으로 유지되며, 피니시는 attack_requests 자동 만료에 위임.
+	match attribute:
+		"light":
+			FinishLightScript.execute(ctx)
+		"shadow":
+			FinishShadowScript.execute(ctx)
+		"hybrid":
+			FinishHybridScript.execute(ctx)
+		_:
+			FinishNeutralScript.execute(ctx)
 
 
 # 히트박스 OFF는 CombatSystem.attack_requests가 처리. 본 콜백은 상태 전이 전용.
