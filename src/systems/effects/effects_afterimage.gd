@@ -18,11 +18,7 @@ func _init(host: Node) -> void:
 ## 각 복제본은 fade 시간 동안 modulate.a 를 0 으로 Tween 후 queue_free.
 ## 부모는 source.get_parent() — 월드 좌표 고정(플레이어 이동해도 잔상 정지).
 func spawn(
-	source: Node2D,
-	count: int,
-	interval: float,
-	fade: float,
-	tint: Color = DEFAULT_TINT
+	source: Node2D, count: int, interval: float, fade: float, tint: Color = DEFAULT_TINT
 ) -> void:
 	if source == null or not is_instance_valid(source) or count <= 0 or fade <= 0.0:
 		return
@@ -37,9 +33,7 @@ func spawn(
 # === 내부 ===
 
 
-func _schedule_spawn(
-	source: Node2D, parent: Node, delay: float, fade: float, tint: Color
-) -> void:
+func _schedule_spawn(source: Node2D, parent: Node, delay: float, fade: float, tint: Color) -> void:
 	if delay <= 0.0:
 		_spawn_one(source, parent, fade, tint)
 		return

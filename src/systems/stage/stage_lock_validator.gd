@@ -5,9 +5,9 @@ extends Node
 ## 시스템 간 직접 참조 없이 EventBus 시그널로 상태를 추적한다.
 
 var _lantern_on: bool = false
-var _clear_states: Dictionary = {}   # stage_id -> ClearState (int)
+var _clear_states: Dictionary = {}  # stage_id -> ClearState (int)
 var _sensor_states: Dictionary = {}  # sensor_id -> bool (ENVIRONMENT α)
-var _combo_states: Dictionary = {}   # combo_key -> bool (ENVIRONMENT β)
+var _combo_states: Dictionary = {}  # combo_key -> bool (ENVIRONMENT β)
 
 
 func _ready() -> void:
@@ -41,6 +41,7 @@ func is_lantern_on() -> bool:
 
 
 # --- 내부 ---
+
 
 func _validate_light(data: StageData) -> Dictionary:
 	if _lantern_on:

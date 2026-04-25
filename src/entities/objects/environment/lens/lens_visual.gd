@@ -90,9 +90,7 @@ func _draw_focus_zone() -> void:
 	draw_rect(Rect2(focus_start, -focus_half, _focus_length, _focus_width), core, true)
 	var ring: Color = COLOR_FOCUS_RING
 	ring.a *= pulse
-	draw_rect(
-		Rect2(focus_start, -focus_half, _focus_length, _focus_width), ring, false, 1.0
-	)
+	draw_rect(Rect2(focus_start, -focus_half, _focus_length, _focus_width), ring, false, 1.0)
 
 
 func _draw_crystal_body() -> void:

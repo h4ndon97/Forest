@@ -9,20 +9,19 @@ const PurificationDetectorScript = preload(
 	"res://src/entities/enemies/shadow_residue/purification_detector.gd"
 )
 const ENEMY_SCENE_PATH := "res://src/entities/enemies/base/BaseEnemy.tscn"
+const MARKER_SIZE := Vector2(16, 4)
+const MARKER_COLOR_DAY := Color(0.15, 0.0, 0.2, 0.6)  # 낮에 처치 — 보라빛
+const MARKER_COLOR_NIGHT := Color(0.0, 0.1, 0.2, 0.6)  # 밤에 처치 — 푸른빛
+const PULSE_SPEED := 2.0
+const DETECTOR_RADIUS := 40.0
+const REVIVE_DURATION := 0.5
+const REVIVE_SCALE := Vector2(3.0, 3.0)
 
 var _enemy_type: String = ""
 var _stats_data: EnemyStatsData
 var _killed_during_day: bool = true
 var _fallback_marker: ColorRect
 var _reviving: bool = false
-
-const MARKER_SIZE := Vector2(16, 4)
-const MARKER_COLOR_DAY := Color(0.15, 0.0, 0.2, 0.6)   # 낮에 처치 — 보라빛
-const MARKER_COLOR_NIGHT := Color(0.0, 0.1, 0.2, 0.6)   # 밤에 처치 — 푸른빛
-const PULSE_SPEED := 2.0
-const DETECTOR_RADIUS := 40.0
-const REVIVE_DURATION := 0.5
-const REVIVE_SCALE := Vector2(3.0, 3.0)
 
 
 func setup(stats_data: EnemyStatsData, killed_during_day: bool = true) -> void:
@@ -85,11 +84,14 @@ func revive() -> void:
 	# 팽창 + 발광 연출
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(self, "scale", REVIVE_SCALE, REVIVE_DURATION) \
-		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	(
+		tween
+		. tween_property(self, "scale", REVIVE_SCALE, REVIVE_DURATION)
+		. set_ease(Tween.EASE_OUT)
+		. set_trans(Tween.TRANS_BACK)
+	)
 	if _fallback_marker:
-		var bright := Color(0.6, 0.1, 0.4, 1.0) if _killed_during_day \
-				else Color(0.1, 0.3, 0.6, 1.0)
+		var bright := Color(0.6, 0.1, 0.4, 1.0) if _killed_during_day else Color(0.1, 0.3, 0.6, 1.0)
 		tween.tween_property(_fallback_marker, "color", bright, REVIVE_DURATION)
 	tween.chain().tween_callback(_spawn_revived_enemy)
 

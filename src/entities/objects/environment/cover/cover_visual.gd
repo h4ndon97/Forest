@@ -104,14 +104,42 @@ func configure(size: Vector2) -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_update_rune()
-	_update_fragment(_frag1_anchor, FRAG1_POS, FRAG1_AMP, FRAG1_PERIOD, FRAG1_PHASE,
-			FRAG1_ROT_AMP, FRAG1_ROT_PERIOD)
-	_update_fragment(_frag2_anchor, FRAG2_POS, FRAG2_AMP, FRAG2_PERIOD, FRAG2_PHASE,
-			FRAG2_ROT_AMP, FRAG2_ROT_PERIOD)
-	_update_fragment(_frag3_anchor, FRAG3_POS, FRAG3_AMP, FRAG3_PERIOD, FRAG3_PHASE,
-			FRAG3_ROT_AMP, FRAG3_ROT_PERIOD)
-	_update_fragment(_frag4_anchor, FRAG4_POS, FRAG4_AMP, FRAG4_PERIOD, FRAG4_PHASE,
-			FRAG4_ROT_AMP, FRAG4_ROT_PERIOD)
+	_update_fragment(
+		_frag1_anchor,
+		FRAG1_POS,
+		FRAG1_AMP,
+		FRAG1_PERIOD,
+		FRAG1_PHASE,
+		FRAG1_ROT_AMP,
+		FRAG1_ROT_PERIOD
+	)
+	_update_fragment(
+		_frag2_anchor,
+		FRAG2_POS,
+		FRAG2_AMP,
+		FRAG2_PERIOD,
+		FRAG2_PHASE,
+		FRAG2_ROT_AMP,
+		FRAG2_ROT_PERIOD
+	)
+	_update_fragment(
+		_frag3_anchor,
+		FRAG3_POS,
+		FRAG3_AMP,
+		FRAG3_PERIOD,
+		FRAG3_PHASE,
+		FRAG3_ROT_AMP,
+		FRAG3_ROT_PERIOD
+	)
+	_update_fragment(
+		_frag4_anchor,
+		FRAG4_POS,
+		FRAG4_AMP,
+		FRAG4_PERIOD,
+		FRAG4_PHASE,
+		FRAG4_ROT_AMP,
+		FRAG4_ROT_PERIOD
+	)
 
 
 func _update_rune() -> void:
@@ -124,13 +152,21 @@ func _update_rune() -> void:
 		var outer_a: float = GLOW_OUTER_ALPHA_BASE + GLOW_OUTER_ALPHA_AMP * sin(glow_phase)
 		_rune_glow_outer.modulate.a = clampf(outer_a, 0.0, 1.0)
 	if _rune_glow_inner != null:
-		var inner_a: float = (GLOW_INNER_ALPHA_BASE
-				+ GLOW_INNER_ALPHA_AMP * sin(glow_phase + GLOW_INNER_PHASE_OFFSET))
+		var inner_a: float = (
+			GLOW_INNER_ALPHA_BASE + GLOW_INNER_ALPHA_AMP * sin(glow_phase + GLOW_INNER_PHASE_OFFSET)
+		)
 		_rune_glow_inner.modulate.a = clampf(inner_a, 0.0, 1.0)
 
 
-func _update_fragment(anchor: Node2D, base_pos: Vector2, amp: float,
-		period: float, phase: float, rot_amp: float, rot_period: float) -> void:
+func _update_fragment(
+	anchor: Node2D,
+	base_pos: Vector2,
+	amp: float,
+	period: float,
+	phase: float,
+	rot_amp: float,
+	rot_period: float
+) -> void:
 	if anchor == null:
 		return
 	var bob_phase: float = _t * TAU / period + phase
@@ -184,11 +220,9 @@ func _build_rune(tex: Texture2D) -> void:
 func _make_radial_glow() -> Sprite2D:
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-	gradient.colors = PackedColorArray([
-		Color(1.0, 1.0, 1.0, 1.0),
-		Color(1.0, 1.0, 1.0, 0.30),
-		Color(1.0, 1.0, 1.0, 0.0)
-	])
+	gradient.colors = PackedColorArray(
+		[Color(1.0, 1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0, 0.30), Color(1.0, 1.0, 1.0, 0.0)]
+	)
 	var gtex := GradientTexture2D.new()
 	gtex.gradient = gradient
 	gtex.fill = GradientTexture2D.FILL_RADIAL
@@ -262,12 +296,8 @@ func _draw_edges() -> void:
 	var half_h: float = _size.y * 0.5
 	draw_rect(Rect2(-half_w, -half_h, 1.5, _size.y), COLOR_STONE_HIGHLIGHT, true)
 	draw_rect(Rect2(-half_w, -half_h, _size.x, 1.5), COLOR_STONE_HIGHLIGHT, true)
-	draw_rect(
-		Rect2(half_w - 1.5, -half_h, 1.5, _size.y), COLOR_STONE_SHADOW, true
-	)
-	draw_rect(
-		Rect2(-half_w, half_h - 1.5, _size.x, 1.5), COLOR_STONE_SHADOW, true
-	)
+	draw_rect(Rect2(half_w - 1.5, -half_h, 1.5, _size.y), COLOR_STONE_SHADOW, true)
+	draw_rect(Rect2(-half_w, half_h - 1.5, _size.x, 1.5), COLOR_STONE_SHADOW, true)
 
 
 func _draw_cracks() -> void:
@@ -289,11 +319,7 @@ func _draw_moss() -> void:
 	for i in range(5):
 		var x: float = lerpf(-half_w + 2.0, half_w - 2.0, (float(i) + 0.5) / 5.0)
 		var bump: float = 1.5 + float(i % 2)
-		draw_rect(
-			Rect2(x - 2.0, -half_h - 1.0, 4.0, moss_h + bump),
-			COLOR_MOSS_DARK,
-			true
-		)
+		draw_rect(Rect2(x - 2.0, -half_h - 1.0, 4.0, moss_h + bump), COLOR_MOSS_DARK, true)
 	for i in range(3):
 		var x: float = lerpf(-half_w + 4.0, half_w - 4.0, (float(i) + 0.5) / 3.0)
 		draw_circle(Vector2(x, -half_h + moss_h * 0.5), 1.3, COLOR_MOSS_LIGHT)

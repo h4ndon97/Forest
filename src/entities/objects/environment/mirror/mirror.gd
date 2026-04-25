@@ -34,6 +34,7 @@ func _on_interact() -> void:
 
 # --- 내부 ---
 
+
 func _apply_rotation() -> void:
 	if mirror_data == null or rotation_pivot == null:
 		return

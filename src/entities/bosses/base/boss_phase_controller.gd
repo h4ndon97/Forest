@@ -69,6 +69,7 @@ func get_current_phase() -> int:
 
 # --- 내부 ---
 
+
 func _swap_to_current_attack(pattern: BossPhasePattern) -> void:
 	var idx: int = _attack_index
 	if idx < 0 or idx >= pattern.attack_scripts.size():
@@ -88,7 +89,8 @@ func _trigger_phase_transition(to_phase: int) -> void:
 	if _boss and _boss.state_machine and _boss.state_machine.has_method("enter_phase_transition"):
 		if not _boss.state_machine.phase_transition_finished.is_connected(_on_transition_finished):
 			_boss.state_machine.phase_transition_finished.connect(
-					_on_transition_finished.bind(to_phase), CONNECT_ONE_SHOT)
+				_on_transition_finished.bind(to_phase), CONNECT_ONE_SHOT
+			)
 		_boss.state_machine.enter_phase_transition()
 	else:
 		# 폴백: state_machine 미지원 시 즉시 전환

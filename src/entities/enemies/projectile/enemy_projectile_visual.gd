@@ -63,9 +63,7 @@ func _draw_shard() -> void:
 	var bot_front := _rot(Vector2(half_w - 5.0, half_h - 1.0), tilt)
 	var bot_back := _rot(Vector2(-half_w + 3.0, half_h - 2.0), tilt)
 
-	var body := PackedVector2Array([
-		tip, top_front, top_back, bot_back, bot_front
-	])
+	var body := PackedVector2Array([tip, top_front, top_back, bot_back, bot_front])
 	draw_colored_polygon(body, COLOR_ROCK_BASE)
 
 	# 상단 하이라이트 (팁 → 상단 뒤쪽)
@@ -83,6 +81,7 @@ func _draw_shard() -> void:
 
 
 # --- 내부 ---
+
 
 func _rot(p: Vector2, angle: float) -> Vector2:
 	var c: float = cos(angle)

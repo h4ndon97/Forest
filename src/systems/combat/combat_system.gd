@@ -18,6 +18,11 @@ var _last_checkpoint_id: String = ""
 var _respawn_timer: Timer
 var _attack_requests: AttackRequests = null
 
+# Phase 4-0 #6: 매 프레임 호출되던 GrowthSystem/InventorySystem getter를 시그널 기반 캐시로 전환.
+# growth_stats_changed / equipment_stats_changed 수신 시점에만 갱신.
+var _cached_growth_attack_bonus: float = 0.0
+var _cached_equipment_attack_bonus: float = 0.0
+
 
 func _ready() -> void:
 	_config = load(CONFIG_PATH) as CombatConfigData
@@ -36,7 +41,11 @@ func _ready() -> void:
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.spawn_point_set.connect(_on_spawn_point_set)
 	EventBus.checkpoint_entered.connect(_on_checkpoint_entered)
+	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
+	EventBus.equipment_stats_changed.connect(_on_equipment_stats_changed)
 
+	# 초기 캐시 — 다른 시스템 _ready / 디버그 starter items 정착 후 한 번 갱신.
+	_refresh_attack_bonus_cache.call_deferred()
 	_load_hud.call_deferred()
 
 
@@ -54,8 +63,8 @@ func get_config() -> CombatConfigData:
 
 func get_combo_damage(hit_number: int) -> float:
 	var base: float = CombatCalculatorScript.calculate_hit_damage(hit_number, _config)
-	base += GrowthSystem.get_attack_bonus()
-	base += InventorySystem.get_attack_bonus()
+	base += _cached_growth_attack_bonus
+	base += _cached_equipment_attack_bonus
 	return CombatCalculatorScript.calculate_final_damage(base, _config.finish_attribute)
 
 
@@ -130,6 +139,19 @@ func request_aoe(spec: AoeSpec) -> void:
 
 
 # === 내부 ===
+
+
+func _on_growth_stats_changed() -> void:
+	_cached_growth_attack_bonus = GrowthSystem.get_attack_bonus()
+
+
+func _on_equipment_stats_changed() -> void:
+	_cached_equipment_attack_bonus = InventorySystem.get_attack_bonus()
+
+
+func _refresh_attack_bonus_cache() -> void:
+	_cached_growth_attack_bonus = GrowthSystem.get_attack_bonus()
+	_cached_equipment_attack_bonus = InventorySystem.get_attack_bonus()
 
 
 func _on_spawn_point_set(position: Vector2) -> void:

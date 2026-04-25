@@ -7,15 +7,15 @@ extends RefCounted
 ## ui_design_master.md §A-7 팔레트 준수.
 
 # === 팔레트 (ui_design_master.md §A-7) ===
-const COLOR_LIGHT_CORE := Color(0.949, 0.8, 0.4, 1.0)         # #F2CC66 금색
-const COLOR_LIGHT_HIGHLIGHT := Color(1.0, 0.957, 0.8, 1.0)    # #FFF4CC 아이보리 (선단)
-const COLOR_LIGHT_TRAIL := Color(0.788, 0.604, 0.247, 1.0)    # #C99A3F 오커 (잔광)
+const COLOR_LIGHT_CORE := Color(0.949, 0.8, 0.4, 1.0)  # #F2CC66 금색
+const COLOR_LIGHT_HIGHLIGHT := Color(1.0, 0.957, 0.8, 1.0)  # #FFF4CC 아이보리 (선단)
+const COLOR_LIGHT_TRAIL := Color(0.788, 0.604, 0.247, 1.0)  # #C99A3F 오커 (잔광)
 
-const COLOR_SHADOW_CORE := Color(0.545, 0.184, 0.776, 1.0)    # #8B2FC6 보라
-const COLOR_SHADOW_HIGHLIGHT := Color(0.788, 0.353, 0.91, 1.0) # #C95AE8 자홍
-const COLOR_SHADOW_DEEP := Color(0.227, 0.051, 0.361, 1.0)    # #3A0D5C 진보라
+const COLOR_SHADOW_CORE := Color(0.545, 0.184, 0.776, 1.0)  # #8B2FC6 보라
+const COLOR_SHADOW_HIGHLIGHT := Color(0.788, 0.353, 0.91, 1.0)  # #C95AE8 자홍
+const COLOR_SHADOW_DEEP := Color(0.227, 0.051, 0.361, 1.0)  # #3A0D5C 진보라
 
-const COLOR_NEUTRAL := Color(0.541, 0.541, 0.565, 1.0)        # #8A8A90 무채색
+const COLOR_NEUTRAL := Color(0.541, 0.541, 0.565, 1.0)  # #8A8A90 무채색
 
 
 ## 스킬 ID로 아이콘 드로잉 분기. center는 슬롯 로컬 좌표(보통 16,16).
@@ -33,8 +33,8 @@ static func draw(canvas: CanvasItem, skill_id: String, center: Vector2) -> void:
 static func _draw_light_slash(canvas: CanvasItem, center: Vector2) -> void:
 	var outer_r := 7.5
 	var inner_r := 4.5
-	var arc_start := -PI * 0.35   # 북동 근처
-	var arc_end := PI * 0.75      # 남서 근처
+	var arc_start := -PI * 0.35  # 북동 근처
+	var arc_end := PI * 0.75  # 남서 근처
 	var segments := 14
 
 	var crescent := PackedVector2Array()
@@ -61,8 +61,12 @@ static func _draw_light_slash(canvas: CanvasItem, center: Vector2) -> void:
 	var trail_a := mid_angle + 0.18
 	var trail_b := mid_angle - 0.18
 	var trail_r := (outer_r + inner_r) * 0.5
-	canvas.draw_circle(center + Vector2(cos(trail_a), sin(trail_a)) * trail_r, 0.8, COLOR_LIGHT_TRAIL)
-	canvas.draw_circle(center + Vector2(cos(trail_b), sin(trail_b)) * trail_r, 0.8, COLOR_LIGHT_TRAIL)
+	canvas.draw_circle(
+		center + Vector2(cos(trail_a), sin(trail_a)) * trail_r, 0.8, COLOR_LIGHT_TRAIL
+	)
+	canvas.draw_circle(
+		center + Vector2(cos(trail_b), sin(trail_b)) * trail_r, 0.8, COLOR_LIGHT_TRAIL
+	)
 
 
 ## 그림자 강타: 방사형 6스파이크 + 중심 2겹 점.

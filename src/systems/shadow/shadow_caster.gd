@@ -5,6 +5,8 @@ extends Node2D
 ## 밤+등불 ON: _process에서 per-object 계산으로 그림자 갱신.
 ## 아트 리소스가 없으면 fallback(ColorRect)으로 동작한다.
 
+const TimeStateMachineScript = preload("res://src/systems/time/time_state_machine.gd")
+
 @export var shadow_sprite: Sprite2D
 @export var base_offset: Vector2 = Vector2(0, 32)
 @export var shadow_length_pixels: float = 48.0
@@ -13,8 +15,6 @@ extends Node2D
 @export var shadow_z_index: int = -1
 ## true: 발밑 고정, 방향으로 뻗음 (적용). false: 오프셋 이동 (환경 오브젝트용).
 @export var anchor_at_base: bool = false
-
-const TimeStateMachineScript = preload("res://src/systems/time/time_state_machine.gd")
 
 var _fallback_rect: ColorRect
 var _using_fallback: bool = false

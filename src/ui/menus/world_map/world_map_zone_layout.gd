@@ -36,10 +36,7 @@ const LABEL_SIZE := Vector2(120, 12)
 
 ## 오버레이를 일괄 생성한다. ring_populated[ring] = bool (노드가 있는지).
 func build_overlay(
-	container: Control,
-	ring_center: Vector2,
-	ring_radii: Dictionary,
-	ring_populated: Dictionary
+	container: Control, ring_center: Vector2, ring_radii: Dictionary, ring_populated: Dictionary
 ) -> void:
 	for zone_id in ZONE_RING:
 		var ring_idx: int = ZONE_RING[zone_id]

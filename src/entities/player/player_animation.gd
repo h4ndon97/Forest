@@ -161,8 +161,10 @@ func _register_animation(anim_name: String, texture: Texture2D) -> void:
 	var frame_count: int = int(texture.get_width() / frame_size)
 	if frame_count <= 0:
 		push_warning(
-			"player_animation: %s 프레임 수 0 (width=%d, height=%d)"
-			% [anim_name, texture.get_width(), frame_size]
+			(
+				"player_animation: %s 프레임 수 0 (width=%d, height=%d)"
+				% [anim_name, texture.get_width(), frame_size]
+			)
 		)
 		return
 

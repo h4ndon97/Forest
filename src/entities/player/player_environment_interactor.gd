@@ -24,6 +24,7 @@ func _physics_process(_delta: float) -> void:
 
 # --- 내부 ---
 
+
 func _refresh_target() -> void:
 	var nearest: Node2D = null
 	var min_dist: float = INF

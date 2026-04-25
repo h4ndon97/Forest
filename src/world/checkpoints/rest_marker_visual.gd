@@ -11,7 +11,7 @@ const BRANCH_ANGLE_DEG: float = 35.0
 
 const COLOR_GROUND_SHADOW := Color(0.353, 0.290, 0.188, 0.6)
 const COLOR_TRUNK := Color(0.353, 0.290, 0.188, 1.0)
-const COLOR_TRUNK_BASE := Color(0.278, 0.227, 0.149, 1.0)   # 아랫쪽 살짝 어둡게
+const COLOR_TRUNK_BASE := Color(0.278, 0.227, 0.149, 1.0)  # 아랫쪽 살짝 어둡게
 const COLOR_LEAF := Color(0.420, 0.561, 0.290, 1.0)
 const COLOR_LEAF_HIGHLIGHT := Color(1.0, 0.957, 0.8, 0.9)
 const COLOR_GLOW_NEAR := Color(0.949, 0.8, 0.4, 0.4)

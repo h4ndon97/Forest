@@ -68,6 +68,7 @@ func get_interaction_radius() -> float:
 
 # --- 내부 ---
 
+
 func _refresh_prompt() -> void:
 	if not prompt_node:
 		return

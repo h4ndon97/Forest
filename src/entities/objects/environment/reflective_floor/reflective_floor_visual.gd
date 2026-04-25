@@ -51,22 +51,14 @@ func _draw_water_body() -> void:
 	var half_h: float = _size.y * 0.5
 	draw_rect(Rect2(-half_w, -half_h, _size.x, _size.y), COLOR_WATER_BASE, true)
 	var deep_h: float = _size.y * 0.5
-	draw_rect(
-		Rect2(-half_w + 6.0, -deep_h * 0.5, _size.x - 12.0, deep_h),
-		COLOR_WATER_DEEP,
-		true
-	)
+	draw_rect(Rect2(-half_w + 6.0, -deep_h * 0.5, _size.x - 12.0, deep_h), COLOR_WATER_DEEP, true)
 
 
 func _draw_edges() -> void:
 	var half_w: float = _size.x * 0.5
 	var half_h: float = _size.y * 0.5
-	draw_line(
-		Vector2(-half_w, -half_h), Vector2(half_w, -half_h), COLOR_WATER_EDGE, 1.0
-	)
-	draw_line(
-		Vector2(-half_w, half_h), Vector2(half_w, half_h), COLOR_WATER_EDGE, 1.0
-	)
+	draw_line(Vector2(-half_w, -half_h), Vector2(half_w, -half_h), COLOR_WATER_EDGE, 1.0)
+	draw_line(Vector2(-half_w, half_h), Vector2(half_w, half_h), COLOR_WATER_EDGE, 1.0)
 
 
 func _draw_ripples() -> void:

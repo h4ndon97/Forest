@@ -58,6 +58,7 @@ func _resource_ratio() -> float:
 
 # === 시그널 핸들러 ===
 
+
 func _on_hour_changed(hour: float) -> void:
 	_hour_value = hour
 	_sync_renderer()

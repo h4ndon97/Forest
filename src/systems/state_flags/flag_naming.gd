@@ -8,6 +8,7 @@ extends RefCounted
 ## 1-H 숨겨진 등불대 포탈 발견 (1-4 렌즈 빛 집중으로 활성화).
 const HIDDEN_1H_DISCOVERED := "hidden_revealer.stage_1_4.portal_1h_revealed"
 
+
 ## HiddenRevealer가 자동 기록하는 플래그 ID를 반환한다.
 ## 형식: "hidden_revealer.<stage_id>.<node_name>"
 static func hidden_revealer_flag(stage_id: String, node_name: String) -> String:

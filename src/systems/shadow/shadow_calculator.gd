@@ -33,7 +33,9 @@ static func scale_factor_to_sprite_scale(factor: float, config: ShadowConfigData
 ## 스케일 팩터(0~1)를 적 강도 배율로 변환한다.
 ## is_day=true: 짧으면 약(0.2), 길면 강(1.5)
 ## is_day=false: 반전 — 짧으면 강(1.5), 길면 약(0.2)
-static func calculate_intensity(scale_factor: float, is_day: bool, config: ShadowConfigData) -> float:
+static func calculate_intensity(
+	scale_factor: float, is_day: bool, config: ShadowConfigData
+) -> float:
 	var t := clampf(scale_factor, 0.0, 1.0)
 
 	# 곡선이 있으면 적용
@@ -42,8 +44,7 @@ static func calculate_intensity(scale_factor: float, is_day: bool, config: Shado
 
 	if is_day:
 		return lerpf(config.min_intensity, config.max_intensity, t)
-	else:
-		return lerpf(config.max_intensity, config.min_intensity, t)
+	return lerpf(config.max_intensity, config.min_intensity, t)
 
 
 ## 밤 그림자 방향을 계산한다 (등불 기반).

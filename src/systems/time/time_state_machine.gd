@@ -2,9 +2,9 @@ extends Node
 
 ## 시간 상태(STOPPED/MANIPULATING/FLOWING)를 관리하고 전이 규칙을 적용한다.
 
-enum TimeState { STOPPED, MANIPULATING, FLOWING }
-
 signal state_changed(old_state: TimeState, new_state: TimeState)
+
+enum TimeState { STOPPED, MANIPULATING, FLOWING }
 
 var current_state: TimeState = TimeState.STOPPED
 var manipulation_blocked: bool = false

@@ -8,9 +8,9 @@ extends Node
 const ABILITIES_DIR := "res://data/abilities/"
 const BOSSES_ROOT := "res://data/bosses/"
 
-var _owned: Dictionary = {}            # ability_id -> true
-var _ability_data: Dictionary = {}     # ability_id -> AbilityData
-var _boss_data: Dictionary = {}        # boss_id -> BossStatsData
+var _owned: Dictionary = {}  # ability_id -> true
+var _ability_data: Dictionary = {}  # ability_id -> AbilityData
+var _boss_data: Dictionary = {}  # boss_id -> BossStatsData
 
 
 func _ready() -> void:
@@ -133,8 +133,7 @@ func _dispatch_reward(data: BossStatsData) -> void:
 	if data.reward_growth_points > 0 and has_node("/root/GrowthSystem"):
 		var growth: Node = get_node("/root/GrowthSystem")
 		if growth.has_method("earn_growth_points"):
-			growth.earn_growth_points(
-					data.reward_growth_points, "boss:" + data.boss_id)
+			growth.earn_growth_points(data.reward_growth_points, "boss:" + data.boss_id)
 		else:
 			push_warning("AbilitySystem: GrowthSystem.earn_growth_points 미정의")
 

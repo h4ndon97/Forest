@@ -16,8 +16,9 @@ var _affected_enemies: Dictionary = {}
 @onready var _projection_zone: Area2D = $ShadowProjectionZone
 @onready var _projection_collision: CollisionShape2D = $ShadowProjectionZone/CollisionShape2D
 @onready var _projection_visual: ColorRect = $ShadowProjectionZone/ProjectionVisual
-@onready var _player_detect_collision: CollisionShape2D = (
-		$ShadowProjectionZone/PlayerShadowDetectZone/CollisionShape2D)
+@onready var _player_detect_collision: CollisionShape2D = get_node(
+	"ShadowProjectionZone/PlayerShadowDetectZone/CollisionShape2D"
+)
 @onready var _highlight_node_local: Node2D = $Highlight
 @onready var _prompt_node_local: Node2D = $Prompt
 
@@ -60,8 +61,10 @@ func _on_interact() -> void:
 	# 플레이어 반대 방향으로 1스텝 이동
 	var push_dir: float = 1.0 if player.global_position.x < global_position.x else -1.0
 	var new_offset: float = clampf(
-			(position.x - _initial_x) + push_dir * cover_data.move_step_pixels,
-			cover_data.min_x_offset, cover_data.max_x_offset)
+		(position.x - _initial_x) + push_dir * cover_data.move_step_pixels,
+		cover_data.min_x_offset,
+		cover_data.max_x_offset
+	)
 	position.x = _initial_x + new_offset
 	_step_index = int(roundf(new_offset / maxf(cover_data.move_step_pixels, 1.0)))
 	_update_projection_transform()
@@ -69,6 +72,7 @@ func _on_interact() -> void:
 
 
 # --- 내부 ---
+
 
 func _setup_body_visual() -> void:
 	if _body_visual != null and _body_visual.has_method("configure"):

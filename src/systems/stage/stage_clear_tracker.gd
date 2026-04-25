@@ -4,13 +4,13 @@ extends Node
 ## 적 처치 수, 잔류 정화 수를 카운트하고 클리어 레벨을 판정한다.
 ## 잔류 위치/시간대를 기록하여 스테이지 재진입 시 복원한다.
 
-var _clear_states: Dictionary = {}           # stage_id -> ClearState (int)
-var _enemies_killed: Dictionary = {}         # stage_id -> int
-var _killed_enemy_names: Dictionary = {}     # stage_id -> Array[String]
-var _residues_purified: Dictionary = {}      # stage_id -> int
-var _total_enemies: Dictionary = {}          # stage_id -> int
-var _total_residues: Dictionary = {}         # stage_id -> int
-var _residue_records: Dictionary = {}        # stage_id -> Array[{position, killed_during_day}]
+var _clear_states: Dictionary = {}  # stage_id -> ClearState (int)
+var _enemies_killed: Dictionary = {}  # stage_id -> int
+var _killed_enemy_names: Dictionary = {}  # stage_id -> Array[String]
+var _residues_purified: Dictionary = {}  # stage_id -> int
+var _total_enemies: Dictionary = {}  # stage_id -> int
+var _total_residues: Dictionary = {}  # stage_id -> int
+var _residue_records: Dictionary = {}  # stage_id -> Array[{position, killed_during_day}]
 var _residue_scene_path: String = ""
 
 
@@ -58,10 +58,15 @@ func get_killed_enemies(stage_id: String) -> Array:
 func record_residue(stage_id: String, pos: Vector2, killed_during_day: bool) -> void:
 	if not _residue_records.has(stage_id):
 		_residue_records[stage_id] = []
-	_residue_records[stage_id].append({
-		"position": pos,
-		"killed_during_day": killed_during_day,
-	})
+	(
+		_residue_records[stage_id]
+		. append(
+			{
+				"position": pos,
+				"killed_during_day": killed_during_day,
+			}
+		)
+	)
 
 
 ## 정화된 잔류를 기록에서 제거하고 클리어 상태 전환을 판정한다.
@@ -116,11 +121,16 @@ func get_save_data() -> Dictionary:
 		var arr := []
 		for record in records:
 			var pos: Vector2 = record["position"]
-			arr.append({
-				"x": pos.x,
-				"y": pos.y,
-				"killed_during_day": record["killed_during_day"],
-			})
+			(
+				arr
+				. append(
+					{
+						"x": pos.x,
+						"y": pos.y,
+						"killed_during_day": record["killed_during_day"],
+					}
+				)
+			)
 		serialized_residues[stage_id] = arr
 	return {
 		"clear_states": _clear_states.duplicate(),
@@ -148,10 +158,15 @@ func load_save_data(data: Dictionary) -> void:
 	for stage_id in raw_residues:
 		var arr := []
 		for record in raw_residues[stage_id]:
-			arr.append({
-				"position": Vector2(record["x"], record["y"]),
-				"killed_during_day": record["killed_during_day"],
-			})
+			(
+				arr
+				. append(
+					{
+						"position": Vector2(record["x"], record["y"]),
+						"killed_during_day": record["killed_during_day"],
+					}
+				)
+			)
 		_residue_records[stage_id] = arr
 
 

@@ -74,21 +74,20 @@ func set_phase(phase_index: int) -> void:
 
 # --- 드로잉 ---
 
+
 func _draw_roots() -> void:
 	var root_xs: Array[float] = [
-		-ROOT_SPREAD,
-		-ROOT_SPREAD * 0.5,
-		0.0,
-		ROOT_SPREAD * 0.5,
-		ROOT_SPREAD
+		-ROOT_SPREAD, -ROOT_SPREAD * 0.5, 0.0, ROOT_SPREAD * 0.5, ROOT_SPREAD
 	]
 	for x in root_xs:
-		var pts := PackedVector2Array([
-			Vector2(x - 4.0, 0.0),
-			Vector2(x * 0.4 - 3.0, -ROOT_DEPTH * 1.5),
-			Vector2(x * 0.4 + 3.0, -ROOT_DEPTH * 1.5),
-			Vector2(x + 4.0, 0.0),
-		])
+		var pts := PackedVector2Array(
+			[
+				Vector2(x - 4.0, 0.0),
+				Vector2(x * 0.4 - 3.0, -ROOT_DEPTH * 1.5),
+				Vector2(x * 0.4 + 3.0, -ROOT_DEPTH * 1.5),
+				Vector2(x + 4.0, 0.0),
+			]
+		)
 		draw_colored_polygon(pts, COLOR_BARK)
 
 
@@ -97,28 +96,34 @@ func _draw_trunk() -> void:
 	var w_top: float = TRUNK_TOP_WIDTH
 	var h: float = _body_size.y
 	var sway: float = _get_sway()
-	var trunk := PackedVector2Array([
-		Vector2(-w_bot * 0.5, 0.0),
-		Vector2(-w_top * 0.5 + sway, -h),
-		Vector2(w_top * 0.5 + sway, -h),
-		Vector2(w_bot * 0.5, 0.0),
-	])
+	var trunk := PackedVector2Array(
+		[
+			Vector2(-w_bot * 0.5, 0.0),
+			Vector2(-w_top * 0.5 + sway, -h),
+			Vector2(w_top * 0.5 + sway, -h),
+			Vector2(w_bot * 0.5, 0.0),
+		]
+	)
 	draw_colored_polygon(trunk, COLOR_BARK)
 
-	var hl := PackedVector2Array([
-		Vector2(-w_bot * 0.5, 0.0),
-		Vector2(-w_bot * 0.5 + 4.0, 0.0),
-		Vector2(-w_top * 0.5 + 4.0 + sway, -h),
-		Vector2(-w_top * 0.5 + sway, -h),
-	])
+	var hl := PackedVector2Array(
+		[
+			Vector2(-w_bot * 0.5, 0.0),
+			Vector2(-w_bot * 0.5 + 4.0, 0.0),
+			Vector2(-w_top * 0.5 + 4.0 + sway, -h),
+			Vector2(-w_top * 0.5 + sway, -h),
+		]
+	)
 	draw_colored_polygon(hl, COLOR_BARK_HIGHLIGHT)
 
-	var sh := PackedVector2Array([
-		Vector2(w_bot * 0.5 - 4.0, 0.0),
-		Vector2(w_bot * 0.5, 0.0),
-		Vector2(w_top * 0.5 + sway, -h),
-		Vector2(w_top * 0.5 - 4.0 + sway, -h),
-	])
+	var sh := PackedVector2Array(
+		[
+			Vector2(w_bot * 0.5 - 4.0, 0.0),
+			Vector2(w_bot * 0.5, 0.0),
+			Vector2(w_top * 0.5 + sway, -h),
+			Vector2(w_top * 0.5 - 4.0 + sway, -h),
+		]
+	)
 	draw_colored_polygon(sh, COLOR_BARK_SHADOW)
 
 
@@ -128,12 +133,7 @@ func _draw_bark_grooves() -> void:
 	var grooves: Array[float] = [-8.0, 2.0, 12.0]
 	for x in grooves:
 		var top_x: float = x * (TRUNK_TOP_WIDTH / _body_size.x) + sway
-		draw_line(
-			Vector2(x, -4.0),
-			Vector2(top_x, -h + 4.0),
-			COLOR_BARK_SHADOW,
-			1.0
-		)
+		draw_line(Vector2(x, -4.0), Vector2(top_x, -h + 4.0), COLOR_BARK_SHADOW, 1.0)
 
 
 func _draw_phase2_damage() -> void:
@@ -175,11 +175,7 @@ func _draw_branch_stubs() -> void:
 		Vector2(TRUNK_TOP_WIDTH * 0.5 + 14.0 + sway, -h - 4.0),
 		5.0
 	)
-	_draw_stub(
-		Vector2(4.0 + sway, -h),
-		Vector2(6.0 + sway, -h - 8.0),
-		3.5
-	)
+	_draw_stub(Vector2(4.0 + sway, -h), Vector2(6.0 + sway, -h - 8.0), 3.5)
 
 
 func _draw_stub(base: Vector2, tip: Vector2, width: float) -> void:
@@ -189,12 +185,14 @@ func _draw_stub(base: Vector2, tip: Vector2, width: float) -> void:
 	var normal: Vector2 = dir.rotated(PI * 0.5)
 	var half_base: Vector2 = normal * width * 0.5
 	var half_tip: Vector2 = normal * width * 0.35
-	var pts := PackedVector2Array([
-		base + half_base,
-		tip + half_tip,
-		tip - half_tip,
-		base - half_base,
-	])
+	var pts := PackedVector2Array(
+		[
+			base + half_base,
+			tip + half_tip,
+			tip - half_tip,
+			base - half_base,
+		]
+	)
 	draw_colored_polygon(pts, COLOR_BARK)
 	draw_circle(tip, width * 0.4, COLOR_INNER_WOOD)
 
@@ -231,6 +229,7 @@ func _draw_weak_point() -> void:
 
 # --- 시그널 ---
 
+
 func _on_boss_phase_changed(boss_id: String, _from_phase: int, to_phase: int) -> void:
 	if boss_id != _boss_id:
 		return
@@ -238,6 +237,7 @@ func _on_boss_phase_changed(boss_id: String, _from_phase: int, to_phase: int) ->
 
 
 # --- 내부 ---
+
 
 func _get_sway() -> float:
 	return sin(_t * TAU / SWAY_PERIOD) * SWAY_AMPLITUDE

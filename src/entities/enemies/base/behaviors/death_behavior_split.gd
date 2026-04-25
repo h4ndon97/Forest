@@ -10,10 +10,11 @@ func on_death() -> void:
 	if _stats_data == null:
 		return
 	var spawned: Array = SplitSpawnerScript.spawn_spores(
-			_enemy_root,
-			_stats_data.spore_stats_path,
-			"",
-			_stats_data.spore_count,
-			_stats_data.spore_spread_radius)
+		_enemy_root,
+		_stats_data.spore_stats_path,
+		"",
+		_stats_data.spore_count,
+		_stats_data.spore_spread_radius
+	)
 	if spawned.size() > 0:
 		EventBus.enemy_split_spawned.emit(_enemy_root.global_position, spawned.size())

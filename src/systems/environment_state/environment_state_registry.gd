@@ -9,8 +9,8 @@ signal combination_broken(combo_key: String)
 
 @export var rules: Array[CombinationRule] = []
 
-var _object_states: Dictionary = {}   # object_id -> state_name
-var _satisfied: Dictionary = {}       # combo_key -> bool
+var _object_states: Dictionary = {}  # object_id -> state_name
+var _satisfied: Dictionary = {}  # combo_key -> bool
 
 
 func _ready() -> void:

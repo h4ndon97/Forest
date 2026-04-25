@@ -86,7 +86,9 @@ func _connect_source() -> void:
 			if _source and _source.has_signal("light_sensor_activated"):
 				_source.light_sensor_activated.connect(_on_light_sensor_activated)
 			else:
-				push_warning("HiddenRevealer: LIGHT_SENSOR/REFLECTION 소스가 LightSensor가 아님 (%s)" % name)
+				push_warning(
+					"HiddenRevealer: LIGHT_SENSOR/REFLECTION 소스가 LightSensor가 아님 (%s)" % name
+				)
 		HiddenRevealerData.RevealCondition.PURIFICATION:
 			EventBus.residue_purified.connect(_on_residue_purified)
 		HiddenRevealerData.RevealCondition.SHADOW_COVER:

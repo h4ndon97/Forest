@@ -125,6 +125,7 @@ func get_intensity_at(pos: Vector2) -> float:
 
 # --- 내부 ---
 
+
 func _on_time_state_changed(_old_state: int, new_state: int) -> void:
 	if new_state == TimeStateMachineScript.TimeState.FLOWING:
 		_locked = true
@@ -159,10 +160,16 @@ func _on_day_night_changed(is_day: bool) -> void:
 func _update_from_sun_angle(sun_angle: float) -> void:
 	_shadow_direction = ShadowCalculator.calculate_day_direction(sun_angle)
 	_shadow_scale_factor = ShadowCalculator.calculate_day_scale_factor(sun_angle)
-	_shadow_sprite_scale = ShadowCalculator.scale_factor_to_sprite_scale(_shadow_scale_factor, _config)
-	_intensity_multiplier = ShadowCalculator.calculate_intensity(_shadow_scale_factor, true, _config)
+	_shadow_sprite_scale = ShadowCalculator.scale_factor_to_sprite_scale(
+		_shadow_scale_factor, _config
+	)
+	_intensity_multiplier = ShadowCalculator.calculate_intensity(
+		_shadow_scale_factor, true, _config
+	)
 
-	EventBus.shadow_params_changed.emit(_shadow_direction, _shadow_sprite_scale, _intensity_multiplier)
+	EventBus.shadow_params_changed.emit(
+		_shadow_direction, _shadow_sprite_scale, _intensity_multiplier
+	)
 
 
 func _on_growth_stats_changed() -> void:

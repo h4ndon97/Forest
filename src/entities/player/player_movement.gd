@@ -3,13 +3,14 @@ extends Node
 ## 현재 상태와 입력 의도를 받아 velocity를 계산한다.
 ## move_and_slide()는 루트(player.gd)에서 호출한다.
 
+signal facing_changed(direction: int)
+
+# gdlint:ignore = constant-name
 const State = preload("res://src/entities/player/player_state_machine.gd").State
 
 var stats: PlayerStatsData
 var facing_direction: int = 1  # 1 = 오른쪽, -1 = 왼쪽
 var _attack_movement_factor: float = 0.4
-
-signal facing_changed(direction: int)
 
 
 func setup(player_stats: PlayerStatsData, attack_movement_factor: float = 0.4) -> void:

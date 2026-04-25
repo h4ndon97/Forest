@@ -10,20 +10,20 @@ const SkillIcons = preload("res://src/ui/hud/skill_icons.gd")
 const SLOT_SIZE := 32.0
 const CENTER := Vector2(16.0, 16.0)
 
-const RING_RADIUS := 15.0          # 링 중심선 (r=14~16에 2px 스트로크)
+const RING_RADIUS := 15.0  # 링 중심선 (r=14~16에 2px 스트로크)
 const RING_THICKNESS := 2.0
-const MOSS_RADIUS := 13.0          # 이끼 배경 원 반경
+const MOSS_RADIUS := 13.0  # 이끼 배경 원 반경
 
 # === 팔레트 (ui_design_master.md §A-7) ===
-const COLOR_RING_BASE := Color(0.102, 0.078, 0.063, 1.0)      # #1A1410 금속 다크브라운
-const COLOR_MOSS := Color(0.290, 0.353, 0.188, 0.85)          # #4A5A30 이끼 녹색
+const COLOR_RING_BASE := Color(0.102, 0.078, 0.063, 1.0)  # #1A1410 금속 다크브라운
+const COLOR_MOSS := Color(0.290, 0.353, 0.188, 0.85)  # #4A5A30 이끼 녹색
 const COLOR_MOSS_SPECKLE_DARK := Color(0.216, 0.263, 0.141, 0.7)
 const COLOR_MOSS_SPECKLE_LIGHT := Color(0.420, 0.561, 0.290, 0.6)
 
-const COLOR_ATTR_LIGHT := Color(0.949, 0.8, 0.4, 1.0)          # #F2CC66
-const COLOR_ATTR_SHADOW := Color(0.545, 0.184, 0.776, 1.0)    # #8B2FC6
-const COLOR_ATTR_HYBRID := Color(0.698, 0.541, 0.588, 1.0)    # 금↔보라 중간
-const COLOR_ATTR_NEUTRAL := Color(0.541, 0.541, 0.565, 1.0)    # #8A8A90
+const COLOR_ATTR_LIGHT := Color(0.949, 0.8, 0.4, 1.0)  # #F2CC66
+const COLOR_ATTR_SHADOW := Color(0.545, 0.184, 0.776, 1.0)  # #8B2FC6
+const COLOR_ATTR_HYBRID := Color(0.698, 0.541, 0.588, 1.0)  # 금↔보라 중간
+const COLOR_ATTR_NEUTRAL := Color(0.541, 0.541, 0.565, 1.0)  # #8A8A90
 
 const COLOR_COOLDOWN_DIM := Color(0.102, 0.078, 0.063, 0.7)
 const COLOR_FLASH := Color(1.0, 1.0, 1.0, 1.0)
@@ -126,8 +126,8 @@ func _draw_ring() -> void:
 	if cooldown_ratio > 0.001:
 		# 쿨다운: 시계방향으로 회복하는 스윕 아크
 		var progress := 1.0 - cooldown_ratio
-		var start_a := -PI * 0.5                       # 12시 시작
-		var end_a := start_a + progress * TAU          # 시계방향 회복
+		var start_a := -PI * 0.5  # 12시 시작
+		var end_a := start_a + progress * TAU  # 시계방향 회복
 		if progress > 0.001:
 			draw_arc(CENTER, RING_RADIUS, start_a, end_a, 40, attr_color, RING_THICKNESS, false)
 	else:

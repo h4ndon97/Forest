@@ -101,10 +101,7 @@ func _draw_fireflies() -> void:
 		var phase: float = float(i) / 3.0
 		var tt: float = fmod(_t * 0.6 + phase, 1.0)
 		var a: float = sin(tt * PI) * _near_mix
-		var pos := Vector2(
-			cos((tt + phase) * TAU) * 9.0,
-			-6.0 + sin((tt + phase) * TAU) * 5.0
-		)
+		var pos := Vector2(cos((tt + phase) * TAU) * 9.0, -6.0 + sin((tt + phase) * TAU) * 5.0)
 		var c: Color = COLOR_FIREFLY
 		c.a *= a
 		draw_circle(pos, 1.0, c)

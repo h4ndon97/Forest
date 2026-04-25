@@ -13,8 +13,8 @@ const BOTTLE_COORDS: Array[Vector2] = [
 ]
 
 # 플레이어 HUD 빛/그림자 축 (feedback_ui_dual_axis): HP=불씨 금 / Time=달 보라
-const COLOR_HP := Color(0.949, 0.8, 0.4, 0.9)          # #F2CC66
-const COLOR_TIME := Color(0.545, 0.184, 0.776, 0.9)    # #8B2FC6
+const COLOR_HP := Color(0.949, 0.8, 0.4, 0.9)  # #F2CC66
+const COLOR_TIME := Color(0.545, 0.184, 0.776, 0.9)  # #8B2FC6
 const COLOR_EMPTY := Color(0.5, 0.5, 0.5, 0.3)
 const COLOR_FLASH := Color(1.0, 1.0, 1.0, 1.0)
 

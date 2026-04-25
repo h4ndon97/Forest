@@ -82,8 +82,9 @@ func _update_core_glow() -> void:
 	if _galaxy_mat != null:
 		_galaxy_mat.set_shader_parameter("near_boost", near_boost)
 	if _keystone_glow != null:
-		var ks_a: float = (KEYSTONE_ALPHA_BASE
-				+ KEYSTONE_ALPHA_AMP * sin(phase + KEYSTONE_PHASE_OFFSET))
+		var ks_a: float = (
+			KEYSTONE_ALPHA_BASE + KEYSTONE_ALPHA_AMP * sin(phase + KEYSTONE_PHASE_OFFSET)
+		)
 		_keystone_glow.modulate.a = clampf(ks_a * near_boost, 0.0, 1.0)
 
 
@@ -93,7 +94,9 @@ func _draw() -> void:
 	# PNG 부재 시 단순 플레이스홀더 (스톤 벽 + 맥동 글로우)
 	draw_rect(
 		Rect2(-PORTAL_WIDTH * 0.5, -PORTAL_HEIGHT, PORTAL_WIDTH, PORTAL_HEIGHT),
-		COLOR_FALLBACK_STONE, true)
+		COLOR_FALLBACK_STONE,
+		true
+	)
 	var pulse: float = 0.5 + 0.5 * sin(_t * TAU / GLOW_PERIOD)
 	var intensity: float = lerpf(0.7, 1.0, pulse) * lerpf(1.0, NEAR_GLOW_BOOST, _near_mix)
 	var glow: Color = COLOR_PORTAL_GLOW
@@ -126,7 +129,8 @@ func _setup_sprite_fallback() -> void:
 	_galaxy.position = Vector2(0, sprite_y + GLOW_Y_OFFSET)
 	add_child(_galaxy)
 	_keystone_glow = _make_radial_glow(
-			KEYSTONE_WIDTH, KEYSTONE_HEIGHT, COLOR_SPRITE_KEYSTONE, "PortalKeystoneGlow")
+		KEYSTONE_WIDTH, KEYSTONE_HEIGHT, COLOR_SPRITE_KEYSTONE, "PortalKeystoneGlow"
+	)
 	_keystone_glow.position = Vector2(0, sprite_y + KEYSTONE_Y_OFFSET + GLOW_Y_OFFSET)
 	add_child(_keystone_glow)
 	_particles = _make_particles()
@@ -179,11 +183,9 @@ func _make_galaxy(w: int, h: int, color: Color) -> Sprite2D:
 func _make_radial_glow(w: int, h: int, color: Color, node_name: String) -> Sprite2D:
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-	gradient.colors = PackedColorArray([
-		Color(1.0, 1.0, 1.0, 1.0),
-		Color(1.0, 1.0, 1.0, 0.30),
-		Color(1.0, 1.0, 1.0, 0.0)
-	])
+	gradient.colors = PackedColorArray(
+		[Color(1.0, 1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0, 0.30), Color(1.0, 1.0, 1.0, 0.0)]
+	)
 	var gtex := GradientTexture2D.new()
 	gtex.gradient = gradient
 	gtex.fill = GradientTexture2D.FILL_RADIAL

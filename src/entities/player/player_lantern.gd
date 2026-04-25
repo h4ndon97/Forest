@@ -42,6 +42,7 @@ func update_position() -> void:
 
 # --- 내부 ---
 
+
 func _create_light() -> void:
 	_light = PointLight2D.new()
 	_light.name = "LanternLight"

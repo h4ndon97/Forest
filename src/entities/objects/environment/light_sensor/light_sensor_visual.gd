@@ -75,12 +75,8 @@ func _draw_halo() -> void:
 
 func _draw_stone_ring() -> void:
 	draw_circle(Vector2.ZERO, RADIUS, COLOR_STONE_BASE)
-	draw_arc(
-		Vector2.ZERO, RADIUS - 0.5, PI + 0.2, TAU - 0.2, 16, COLOR_STONE_HIGHLIGHT, 1.0, false
-	)
-	draw_arc(
-		Vector2.ZERO, RADIUS - 0.5, 0.2, PI - 0.2, 16, COLOR_STONE_SHADOW, 1.0, false
-	)
+	draw_arc(Vector2.ZERO, RADIUS - 0.5, PI + 0.2, TAU - 0.2, 16, COLOR_STONE_HIGHLIGHT, 1.0, false)
+	draw_arc(Vector2.ZERO, RADIUS - 0.5, 0.2, PI - 0.2, 16, COLOR_STONE_SHADOW, 1.0, false)
 
 
 func _draw_runes() -> void:

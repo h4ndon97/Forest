@@ -32,10 +32,7 @@ var _finish_shake_base: Vector2 = Vector2.ZERO
 
 
 func setup(
-	amount: float,
-	is_finish: bool = false,
-	is_critical: bool = false,
-	finish_attribute: String = ""
+	amount: float, is_finish: bool = false, is_critical: bool = false, finish_attribute: String = ""
 ) -> void:
 	_shake_anchor = Node2D.new()
 	add_child(_shake_anchor)
@@ -97,9 +94,12 @@ func _get_font() -> FontFile:
 func _play_critical_pop() -> void:
 	_shake_anchor.scale = Vector2(CRITICAL_POP_SCALE, CRITICAL_POP_SCALE)
 	var pop_tween: Tween = create_tween()
-	pop_tween.tween_property(_shake_anchor, "scale", Vector2.ONE, CRITICAL_POP_TIME).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
+	(
+		pop_tween
+		. tween_property(_shake_anchor, "scale", Vector2.ONE, CRITICAL_POP_TIME)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _start_finish_shake() -> void:

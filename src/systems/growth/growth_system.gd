@@ -132,9 +132,7 @@ func get_save_data() -> Dictionary:
 func load_save_data(data: Dictionary) -> void:
 	_tracker.load_save_data(data)
 	EventBus.growth_stats_changed.emit()
-	EventBus.growth_points_changed.emit(
-		_tracker.available_growth, _tracker.available_property
-	)
+	EventBus.growth_points_changed.emit(_tracker.available_growth, _tracker.available_property)
 
 
 # === 디버그 (Phase 3 UI 전까지 임시) ===
@@ -160,34 +158,46 @@ func _unhandled_input(event: InputEvent) -> void:
 func _debug_earn_points(amount: int) -> void:
 	_tracker.earn_growth_points(amount, "debug")
 	_tracker.earn_property_points(amount, "debug")
-	print("[Growth DEBUG] +%d points (growth: %d, property: %d)" % [
-		amount, _tracker.available_growth, _tracker.available_property
-	])
+	print(
+		(
+			"[Growth DEBUG] +%d points (growth: %d, property: %d)"
+			% [amount, _tracker.available_growth, _tracker.available_property]
+		)
+	)
 
 
 func _debug_invest_light() -> void:
 	if invest_light():
-		print("[Growth DEBUG] Light invested: %d (ATK +%.0f)" % [
-			_tracker.light_invested, _calculator.get_attack_bonus()
-		])
+		print(
+			(
+				"[Growth DEBUG] Light invested: %d (ATK +%.0f)"
+				% [_tracker.light_invested, _calculator.get_attack_bonus()]
+			)
+		)
 	else:
 		print("[Growth DEBUG] Not enough growth points")
 
 
 func _debug_invest_shadow() -> void:
 	if invest_shadow():
-		print("[Growth DEBUG] Shadow invested: %d (HP +%.0f)" % [
-			_tracker.shadow_invested, _calculator.get_hp_bonus()
-		])
+		print(
+			(
+				"[Growth DEBUG] Shadow invested: %d (HP +%.0f)"
+				% [_tracker.shadow_invested, _calculator.get_hp_bonus()]
+			)
+		)
 	else:
 		print("[Growth DEBUG] Not enough growth points")
 
 
 func _debug_invest_property() -> void:
 	if invest_property():
-		print("[Growth DEBUG] Property invested: %d (TimeMax +%.0f)" % [
-			_tracker.property_invested, _calculator.get_time_max_bonus()
-		])
+		print(
+			(
+				"[Growth DEBUG] Property invested: %d (TimeMax +%.0f)"
+				% [_tracker.property_invested, _calculator.get_time_max_bonus()]
+			)
+		)
 	else:
 		print("[Growth DEBUG] Not enough property points")
 
@@ -234,6 +244,9 @@ func _on_stage_clear_updated(_stage_id: String, clear_level: int) -> void:
 
 
 func _on_hybrid_unlocked() -> void:
-	print("[Growth DEBUG] Hybrid UNLOCKED! (light: %d, shadow: %d)" % [
-		_tracker.light_invested, _tracker.shadow_invested
-	])
+	print(
+		(
+			"[Growth DEBUG] Hybrid UNLOCKED! (light: %d, shadow: %d)"
+			% [_tracker.light_invested, _tracker.shadow_invested]
+		)
+	)

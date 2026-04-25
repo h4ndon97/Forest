@@ -58,16 +58,17 @@ func reached_manipulation_limit() -> bool:
 
 	if _was_day:
 		return current_hour >= sunset_limit and current_hour < _config.sunset_hour
-	else:
-		if sunrise_limit < 0.0:
-			return current_hour >= (24.0 + sunrise_limit) or current_hour < _config.sunrise_hour
-		return current_hour >= sunrise_limit and current_hour < _config.sunrise_hour
+	if sunrise_limit < 0.0:
+		return current_hour >= (24.0 + sunrise_limit) or current_hour < _config.sunrise_hour
+	return current_hour >= sunrise_limit and current_hour < _config.sunrise_hour
 
 
 func get_sun_angle() -> float:
 	if not is_day():
 		return -1.0
-	return (current_hour - _config.sunrise_hour) / (_config.sunset_hour - _config.sunrise_hour) * 180.0
+	return (
+		(current_hour - _config.sunrise_hour) / (_config.sunset_hour - _config.sunrise_hour) * 180.0
+	)
 
 
 func get_time_string() -> String:
@@ -84,7 +85,7 @@ func _wrap_hour() -> void:
 		current_hour += 24.0
 
 
-func _check_boundary_crossing(old_hour: float) -> void:
+func _check_boundary_crossing(_old_hour: float) -> void:
 	var now_day := is_day()
 	if now_day != _was_day:
 		_was_day = now_day

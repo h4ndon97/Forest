@@ -8,16 +8,16 @@ extends Node
 ## _process(delta)로 모든 흐름 중 스테이지를 직접 진행한다.
 
 var _registry: Node
-var _stage_hours: Dictionary              # StageSystem과 참조 공유
+var _stage_hours: Dictionary  # StageSystem과 참조 공유
 var _config: PropagationConfigData
 var _current_stage_id: String = ""
 var _origin_stage_id: String = ""
-var _stage_rates: Dictionary = {}         # BFS 감쇠 비율 (rebuild 시 계산)
-var _flowing_stages: Dictionary = {}      # stage_id -> rate (독립 흐름 중)
-var _ts_flowing: bool = false             # TimeSystem FLOWING 상태 추적
-var _is_auto_resuming: bool = false       # 자동 재개 플래그 (rebuild 스킵)
-var _paused: bool = false                 # 전환 애니메이션 일시정지
-var _is_current_origin: bool = false      # 현재 스테이지 원점 여부 (시그널 중복 발행 방지)
+var _stage_rates: Dictionary = {}  # BFS 감쇠 비율 (rebuild 시 계산)
+var _flowing_stages: Dictionary = {}  # stage_id -> rate (독립 흐름 중)
+var _ts_flowing: bool = false  # TimeSystem FLOWING 상태 추적
+var _is_auto_resuming: bool = false  # 자동 재개 플래그 (rebuild 스킵)
+var _paused: bool = false  # 전환 애니메이션 일시정지
+var _is_current_origin: bool = false  # 현재 스테이지 원점 여부 (시그널 중복 발행 방지)
 
 
 func setup(registry: Node, stage_hours: Dictionary, config: PropagationConfigData) -> void:

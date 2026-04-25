@@ -3,9 +3,9 @@ extends Node
 ## 적 AI 상태 머신.
 ## DORMANT(시간 정지) ↔ 활성 상태(IDLE~DEAD) 전환을 관리한다.
 
-enum State { DORMANT, IDLE, PATROL, CHASE, ATTACK, HURT, DEAD }
-
 signal state_changed(old_state: State, new_state: State)
+
+enum State { DORMANT, IDLE, PATROL, CHASE, ATTACK, HURT, DEAD }
 
 var current_state: State = State.DORMANT
 var _target: Node2D = null
@@ -82,6 +82,7 @@ func get_target() -> Node2D:
 
 
 # --- 내부 ---
+
 
 func _update_idle(delta: float) -> void:
 	_patrol_timer += delta
