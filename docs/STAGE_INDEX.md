@@ -60,7 +60,7 @@
 | `stage_2_6` | 안개 갈림길 | 11 | NONE | 3 / 3 | 호흡 + 분기 (2-7/2-H) | **2-H 숨김 힌트 위치** | — | ⏳ |
 | `stage_2_7` | 마지막 늪 | 23 | LIGHT | 5 / 5 | 강화 적 배치 | — | "통곡 소리가 들린다" | ⏳ |
 | `stage_2_h` | 잠긴 수문 | 8 | NONE (HiddenRevealer, 2-6에서 발견) | 2 / 2 | **추가조작: 수문 조작** (`Floodgate`) | 발견 시 zone3+ 물 반사면 활성 | — | ⏳ |
-| `stage_2_b` | 늪의 어머니의 뜰 | 17 | NONE (2-1~2-7 fully cleared) | 1(보스) / 0 | **보스: Mire Mother** (2페이즈, 약점 등불 트리거) | 보상: `shadow_phase` + GP×7 + `mire_pendant` + `story.zone2.mire_mother_defeated` | 봉인의 진실 단편 | ⏳ |
+| `stage_2_b` | 늪의 어머니의 뜰 | 17 | NONE (2-1~2-7 fully cleared) | 1(보스) / 0 | **보스: Mire Mother** ✅ (HP 850, 2페이즈: fog_release / reflection_teleport+ranged_spread, 약점 lens_focus 재활용) | 보상: `shadow_phase` + GP×7 + `mire_pendant` ✅ + `story.zone2.mire_mother_defeated` | 봉인의 진실 단편 | ⚙️ Step 3 |
 
 **2-3 경계 거점** (마을형 + 간이형, Phase 4-B 진입 시 추가)
 
@@ -153,3 +153,4 @@
 |---|---|
 | 2026-04-25 | 초안 — zone1 실데이터 + zone2 계획 통합 |
 | 2026-04-25 | stage_2_1 'Step 1' 양산 완료 (zone1 적 placeholder 3 / FogOverlay / 좌측 포탈만). 헤드리스 로드 ERROR 0 / gdlint clean. |
+| 2026-04-25 | Step 3 — Mire Mother 보스 데이터 + 패턴 2종 작성 (스테이지 .tscn은 Step 5 대기). |

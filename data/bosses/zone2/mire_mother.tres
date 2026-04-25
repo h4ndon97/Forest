@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="BossStatsData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://data/bosses/boss_stats_data.gd" id="1"]
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="2"]
+[ext_resource type="Resource" path="res://data/bosses/zone2/phase_1_fog_release.tres" id="3"]
+[ext_resource type="Resource" path="res://data/bosses/zone2/phase_2_reflection_storm.tres" id="4"]
+
+[sub_resource type="Resource" id="base_stats"]
+script = ExtResource("2")
+enemy_name = "늪의 어머니"
+enemy_type = "boss"
+base_hp = 850.0
+base_attack = 22.0
+attack_range = 150.0
+attack_cooldown = 1.6
+base_speed = 50.0
+patrol_speed = 0.0
+detect_range = 320.0
+lose_range = 480.0
+min_intensity = 1.0
+max_intensity = 1.0
+collision_width = 56.0
+collision_height = 72.0
+gravity_scale = 1.0
+leaves_residue = false
+attack_behavior = "melee"
+death_behavior = "none"
+hitbox_size = Vector2(240.0, 100.0)
+hitbox_offset = Vector2(0.0, -50.0)
+hitbox_active_duration = 0.4
+damage_reduction_flat = 18.0
+hurt_resistance_chance = 0.15
+projectile_scene_path = ""
+projectile_speed = 200.0
+projectile_lifetime = 3.0
+projectile_telegraph = 0.55
+spore_stats_path = ""
+spore_count = 0
+spore_spread_radius = 0.0
+is_spore = false
+movement_profile = "ground"
+homing_turn_rate = 3.0
+homing_max_speed = 60.0
+
+[resource]
+script = ExtResource("1")
+boss_id = "mire_mother"
+display_name = "늪의 어머니"
+intro_duration = 1.5
+defeat_duration = 2.5
+base_stats = SubResource("base_stats")
+phase_count = 2
+phase_hp_thresholds = PackedFloat32Array(0.5)
+phase_transition_duration = 1.8
+phase_patterns = Array[BossPhasePattern]([ExtResource("3"), ExtResource("4")])
+weak_point_offset = Vector2(0, -56)
+weak_point_radius = 22.0
+weak_point_damage_multiplier = 2.5
+weak_point_reveal_source = "lens_focus"
+reward_ability_id = "shadow_phase"
+reward_growth_points = 7
+reward_item_ids = PackedStringArray("mire_pendant")
+reward_story_flag = "story.zone2.mire_mother_defeated"
+reward_next_zone_flag = "stage_progress.zone3_unlocked"

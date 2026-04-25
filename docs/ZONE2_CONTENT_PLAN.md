@@ -139,10 +139,10 @@ zone1 대비 **HP·공격력 ×1.3~1.5** 계단식. 시각·이름은 습지 테
 | 항목 | 비용 | 의존성 | 상태 |
 |---|---|---|---|
 | `attack_behavior_ground_tether.gd` (적 행동) | 80~100줄 | base_enemy 상속 | ✅ Step 2 (60줄) |
-| `boss_fog_release.gd` (페이즈 1 패턴) | 100~150줄 | base_boss 상속 | ⏳ |
-| `boss_reflection_teleport.gd` (페이즈 2 패턴) | 150~200줄 | EnemySystem.get_nearest_enemy 또는 ReflectiveFloor 위치 쿼리 | ⏳ |
+| `attack_behavior_boss_fog_release.gd` (페이즈 1 패턴) | 100~150줄 | boss_melee_aoe 패턴 답습 | ✅ Step 3 (130줄, 잔존 안개 페이드 포함) |
+| `attack_behavior_boss_reflection_teleport.gd` (페이즈 2 패턴) | 150~200줄 | player group lookup (ReflectiveFloor 쿼리는 추후) | ✅ Step 3 (75줄, 단순화) |
 | `floodgate.gd` (환경 오브젝트) | 80~120줄 | Cover/Lens 패턴 답습 | ⏳ |
-| 데이터: 적 .tres 5 (Step 2 ✅) + 보스 .tres 1 + 페이즈 .tres 2 + 스테이지 .tres 9 (2-1 ✅) + 아이템 .tres 1 + 다이얼로그 .tres 1+ | — | — | ⚙️ 일부 |
+| 데이터: 적 .tres 5 (Step 2 ✅) + 보스 .tres 1 ✅ + 페이즈 .tres 2 ✅ + 스테이지 .tres 9 (2-1 ✅) + 아이템 .tres 1 ✅ (mire_pendant) + 다이얼로그 .tres 1+ | — | — | ⚙️ 대부분 |
 | 스테이지 .tscn 9 (Stage2_1 ✅ + Stage2_2 ~ Stage2_H + Stage2_B) | 한 스테이지당 1~3일 | — | ⚙️ 1/9 |
 | (선택) `fog_volume.gdshader` | 1일 | — | Pass 5로 보류 |
 
@@ -180,3 +180,4 @@ zone1 대비 **HP·공격력 ×1.3~1.5** 계단식. 시각·이름은 습지 테
 | 2026-04-25 | 초안 작성 (7개 결정 항목 통합) |
 | 2026-04-25 | Step 1 완료 — stage_2_1 양산 (zone1 적 placeholder, FogOverlay) |
 | 2026-04-25 | Step 2 완료 — 적 .tres 5종 + `attack_behavior_ground_tether.gd` (60줄). enemy_stats_data enum 확장. base_enemy 디스패치 추가. |
+| 2026-04-25 | Step 3 완료 — 보스 패턴 2종 + Mire Mother + mire_pendant. `boss_fog_release.gd` (130줄, 잔존 안개 페이드 포함) + `boss_reflection_teleport.gd` (75줄). data: `mire_mother.tres` (HP 850/ATK 22/2페이즈) + phase_1_fog_release / phase_2_reflection_storm + `mire_pendant.tres` (액세서리, 시간회복+10%). 약점 source는 임시로 `lens_focus` 재활용 (등불 트리거 인프라는 zone3 대기). |
