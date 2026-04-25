@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="FloodgateData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/floodgate_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "수문"
+prompt_text = "수문 조작"
+can_interact = true
+interaction_radius = 48.0
+influence_radius = 0.0
+sprite_path = ""
+flag_id = "world.zone2.floodgate_opened"
+body_size = Vector2(40, 64)
+closed_color = Color(0.32, 0.36, 0.44, 1.0)
+open_color = Color(0.4, 0.55, 0.62, 0.8)
+body_border_color = Color(0.18, 0.22, 0.28, 1.0)
