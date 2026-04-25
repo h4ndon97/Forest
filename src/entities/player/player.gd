@@ -9,12 +9,14 @@ const StateMachine = preload("res://src/entities/player/player_state_machine.gd"
 const ShadowStepScript = preload("res://src/entities/player/player_shadow_step.gd")
 const LightLeapScript = preload("res://src/entities/player/player_light_leap.gd")
 const ShadowPhaseScript = preload("res://src/entities/player/player_shadow_phase.gd")
+const FollowUpScript = preload("res://src/entities/player/player_follow_up.gd")
 
 @export var stats: PlayerStatsData
 
 var _is_dead: bool = false
 var _input_blocked: bool = false
 var _death_tween: Tween
+var _follow_up: Node
 
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var state_machine: Node = $StateMachine
@@ -56,6 +58,8 @@ func _ready() -> void:
 	_create_enhanced_helper("ShadowStep", ShadowStepScript).setup(self)
 	_create_enhanced_helper("LightLeap", LightLeapScript).setup(self)
 	_create_enhanced_helper("ShadowPhase", ShadowPhaseScript).setup(self)
+	_follow_up = _create_enhanced_helper("FollowUp", FollowUpScript)
+	_follow_up.setup(self)
 
 	# 타이머 설정
 	coyote_timer.wait_time = stats.coyote_time
@@ -127,16 +131,19 @@ func _physics_process(delta: float) -> void:
 		animation_controller.update(state_machine.current_state, movement.facing_direction)
 		return
 
-	# 2. 콤보 업데이트
+	# 2. 후속 공격 윈도우 (강화 이동 종료 후 0.25s) — attack 입력을 가로챈 경우 consume.
+	_follow_up.update(input_handler, delta)
+
+	# 3. 콤보 업데이트
 	combo.update(input_handler, EnemySystem.are_enemies_active())
 
-	# 2.5 스킬 업데이트
+	# 4. 스킬 업데이트
 	skill.update(input_handler, EnemySystem.are_enemies_active())
 
-	# 3. 상태 전이 판정
+	# 5. 상태 전이 판정
 	state_machine.update(input_handler, is_on_floor(), velocity)
 
-	# 4. velocity 계산
+	# 6. velocity 계산
 	velocity = movement.calculate_velocity(
 		state_machine.current_state,
 		input_handler,
@@ -146,13 +153,13 @@ func _physics_process(delta: float) -> void:
 		combo.is_attacking()
 	)
 
-	# 5. 물리 이동
+	# 7. 물리 이동
 	move_and_slide()
 
-	# 6. 애니메이션 갱신
+	# 8. 애니메이션 갱신
 	animation_controller.update(state_machine.current_state, movement.facing_direction)
 
-	# 7. 등불 위치/방향 갱신
+	# 9. 등불 위치/방향 갱신
 	lantern.update_facing(movement.facing_direction > 0)
 	lantern.update_position()
 

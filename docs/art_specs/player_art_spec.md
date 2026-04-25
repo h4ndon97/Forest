@@ -95,6 +95,20 @@
 - `player_magic.png` — 스킬 시전 모션 (SKILLS.md 진행 시 확정)
 - 대시 애프터이미지·베기 궤적은 **별도 이펙트 레이어**로 분리될 수도 있음 (Phase 3-7 이펙트 패스에서 결정)
 
+#### 강화 이동 후속 공격 (Phase 4-0 #4 Step 5 — 잠정 미제작, slash_4 fallback 재사용)
+
+현재 follow-up 4종은 `slash_4` 애니메이션을 재사용한다. 전용 모션이 추가되면 자동 활성화 — `player_animation.gd`의 `DYNAMIC_ANIM_PATHS`에 다음 파일명 등록만 하면 됨(코드 수정 불필요).
+
+| 파일명 | 발동 | 설명 |
+|---|---|---|
+| `player_follow_up_light_dash.png` | LIGHT_DASH 종료 후 0.05s 자동 | 빛 잔상 끝의 짧은 정면 베기 (관통 강조) |
+| `player_follow_up_shadow_step.png` | SHADOW_STEP 후 0.25s attack | 적 등 뒤에서 2단 다단 베기 |
+| `player_follow_up_light_leap.png` | LIGHT_LEAP 후 0.25s attack | 공중 burst 끝의 낙하 베기 |
+| `player_follow_up_shadow_phase.png` | SHADOW_PHASE 후 0.25s attack | 잠수 해제 직후 강화 기습 |
+
+- 프레임 수: 3~5 권장 (slash_4와 비슷한 임팩트). 128×128.
+- 시각 단서(screen flash + afterimage burst)는 코드 측에서 발동 — 스프라이트 자체는 베기 동작에 집중.
+
 ---
 
 ## 4. 출력 규칙

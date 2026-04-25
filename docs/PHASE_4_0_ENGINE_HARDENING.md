@@ -355,6 +355,41 @@ func _on_attribute_toggle_input(direction: int) -> void:
 - **#1 CombatSystem 선행** (후속 공격용 AttackSpec)
 - **#3 속성 피니시**와 직접 의존성 없으나, 속성 토글 UX를 일관되게 맞추려면 순서상 #3 이후 착수가 자연스러움
 
+#### 후속 공격 4종 매핑 (Step 5 — 2026-04-25 확정)
+
+| 능력 | 트리거 | 속성 | 플래그 | 데미지 |
+|---|---|---|---|---|
+| LIGHT_DASH | duration 종료 시 자동 (지연 0.05s) | light | piercing=true | base 콤보 1타 (= `get_combo_damage(1)`) |
+| SHADOW_STEP | 종료 후 0.25s 윈도우 내 attack | shadow | multi_hit=2 (간격 0.1s) | 동상 |
+| LIGHT_LEAP | 동상 | light | — | 동상 |
+| SHADOW_PHASE | 동상 | shadow | — | 동상 |
+
+- 구현: [`player_follow_up.gd`](../src/entities/player/player_follow_up.gd) — state_machine.state_changed 구독, attack 입력 발동 시 `input.attack_pressed = false`로 consume(콤보 가드)
+- hitbox/duration: 일반 콤보(`combat_config.tres`) 재사용
+- 데미지·관통·다단 누적 효과는 자연 발생 — Phase 5 밸런싱에서 재조정
+- `EnemySystem.are_enemies_active()` 가드로 시간 정지 중 발동 차단
+- 시각 단서: 발동 시점에 screen_flash(속성색 HDR) + afterimage burst(count=8, fade=0.30) — dash 자체 잔상 위 한 박자 늦게 임팩트 강조
+- 애니메이션: 우선 `follow_up_<tag>` 전용 시도 → 없으면 `slash_4` → `slash` fallback. 전용 스프라이트 4종 명세는 [`player_art_spec.md` §3.4](art_specs/player_art_spec.md) 참조 (잠정 미제작, slash_4 재사용 중)
+
+#### 보스 보상 매핑 (Step 6 — 2026-04-25 확정)
+
+`AbilitySystem._on_boss_defeated` dispatch 경로는 이미 동작(Phase 3-3-d). 보스 `.tres` 신설 시 `reward_ability_id` 필드만 채우면 자동 해금된다.
+
+| 단계 | 보스 `.tres` (예정) | reward_ability_id |
+|---|---|---|
+| Phase 3-3 | [`zone1/ancient_oakheart.tres`](../data/bosses/zone1/ancient_oakheart.tres) ✅ | `light_dash` |
+| Phase 4-A | `zone2/<boss_id>.tres` | `shadow_phase` |
+| Phase 4-B | `zone3/<boss_id>.tres` | `light_leap` |
+| Phase 4-C | `zone4/<boss_id>.tres` | `shadow_step` |
+| Phase 4-D | `zone5/<boss_id>.tres` | (혼합 필살기 — 미정) |
+
+**Step 6 비범위**: zone 2~4 보스 placeholder `.tres`는 만들지 않는다 — 스탯/페이즈 패턴/이름이 미설계 상태에서 양산하면 부채. Phase 4-A 진입 시 보스 `.tres` 신설하면서 위 표대로 채우면 됨.
+
+#### 검증 (Step 5 + Step 6)
+
+- **Step 5 (강화 이동 4종 follow-up)**: `AbilitySystem._DEBUG_AUTO_UNLOCK_ALL = true` 유지(현재 기본값). V키로 속성 순환(NEUTRAL/LIGHT/SHADOW), SHIFT로 dash 발동. LIGHT_DASH는 자동 베기, 나머지 3종은 종료 직후 attack 입력 시 강화 베기 발동 확인.
+- **Step 6 (보스 보상 dispatch)**: 일시적으로 `_DEBUG_AUTO_UNLOCK_ALL = false`로 토글 → 신규 게임 → 1-B 처치 → `light_dash` 해금 확인 → 검증 끝나면 다시 `true`로 복구. (한 번에 인게임 검증 가능 — 짧은 회귀)
+
 ---
 
 ### 5.2 #5 EventBus 고아 시그널 정리

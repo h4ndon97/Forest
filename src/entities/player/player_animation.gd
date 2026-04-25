@@ -147,7 +147,11 @@ func _register_combo_animations() -> void:
 
 
 func _is_action_anim(anim_name: String) -> bool:
-	return anim_name.begins_with("slash") or anim_name.begins_with("skill_")
+	return (
+		anim_name.begins_with("slash")
+		or anim_name.begins_with("skill_")
+		or anim_name.begins_with("follow_up_")
+	)
 
 
 ## 가로 스트립 텍스처를 AtlasTexture로 슬라이스해 등록.

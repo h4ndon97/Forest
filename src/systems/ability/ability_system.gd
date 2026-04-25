@@ -8,7 +8,8 @@ extends Node
 const ABILITIES_DIR := "res://data/abilities/"
 const BOSSES_ROOT := "res://data/bosses/"
 ## Phase 4-0 #4 검증용 디버그 토글. true면 디버그 빌드 시작 시 모든 능력 자동 해금.
-## 정상 보스 보상 시퀀스 검증 시 false로 되돌릴 것.
+## - true: 강화 이동 4종 + 후속 공격(Step 5) 회귀 검증 — Phase 4-0 #4 진행 기간 기본값.
+## - false: 보스 보상 dispatch(Step 6) 회귀 검증용 — 신규 게임 → 1-B 처치 → light_dash 해금 확인 후 다시 true 복구.
 const _DEBUG_AUTO_UNLOCK_ALL := true
 
 var _owned: Dictionary = {}  # ability_id -> true
