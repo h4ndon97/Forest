@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "shadow_step"
+display_name = "그림자 발걸음"
+description = "지상에서 가까운 적의 등 뒤로 순간이동한다."
+category = "dash"
+icon_path = ""
+unlock_story_flag = ""

@@ -24,3 +24,22 @@ extends Resource
 @export var light_dash_cooldown: float = 0.9
 ## 빛 대시 진입 시 부여되는 무적 시간(s). 보통 duration과 같거나 약간 더 김.
 @export var light_dash_iframe: float = 0.22
+
+## 그림자 발걸음 (지상 텔포, Phase 4-0 #4)
+@export var shadow_step_max_target_dist: float = 120.0
+## 텔포 후 적의 등 뒤로 떨어지는 오프셋(facing 반대 방향 픽셀).
+@export var shadow_step_back_offset: float = 28.0
+@export var shadow_step_iframe: float = 0.22
+@export var shadow_step_cooldown: float = 0.9
+
+## 빛 도약 (공중 상향, Phase 4-0 #4)
+@export var light_leap_velocity: float = -340.0
+@export var light_leap_duration: float = 0.20
+@export var light_leap_iframe: float = 0.22
+@export var light_leap_cooldown: float = 0.9
+
+## 그림자 잠수 (공중 통과, Phase 4-0 #4)
+@export var shadow_phase_speed: float = 260.0
+@export var shadow_phase_duration: float = 0.30
+@export var shadow_phase_iframe: float = 0.32
+@export var shadow_phase_cooldown: float = 0.9

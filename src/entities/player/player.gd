@@ -5,6 +5,9 @@ extends CharacterBody2D
 
 const StateMachine = preload("res://src/entities/player/player_state_machine.gd")
 
+## Phase 4-0 #4: 강화 이동 헬퍼 — Player.tscn 변경 없이 코드로 동적 생성.
+const ShadowStepScript = preload("res://src/entities/player/player_shadow_step.gd")
+
 @export var stats: PlayerStatsData
 
 var _is_dead: bool = false
@@ -41,12 +44,14 @@ func _ready() -> void:
 		dash_cooldown_timer,
 		light_dash_duration_timer,
 		light_dash_cooldown_timer,
-		stats.max_air_jumps
+		stats.max_air_jumps,
+		stats
 	)
 	combo.setup(self, combat_config)
 	health.setup(self, combat_config)
 	skill.setup(self)
 	light_dash.setup(self)
+	_create_enhanced_helper("ShadowStep", ShadowStepScript).setup(self)
 
 	# 타이머 설정
 	coyote_timer.wait_time = stats.coyote_time
@@ -103,6 +108,10 @@ func _physics_process(delta: float) -> void:
 	if input_handler.lantern_pressed:
 		lantern.toggle()
 
+	# 속성 토글 (V 키) — 넉백 중에도 허용. dash 키 발동 시점에 분기에 사용된다.
+	if input_handler.attribute_toggle_pressed:
+		state_machine.toggle_attribute()
+
 	# 넉백 중에는 입력/상태/이동 계산 건너뛰고 마찰+중력만 적용
 	if health.is_knocked_back():
 		var gravity := ProjectSettings.get_setting("physics/2d/default_gravity", 980.0) as float
@@ -142,6 +151,14 @@ func _physics_process(delta: float) -> void:
 	# 7. 등불 위치/방향 갱신
 	lantern.update_facing(movement.facing_direction > 0)
 	lantern.update_position()
+
+
+func _create_enhanced_helper(node_name: String, script: GDScript) -> Node:
+	var n := Node.new()
+	n.name = node_name
+	n.set_script(script)
+	add_child(n)
+	return n
 
 
 func take_damage(amount: float) -> void:

@@ -60,8 +60,16 @@ func calculate_velocity(
 		State.LIGHT_DASH:
 			velocity = Vector2(facing_direction * stats.light_dash_speed, 0.0)
 
-	# 공격 중 수평 이동 감속 (DASH/LIGHT_DASH 제외)
-	if is_attacking and current_state != State.DASH and current_state != State.LIGHT_DASH:
+		# Phase 4-0 #4: 신규 강화 이동 3종 — Step 2~4에서 각자 velocity 로직 추가.
+		# 현재는 진입 시 velocity 유지 (player_shadow_step.gd 등 헬퍼가 직접 설정).
+		State.SHADOW_STEP, State.LIGHT_LEAP, State.SHADOW_PHASE:
+			pass
+
+	# 공격 중 수평 이동 감속 (대시/강화 이동 계열 제외)
+	var dash_states: Array = [
+		State.DASH, State.LIGHT_DASH, State.SHADOW_STEP, State.LIGHT_LEAP, State.SHADOW_PHASE
+	]
+	if is_attacking and not (current_state in dash_states):
 		velocity.x *= _attack_movement_factor
 
 	# 바닥에 서 있을 때 중력 리셋
@@ -83,3 +91,11 @@ func _update_facing(move_dir: float) -> void:
 	if new_dir != 0 and new_dir != facing_direction:
 		facing_direction = new_dir
 		facing_changed.emit(facing_direction)
+
+
+## 외부(예: Shadow Step 텔포 후 적 방향 정면화)가 facing을 강제 설정.
+func set_facing(direction: int) -> void:
+	if direction == 0 or direction == facing_direction:
+		return
+	facing_direction = direction
+	facing_changed.emit(facing_direction)
