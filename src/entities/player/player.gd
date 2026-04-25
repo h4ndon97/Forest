@@ -7,6 +7,8 @@ const StateMachine = preload("res://src/entities/player/player_state_machine.gd"
 
 ## Phase 4-0 #4: 강화 이동 헬퍼 — Player.tscn 변경 없이 코드로 동적 생성.
 const ShadowStepScript = preload("res://src/entities/player/player_shadow_step.gd")
+const LightLeapScript = preload("res://src/entities/player/player_light_leap.gd")
+const ShadowPhaseScript = preload("res://src/entities/player/player_shadow_phase.gd")
 
 @export var stats: PlayerStatsData
 
@@ -52,6 +54,8 @@ func _ready() -> void:
 	skill.setup(self)
 	light_dash.setup(self)
 	_create_enhanced_helper("ShadowStep", ShadowStepScript).setup(self)
+	_create_enhanced_helper("LightLeap", LightLeapScript).setup(self)
+	_create_enhanced_helper("ShadowPhase", ShadowPhaseScript).setup(self)
 
 	# 타이머 설정
 	coyote_timer.wait_time = stats.coyote_time
@@ -173,6 +177,9 @@ func _on_state_changed(_old_state: int, new_state: int) -> void:
 	# 점프 진입 시 velocity.y 설정
 	if new_state == StateMachine.State.JUMP:
 		velocity.y = stats.jump_velocity
+	# Light Leap 진입 시 상향 추진력 1회 부여 (이후 자연 중력으로 하강).
+	elif new_state == StateMachine.State.LIGHT_LEAP:
+		velocity.y = stats.light_leap_velocity
 
 
 func _on_died() -> void:

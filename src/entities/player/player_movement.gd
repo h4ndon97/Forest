@@ -60,10 +60,19 @@ func calculate_velocity(
 		State.LIGHT_DASH:
 			velocity = Vector2(facing_direction * stats.light_dash_speed, 0.0)
 
-		# Phase 4-0 #4: 신규 강화 이동 3종 — Step 2~4에서 각자 velocity 로직 추가.
-		# 현재는 진입 시 velocity 유지 (player_shadow_step.gd 등 헬퍼가 직접 설정).
-		State.SHADOW_STEP, State.LIGHT_LEAP, State.SHADOW_PHASE:
-			pass
+		State.SHADOW_STEP:
+			# 텔포 상태 — 위치는 player_shadow_step.gd가 진입 시 즉시 변경, velocity는 0 유지.
+			velocity = Vector2.ZERO
+
+		State.LIGHT_LEAP:
+			# 상향 도약 — y는 _on_state_changed에서 진입 시 1회 설정, 이후 자연 중력.
+			# x는 입력 방향으로 공중 제어 허용.
+			velocity.x = input.move_direction * stats.run_speed
+			velocity.y = _apply_gravity(velocity.y, gravity, delta, current_state)
+
+		State.SHADOW_PHASE:
+			# 공중 비행 — 진입 시 facing 고정 방향으로 직선 비행, 중력 무시.
+			velocity = Vector2(facing_direction * stats.shadow_phase_speed, 0.0)
 
 	# 공격 중 수평 이동 감속 (대시/강화 이동 계열 제외)
 	var dash_states: Array = [
