@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://bitempopup5step1"]
+[gd_scene format=3 uid="uid://bxivdbnfanp4c"]
 
 [ext_resource type="Script" path="res://src/ui/hud/item_pickup_popup.gd" id="1"]
 
