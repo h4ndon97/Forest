@@ -43,8 +43,8 @@ func _on_arena_trigger_entered(body: Node2D) -> void:
 		return
 	_trigger_consumed = true
 	var boss := get_node_or_null("Boss")
-	if boss and boss.has_method("activate"):
-		boss.activate()
+	if boss != null:
+		EnemySystem.on_boss_arena_entered(boss)
 	var trigger := get_node_or_null("BossArenaTrigger") as Area2D
 	if trigger:
 		trigger.set_deferred("monitoring", false)

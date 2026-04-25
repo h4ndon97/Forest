@@ -69,6 +69,17 @@ func register_enemy(enemy: Node) -> int:
 	return id
 
 
+## 보스 아레나 트리거 진입 시 단일 진입점.
+## enemies 활성화를 time_state와 독립적으로 강제 + 보스 activate 일원화.
+## time_state가 STOPPED여도 플레이어 공격 판정이 생성되도록 enemies_active를 켠다.
+## (시간 정지 전술은 정상 — 이후 TimeSystem 전이 시 기존 경로로 deactivate/activate)
+func on_boss_arena_entered(boss: Node) -> void:
+	if not _enemies_active:
+		_activate_enemies()
+	if boss != null and boss.has_method("activate"):
+		boss.activate()
+
+
 ## 적 사망 처리. 시그널 발신 + 레지스트리 제거.
 ## 처치 시점의 낮/밤 상태를 반환한다 (잔류 정화 조건에 사용).
 func on_enemy_died(enemy_id: int, _death_position: Vector2) -> bool:
