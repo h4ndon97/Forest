@@ -143,7 +143,7 @@ zone1 대비 **HP·공격력 ×1.3~1.5** 계단식. 시각·이름은 습지 테
 | `attack_behavior_boss_reflection_teleport.gd` (페이즈 2 패턴) | 150~200줄 | player group lookup (ReflectiveFloor 쿼리는 추후) | ✅ Step 3 (75줄, 단순화) |
 | `floodgate.gd` (환경 오브젝트) | 80~120줄 | Cover/Lens 패턴 답습 | ✅ Step 4 (45줄, 단순 토글) |
 | 데이터: 적 .tres 5 (Step 2 ✅) + 보스 .tres 1 ✅ + 페이즈 .tres 2 ✅ + 스테이지 .tres 9 (2-1 ✅) + 아이템 .tres 1 ✅ (mire_pendant) + 다이얼로그 .tres 1+ | — | — | ⚙️ 대부분 |
-| 스테이지 .tscn 9 (Stage2_1 ✅ + Stage2_2 ~ Stage2_H + Stage2_B) | 한 스테이지당 1~3일 | — | ⚙️ 1/9 |
+| 스테이지 .tscn 9 (Stage2_1 ~ Stage2_7 + Stage2_H + Stage2_B + MireMother.tscn) | 한 스테이지당 1~3일 | — | ✅ 9/9 (MireMother.tscn 포함) |
 | (선택) `fog_volume.gdshader` | 1일 | — | Pass 5로 보류 |
 
 **총 코드 ~600줄 + 데이터 ~20 .tres + 씬 9 .tscn**
@@ -182,3 +182,4 @@ zone1 대비 **HP·공격력 ×1.3~1.5** 계단식. 시각·이름은 습지 테
 | 2026-04-25 | Step 2 완료 — 적 .tres 5종 + `attack_behavior_ground_tether.gd` (60줄). enemy_stats_data enum 확장. base_enemy 디스패치 추가. |
 | 2026-04-25 | Step 3 완료 — 보스 패턴 2종 + Mire Mother + mire_pendant. `boss_fog_release.gd` (130줄, 잔존 안개 페이드 포함) + `boss_reflection_teleport.gd` (75줄). data: `mire_mother.tres` (HP 850/ATK 22/2페이즈) + phase_1_fog_release / phase_2_reflection_storm + `mire_pendant.tres` (액세서리, 시간회복+10%). 약점 source는 임시로 `lens_focus` 재활용 (등불 트리거 인프라는 zone3 대기). |
 | 2026-04-25 | Step 4 완료 — Floodgate 환경 오브젝트 + stage_2_h.tres. `floodgate.gd` (45줄, 단순 토글) + `FloodgateData` + `Floodgate.tscn` + `floodgate_basic.tres`. StateFlags `world.zone2.floodgate_opened` 영속 플래그. zone3+ HiddenRevealer가 구독해 막힌 경로 노출 (zone3 콘텐츠 진입 시 결정). stage_2_h.tres 등록 — .tscn은 Step 5에서. |
+| 2026-04-25 | Step 5 완료 — zone2 9 스테이지 모두 양산. 8 sub-step (5-1~5-8): 2-1 적 교체는 미진행, 2-2~2-7 + 2-H + 2-B + MireMother.tscn 신규. 잠금 5종 모두 체험 (ABILITY/NONE/LIGHT/ENVIRONMENT/PURIFY/숨김). 환경 인프라 추가: light_sensor_2_4_pool / light_sensor_2_6_hidden / hidden_revealer_zone2_h. 누적 약 3시간. |

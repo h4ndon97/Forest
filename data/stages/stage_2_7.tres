@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_2_7"
+display_name = "마지막 늪"
+scene_path = "res://src/world/stages/Stage2_7.tscn"
+initial_hour = 23.0
+zone_id = "zone_2"
+adjacent_stages = Array[String](["stage_2_6", "stage_2_b"])
+lock_type = 1
+lock_requirement = ""
+total_enemies = 5
+total_residues = 5
+is_checkpoint = false
+radius_ring = 2
+angle_deg = 135.0
+radius_offset = 0.0

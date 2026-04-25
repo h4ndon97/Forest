@@ -4,17 +4,17 @@
 
 [resource]
 script = ExtResource("1")
-stage_id = "stage_2_1"
-display_name = "안개의 문턱"
-scene_path = "res://src/world/stages/Stage2_1.tscn"
-initial_hour = 16.0
+stage_id = "stage_2_6"
+display_name = "안개 갈림길"
+scene_path = "res://src/world/stages/Stage2_6.tscn"
+initial_hour = 11.0
 zone_id = "zone_2"
-adjacent_stages = Array[String](["border_checkpoint", "stage_2_2"])
-lock_type = 4
-lock_requirement = "light_dash"
+adjacent_stages = Array[String](["stage_2_5", "stage_2_h", "stage_2_7"])
+lock_type = 0
+lock_requirement = ""
 total_enemies = 3
 total_residues = 3
 is_checkpoint = false
 radius_ring = 2
-angle_deg = 270.0
+angle_deg = 157.5
 radius_offset = 0.0

@@ -52,15 +52,15 @@
 
 | ID | 표시명(잠정) | 시간 | 잠금 | 적 / 잔류 | 기믹/환경 | 추가조작/숨김 | 스토리 비트 | 상태 |
 |---|---|---|---|---|---|---|---|---|
-| `stage_2_1` | 안개의 문턱 | 16 | ABILITY(`light_dash`) | 3 / 3 | 안개 도입(FogOverlay ColorRect 반투명) | — | "발 밑이 젖어 있다" *(미적용)* | ✅ Step 1 |
-| `stage_2_2` | 물웅덩이 | 18 | NONE | 3 / 3 | 안개 + 물 반사면 학습 | — | — | ⏳ |
-| `stage_2_3` | 가라앉은 길 | 22 | LIGHT | 4 / 4 | 짙은 안개, 등불 강제 | — | — | ⏳ |
-| `stage_2_4` | 거울 늪 | 14 | ENVIRONMENT(`light_sensor:sensor_2_4_pool`) | 4 / 4 | ReflectiveFloor 본격 | — | — | ⏳ |
-| `stage_2_5` | 잠긴 둑 | 20 | PURIFY (2-3 fully cleared) | 4 / 4 | 정화 재학습 | — | — | ⏳ |
-| `stage_2_6` | 안개 갈림길 | 11 | NONE | 3 / 3 | 호흡 + 분기 (2-7/2-H) | **2-H 숨김 힌트 위치** | — | ⏳ |
-| `stage_2_7` | 마지막 늪 | 23 | LIGHT | 5 / 5 | 강화 적 배치 | — | "통곡 소리가 들린다" | ⏳ |
-| `stage_2_h` | 잠긴 수문 | 8 | NONE (HiddenRevealer, 2-6에서 발견) | 2 / 2 | **추가조작: 수문 조작** ✅ (`Floodgate` 컴포넌트) | 발견 시 `world.zone2.floodgate_opened` flag set → zone3+ HiddenRevealer 구독 | — | ⚙️ Step 4 (.tres만, .tscn은 Step 5) |
-| `stage_2_b` | 늪의 어머니의 뜰 | 17 | NONE (2-1~2-7 fully cleared) | 1(보스) / 0 | **보스: Mire Mother** ✅ (HP 850, 2페이즈: fog_release / reflection_teleport+ranged_spread, 약점 lens_focus 재활용) | 보상: `shadow_phase` + GP×7 + `mire_pendant` ✅ + `story.zone2.mire_mother_defeated` | 봉인의 진실 단편 | ⚙️ Step 3 |
+| `stage_2_1` | 안개의 문턱 | 16 | ABILITY(`light_dash`) | 3 / 3 | 안개 도입(FogOverlay ColorRect 반투명) | PortalRight → 2-2 ✅ | "발 밑이 젖어 있다" *(미적용)* | ✅ Step 1+5 |
+| `stage_2_2` | 물웅덩이 | 18 | NONE | 3 / 3 | 안개 + ReflectiveFloor 학습. 적: weeping_willow + miasma_lily + drowned_pillar | — | — | ✅ Step 5 |
+| `stage_2_3` | 가라앉은 길 | 22 | LIGHT | 4 / 4 | 짙은 안개(α 0.28), 등불 강제. 적 4 + marsh_tendril 도입. **Lens + LightSensor(sensor_2_4_pool)** — 2-4 진입 게이트 활성화 | — | — | ✅ Step 5 |
+| `stage_2_4` | 거울 늪 | 14 | ENVIRONMENT(`light_sensor:sensor_2_4_pool`) | 4 / 4 | ReflectiveFloor 본격(RF×2). 적: weeping_willow + miasma_lily + marsh_tendril + drowned_pillar. sensor는 stage_2_3 안의 Lens 회전으로 활성화 | — | — | ✅ Step 5 |
+| `stage_2_5` | 잠긴 둑 | 20 | PURIFY (`stage_2_3`) | 4 / 4 | 정화 재학습. zone2 베이스 4종(weeping_willow + mire_stone + miasma_lily + drowned_pillar). marsh_tendril 제외(2-3·2-4에서 학습 끝) | — | — | ✅ Step 5 |
+| `stage_2_6` | 안개 갈림길 | 11 | NONE | 3 / 3 | 호흡 + 분기 (2-7/2-H). zone2 베이스 3종(weeping_willow + mire_stone + miasma_lily) | **2-H 숨김 힌트** ✅: Lens 회전 → HiddenSensor(sensor_2_6_hidden) 점등 → HiddenRevealer가 PortalHidden(stage_2_h) 노출 | — | ✅ Step 5 |
+| `stage_2_7` | 마지막 늪 | 23 | LIGHT | 5 / 5 | 보스 직전 종합 검증 — zone2 5종 모두 (weeping_willow + mire_stone + miasma_lily + drowned_pillar + marsh_tendril). 가장 짙은 안개(α 0.30) + 가장 어두운 BG | — | "통곡 소리가 들린다" *(미적용)* | ✅ Step 5 |
+| `stage_2_h` | 잠긴 수문 | 8 | NONE (HiddenRevealer, 2-6에서 발견) | 2 / 2 | **추가조작: Floodgate 1개** + 적 marsh_tendril×2 (수문 영역 위협). 8시 아침 — 안개 옅게(α 0.16), 가장 밝은 zone2 톤 (휴식·발견 분위기) | 발견 시 `world.zone2.floodgate_opened` flag set → zone3+ HiddenRevealer 구독 | — | ✅ Step 5 |
+| `stage_2_b` | 늪의 어머니의 뜰 | 17 | NONE (2-1~2-7 fully cleared) | 1(보스) / 0 | **보스: Mire Mother** ✅ (HP 850, 2페이즈, 약점 lens_focus). MireMother.tscn + Stage2_B.tscn + Lens×2 + BossArenaTrigger. Visual은 fallback ColorRect (mire_mother_visual.gd 미작성 — 추후 art-spec 작업) | 보상: `shadow_phase` + GP×7 + `mire_pendant` + `story.zone2.mire_mother_defeated` | 봉인의 진실 단편 | ✅ Step 5 |
 
 **2-3 경계 거점** (마을형 + 간이형, Phase 4-B 진입 시 추가)
 
@@ -155,3 +155,11 @@
 | 2026-04-25 | stage_2_1 'Step 1' 양산 완료 (zone1 적 placeholder 3 / FogOverlay / 좌측 포탈만). 헤드리스 로드 ERROR 0 / gdlint clean. |
 | 2026-04-25 | Step 3 — Mire Mother 보스 데이터 + 패턴 2종 작성 (스테이지 .tscn은 Step 5 대기). |
 | 2026-04-25 | Step 4 — Floodgate 환경 오브젝트 (45줄) + stage_2_h.tres 등록. .tscn은 Step 5. |
+| 2026-04-25 | Step 5-1 — stage_2_2 '물웅덩이' 양산 (zone2 적 3 + ReflectiveFloor + FogOverlay) + 2-1 PortalRight 추가. 헤드리스 ERROR 0. |
+| 2026-04-25 | Step 5-2 — stage_2_3 '가라앉은 길' (LIGHT 잠금) 양산. 적 4 + marsh_tendril 첫 도입(ground_tether 학습). 짙은 안개 α 0.28. 2-2 PortalRight 추가. |
+| 2026-04-25 | Step 5-3 — stage_2_4 '거울 늪' (ENVIRONMENT 잠금) 양산. 적 4 + ReflectiveFloor×2. 2-3에 Lens + LightSensor(sensor_2_4_pool) 추가 — sensor 활성화로 2-4 진입. light_sensor_2_4_pool.tres 신규. |
+| 2026-04-25 | Step 5-4 — stage_2_5 '잠긴 둑' (PURIFY 잠금) 양산. zone2 베이스 4종 적. 2-3 fully cleared 시 진입. 2-4 PortalRight 추가. |
+| 2026-04-25 | Step 5-5 — stage_2_6 '안개 갈림길' 양산 + 2-H 숨김 발견 인프라. light_sensor_2_6_hidden.tres + hidden_revealer_zone2_h.tres 신규. Lens 회전 → sensor → HiddenRevealer가 PortalHidden(stage_2_h) 노출. zone1 stage_1_4 패턴 답습. |
+| 2026-04-25 | Step 5-6 — stage_2_7 '마지막 늪' (LIGHT 잠금) 양산. 적 5 = zone2 5종 모두 종합 검증. 짙은 안개 α 0.30. 2-6 PortalRight 추가. gdlint max-line-length 1건 fix. |
+| 2026-04-25 | Step 5-7 — stage_2_h '잠긴 수문' 양산. Floodgate 1개 + marsh_tendril×2. 8시 아침 — 휴식·발견 분위기. 통상 7개 + 숨김 1 = 8개 zone2 일반 스테이지 모두 양산 완료. |
+| 2026-04-25 | Step 5-8 — stage_2_b '늪의 어머니의 뜰' + MireMother.tscn 양산. AncientOakheart.tscn + stage_1_b.gd 패턴 답습. room_size 960×360 보스 아레나. Lens×2 + BossArenaTrigger. Visual은 fallback ColorRect (mire_mother_visual.gd 미작성). 2-7 PortalRight 추가. **zone2 9 스테이지 모두 양산 완료**. |
