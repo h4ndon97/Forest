@@ -32,10 +32,11 @@ extends Resource
 @export var shadow_step_iframe: float = 0.22
 @export var shadow_step_cooldown: float = 0.9
 
-## 빛 도약 (공중 상향, Phase 4-0 #4)
-@export var light_leap_velocity: float = -340.0
-@export var light_leap_duration: float = 0.20
-@export var light_leap_iframe: float = 0.22
+## 빛 도약 (공중 8방향 직선 비행, Phase 4-0 #4) — 진입 시점 입력으로 8방향 capture, 중력 무시.
+## 짧은 duration + 빠른 speed로 burst 느낌. 거리 ≈ speed × duration.
+@export var light_leap_speed: float = 800.0
+@export var light_leap_duration: float = 0.15
+@export var light_leap_iframe: float = 0.17
 @export var light_leap_cooldown: float = 0.9
 
 ## 그림자 잠수 (공중 통과, Phase 4-0 #4)

@@ -16,15 +16,19 @@ func _init(host: Node) -> void:
 
 ## source 의 현재 프레임으로 잔상 count 장을 interval 간격 스폰.
 ## 각 복제본은 fade 시간 동안 modulate.a 를 0 으로 Tween 후 queue_free.
-## 부모는 source.get_parent() — 월드 좌표 고정(플레이어 이동해도 잔상 정지).
+## 부모는 current_scene(Stage) — Player 이동과 분리되어 잔상이 월드 좌표에 고정.
+## (이전 버그: source.get_parent()=Player였어서 잔상이 Player 자식으로 따라다녀 trail 효과 소실).
 func spawn(
 	source: Node2D, count: int, interval: float, fade: float, tint: Color = DEFAULT_TINT
 ) -> void:
 	if source == null or not is_instance_valid(source) or count <= 0 or fade <= 0.0:
 		return
-	var parent: Node = source.get_parent()
+	var parent: Node = _host.get_tree().current_scene
 	if parent == null:
-		return
+		# 폴백: 비정상 상황(scene 미로드)에서도 동작 보장.
+		parent = source.get_parent()
+		if parent == null:
+			return
 	for i in range(count):
 		var delay: float = float(i) * maxf(interval, 0.0)
 		_schedule_spawn(source, parent, delay, fade, tint)

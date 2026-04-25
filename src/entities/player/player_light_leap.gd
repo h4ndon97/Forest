@@ -27,11 +27,17 @@ func _on_state_changed(_old_state: int, new_state: int) -> void:
 		return
 	if _health != null and _health.has_method("set_invulnerable"):
 		_health.set_invulnerable(_stats.light_leap_iframe)
+	var cfg: EffectsConfigData = EffectsSystem.get_config()
+	# Light Leap 전용 잔상 (Light Dash보다 진하고 길게).
 	if _sprite != null:
-		var cfg: EffectsConfigData = EffectsSystem.get_config()
 		EffectsSystem.request_afterimage(
 			_sprite,
-			cfg.light_dash_afterimage_count,
-			cfg.light_dash_afterimage_interval,
-			cfg.light_dash_afterimage_fade
+			cfg.light_leap_afterimage_count,
+			cfg.light_leap_afterimage_interval,
+			cfg.light_leap_afterimage_fade
+		)
+	# 진입 시점 mini screen flash — "빛처럼 쭉 지르는" burst 강조.
+	if cfg.light_leap_burst_duration > 0.0:
+		EventBus.screen_flash_requested.emit(
+			cfg.light_leap_burst_color, cfg.light_leap_burst_duration
 		)

@@ -11,11 +11,15 @@ const State = preload("res://src/entities/player/player_state_machine.gd").State
 var stats: PlayerStatsData
 var facing_direction: int = 1  # 1 = 오른쪽, -1 = 왼쪽
 var _attack_movement_factor: float = 0.4
+var _state_machine_ref: Node
 
 
-func setup(player_stats: PlayerStatsData, attack_movement_factor: float = 0.4) -> void:
+func setup(
+	player_stats: PlayerStatsData, attack_movement_factor: float = 0.4, state_machine: Node = null
+) -> void:
 	stats = player_stats
 	_attack_movement_factor = attack_movement_factor
+	_state_machine_ref = state_machine
 
 
 func calculate_velocity(
@@ -65,10 +69,10 @@ func calculate_velocity(
 			velocity = Vector2.ZERO
 
 		State.LIGHT_LEAP:
-			# 상향 도약 — y는 _on_state_changed에서 진입 시 1회 설정, 이후 자연 중력.
-			# x는 입력 방향으로 공중 제어 허용.
-			velocity.x = input.move_direction * stats.run_speed
-			velocity.y = _apply_gravity(velocity.y, gravity, delta, current_state)
+			# 공중 8방향 직선 비행 — 진입 시점에 state_machine이 capture한 입력 방향 사용.
+			# 입력 (0,0)이면 facing 방향 fallback. 중력 무시.
+			var dir: Vector2 = _resolve_light_leap_direction()
+			velocity = dir * stats.light_leap_speed
 
 		State.SHADOW_PHASE:
 			# 공중 비행 — 진입 시 facing 고정 방향으로 직선 비행, 중력 무시.
@@ -100,6 +104,16 @@ func _update_facing(move_dir: float) -> void:
 	if new_dir != 0 and new_dir != facing_direction:
 		facing_direction = new_dir
 		facing_changed.emit(facing_direction)
+
+
+## Light Leap 진입 시점 8방향 입력을 정규화해 반환. (0,0)이면 facing 방향 fallback.
+func _resolve_light_leap_direction() -> Vector2:
+	var raw: Vector2 = Vector2.ZERO
+	if _state_machine_ref != null:
+		raw = _state_machine_ref.light_leap_direction
+	if raw.length_squared() < 0.001:
+		return Vector2(facing_direction, 0.0)
+	return raw.normalized()
 
 
 ## 외부(예: Shadow Step 텔포 후 적 방향 정면화)가 facing을 강제 설정.

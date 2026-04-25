@@ -38,7 +38,7 @@ func _ready() -> void:
 
 	var combat_config: CombatConfigData = CombatSystem.get_config()
 
-	movement.setup(stats, combat_config.attack_movement_factor)
+	movement.setup(stats, combat_config.attack_movement_factor, state_machine)
 	animation_controller.setup(animated_sprite)
 	state_machine.setup(
 		coyote_timer,
@@ -173,13 +173,17 @@ func is_attacking() -> bool:
 	return combo.is_attacking()
 
 
-func _on_state_changed(_old_state: int, new_state: int) -> void:
+func _on_state_changed(old_state: int, new_state: int) -> void:
 	# 점프 진입 시 velocity.y 설정
 	if new_state == StateMachine.State.JUMP:
 		velocity.y = stats.jump_velocity
-	# Light Leap 진입 시 상향 추진력 1회 부여 (이후 자연 중력으로 하강).
-	elif new_state == StateMachine.State.LIGHT_LEAP:
-		velocity.y = stats.light_leap_velocity
+	# Light Leap 종료 시 잔존 상향 운동량 차단 — 대각선 위 dash 종료 후 부유감 제거.
+	if (
+		old_state == StateMachine.State.LIGHT_LEAP
+		and new_state != StateMachine.State.LIGHT_LEAP
+		and velocity.y < 0.0
+	):
+		velocity.y = 0.0
 
 
 func _on_died() -> void:

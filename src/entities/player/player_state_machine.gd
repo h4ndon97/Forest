@@ -19,6 +19,8 @@ const ABILITY_SHADOW_PHASE := "shadow_phase"
 
 var current_state: State = State.IDLE
 var current_dash_attribute: DashAttribute = DashAttribute.NEUTRAL
+## Light Leap 진입 시점에 capture된 입력 방향. (0,0)이면 facing fallback (movement가 처리).
+var light_leap_direction: Vector2 = Vector2.ZERO
 var air_jump_count: int = 0
 var can_dash: bool = true
 var can_light_dash: bool = true
@@ -224,7 +226,7 @@ func _check_dash_inputs(input: Node, is_on_floor: bool) -> State:
 		return State.LIGHT_DASH
 	if not input.dash_pressed:
 		return current_state
-	var resolved: State = _resolve_attribute_dash(is_on_floor)
+	var resolved: State = _resolve_attribute_dash(input, is_on_floor)
 	if resolved != current_state:
 		return resolved
 	# NEUTRAL 또는 해금 안 됨 → 기본 dash 폴백
@@ -233,13 +235,15 @@ func _check_dash_inputs(input: Node, is_on_floor: bool) -> State:
 	return current_state
 
 
-func _resolve_attribute_dash(is_on_floor: bool) -> State:
+func _resolve_attribute_dash(input: Node, is_on_floor: bool) -> State:
 	match current_dash_attribute:
 		DashAttribute.LIGHT:
 			if is_on_floor:
 				if can_light_dash and _has_ability(ABILITY_LIGHT_DASH):
 					return State.LIGHT_DASH
 			elif can_light_leap and _has_ability(ABILITY_LIGHT_LEAP):
+				# 진입 시점 8방향 capture — movement가 (0,0)이면 facing fallback.
+				light_leap_direction = Vector2(input.move_direction, input.vertical_direction)
 				return State.LIGHT_LEAP
 		DashAttribute.SHADOW:
 			if is_on_floor:

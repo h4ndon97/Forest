@@ -74,6 +74,17 @@ extends Resource
 @export var light_dash_afterimage_interval: float = 0.025
 @export var light_dash_afterimage_fade: float = 0.18
 
+# === 빛 도약 잔상 + burst (Phase 4-0 #4) ===
+# Light Dash보다 강화 (count↑↑·fade↑↑) + 진입 시점 mini screen flash로 burst 강조.
+@export_group("Light Leap")
+@export var light_leap_afterimage_count: int = 5
+@export var light_leap_afterimage_interval: float = 0.015
+@export var light_leap_afterimage_fade: float = 0.25
+## 진입 시점 mini screen flash 지속(s). 0이면 burst 미사용.
+@export var light_leap_burst_duration: float = 0.04
+## mini flash 색 — 보통 light finish color(흰)에 약간의 알파.
+@export var light_leap_burst_color: Color = Color(2.5, 2.5, 2.5, 0.2)
+
 # === 땅거미 공포 비네트 (Pass 4, D7-3 거리 보간 보라→빨강) ===
 @export_group("Dusk Warning (Pass 4)")
 ## 먼 거리 비네트 색 (#8B2FC6 보라 = 그림자 왕가 팔레트).

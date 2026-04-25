@@ -4,6 +4,7 @@ extends Node
 ## 물리 연산이나 상태 판정은 하지 않는다.
 
 var move_direction: float = 0.0
+var vertical_direction: float = 0.0
 var jump_pressed: bool = false
 var jump_held: bool = false
 var jump_released: bool = false
@@ -20,6 +21,7 @@ var skill_4_pressed: bool = false
 
 func update() -> void:
 	move_direction = Input.get_axis("move_left", "move_right")
+	vertical_direction = Input.get_axis("move_up", "move_down")
 	jump_pressed = Input.is_action_just_pressed("jump")
 	jump_held = Input.is_action_pressed("jump")
 	jump_released = Input.is_action_just_released("jump")
