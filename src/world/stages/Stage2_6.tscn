@@ -102,7 +102,7 @@ position = Vector2(320, 124)
 data = ExtResource("sensor_data_2_6")
 
 [node name="Lens1" parent="." instance=ExtResource("lens_scene")]
-position = Vector2(140, 296)
+position = Vector2(320, 280)
 lens_data = ExtResource("lens_data_basic")
 
 [node name="Hidden2_HRevealer" parent="." instance=ExtResource("hidden_revealer_scene")]

@@ -90,11 +90,11 @@ target_stage_id = "stage_2_4"
 direction = "right"
 
 [node name="Stage2_4PoolSensor" parent="." instance=ExtResource("light_sensor_scene")]
-position = Vector2(560, 312)
+position = Vector2(440, 312)
 data = ExtResource("sensor_data_2_4")
 
 [node name="Lens1" parent="." instance=ExtResource("lens_scene")]
-position = Vector2(140, 296)
+position = Vector2(300, 296)
 lens_data = ExtResource("lens_data_basic")
 
 [node name="Enemies" type="Node2D" parent="."]

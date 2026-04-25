@@ -25,8 +25,8 @@ func _ready() -> void:
 		return
 	data = floodgate_data
 	# 영속 플래그가 이미 set이면 시작부터 open 상태로 복원
-	_is_open = StateFlags.has_flag(floodgate_data.flag_id) and StateFlags.get_flag(
-		floodgate_data.flag_id
+	_is_open = (
+		StateFlags.has_flag(floodgate_data.flag_id) and StateFlags.get_flag(floodgate_data.flag_id)
 	)
 	_apply_visual_state()
 
@@ -46,6 +46,4 @@ func _on_interact() -> void:
 func _apply_visual_state() -> void:
 	if _body_visual == null or floodgate_data == null:
 		return
-	_body_visual.color = (
-		floodgate_data.open_color if _is_open else floodgate_data.closed_color
-	)
+	_body_visual.color = (floodgate_data.open_color if _is_open else floodgate_data.closed_color)
