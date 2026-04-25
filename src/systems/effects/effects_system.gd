@@ -22,8 +22,7 @@ const AfterimageScript = preload("res://src/systems/effects/effects_afterimage.g
 const DuskWarningScript = preload("res://src/systems/effects/effects_dusk_warning.gd")
 const HpCrackScript = preload("res://src/systems/effects/effects_hp_crack.gd")
 const FinishCutinScript = preload("res://src/systems/effects/effects_finish_cutin.gd")
-const TimelinePlayerScript = preload("res://src/systems/effects/effects_timeline_player.gd")
-const TimelineRegistryScript = preload("res://src/systems/effects/effects_timeline_registry.gd")
+const TimelineManagerScript = preload("res://src/systems/effects/effects_timeline_manager.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
 const CONFIG_PATH: String = "res://data/effects/effects_config.tres"
@@ -40,9 +39,6 @@ const CATEGORY_ORGANIC: StringName = &"organic"
 const CATEGORY_MINERAL: StringName = &"mineral"
 const CATEGORY_SHADOW: StringName = &"shadow"
 
-## 동시 재생 timeline 상한. 초과 호출 시 가장 오래된 Player를 cancel.
-const MAX_CONCURRENT_TIMELINES := 8
-
 var _config: EffectsConfigData
 var _hit_flash: EffectsHitFlash
 var _hitstop: EffectsHitstop
@@ -53,8 +49,7 @@ var _afterimage: EffectsAfterimage
 var _dusk_warning: EffectsDuskWarning
 var _hp_crack: EffectsHpCrack
 var _finish_cutin: EffectsFinishCutin
-var _timeline_registry: EffectsTimelineRegistry
-var _active_timeline_players: Array[EffectsTimelinePlayer] = []
+var _timeline_manager: EffectsTimelineManager
 
 
 func _ready() -> void:
@@ -71,8 +66,7 @@ func _ready() -> void:
 	_dusk_warning = DuskWarningScript.new(self, _config)
 	_hp_crack = HpCrackScript.new(self, _config)
 	_finish_cutin = FinishCutinScript.new(self, _config)
-	_timeline_registry = TimelineRegistryScript.new()
-	_timeline_registry.load_all()
+	_timeline_manager = TimelineManagerScript.new(self)
 	# Phase 4-0 #1 Step 6 + #3: 고아 시그널 3종 부활 — damage_resolver가 발행하는 신호를 구독해
 	# 내부 request_* 로 포워딩. screen_shake_requested는 이미 pass 1에서 연결돼 있음.
 	EventBus.hit_flash_requested.connect(_on_hit_flash_requested)
@@ -146,43 +140,18 @@ func request_screen_flash(
 
 ## timeline 리소스를 재생하고 Player 핸들을 반환한다. 호출자 0 상태로 등록됨 — 실 사용은 Step 2+.
 func request_timeline(timeline: EffectTimeline, ctx: Dictionary = {}) -> EffectsTimelinePlayer:
-	if timeline == null:
-		push_warning("EffectsSystem.request_timeline: timeline is null")
-		return null
-	_enforce_timeline_limit()
-	var player: EffectsTimelinePlayer = TimelinePlayerScript.new()
-	player.name = "TimelinePlayer_%s" % timeline.display_name
-	player.setup(timeline, ctx)
-	add_child(player)
-	_active_timeline_players.append(player)
-	player.tree_exited.connect(_active_timeline_players.erase.bind(player))
-	return player
+	return _timeline_manager.request(timeline, ctx) if _timeline_manager != null else null
 
 
 ## Registry 조회로 timeline을 재생한다. id는 .tres 파일 basename (StringName).
 func request_timeline_by_id(timeline_id: StringName, ctx: Dictionary = {}) -> EffectsTimelinePlayer:
-	if _timeline_registry == null:
-		return null
-	var timeline: EffectTimeline = _timeline_registry.get_timeline(timeline_id)
-	if timeline == null:
-		push_warning("EffectsSystem.request_timeline_by_id: '%s' not registered" % timeline_id)
-		return null
-	return request_timeline(timeline, ctx)
+	return _timeline_manager.request_by_id(timeline_id, ctx) if _timeline_manager != null else null
 
 
 ## 재생 중 timeline을 취소. 이미 발화한 cue는 되돌릴 수 없다(Layer 2 위임 완료).
 func cancel_timeline(handle: EffectsTimelinePlayer) -> void:
-	if handle == null or not is_instance_valid(handle):
-		return
-	handle.cancel()
-
-
-func _enforce_timeline_limit() -> void:
-	while _active_timeline_players.size() >= MAX_CONCURRENT_TIMELINES:
-		var oldest: EffectsTimelinePlayer = _active_timeline_players[0]
-		_active_timeline_players.remove_at(0)
-		if is_instance_valid(oldest):
-			oldest.cancel()
+	if _timeline_manager != null:
+		_timeline_manager.cancel(handle)
 
 
 # === 공개 API: 디졸브 (Pass 5 Step 1) ===
