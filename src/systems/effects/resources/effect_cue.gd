@@ -30,7 +30,8 @@ var cue_type: String = "hit_flash"
 @export var flash_use_finish_color: bool = false
 
 @export_group("Shake")
-@export_enum("light", "medium", "heavy", "finish", "custom") var shake_preset: String = "medium"
+@export_enum("light", "medium", "heavy", "finish", "custom", "from_context")
+var shake_preset: String = "medium"
 ## shake_preset == "custom" 시 사용. 0 이하면 무시.
 @export var shake_trauma_override: float = -1.0
 
@@ -42,6 +43,8 @@ var cue_type: String = "hit_flash"
 @export_group("Screen Flash")
 @export var screen_flash_color: Color = Color(1, 1, 1, 0.6)
 @export var screen_flash_duration: float = 0.1
+## true면 context.finish_attribute로 EffectsSystem.get_finish_color() 적용 (screen_flash_color 무시).
+@export var screen_flash_use_finish_color: bool = false
 
 @export_group("Afterimage")
 ## -1.0이면 config.time_stop_afterimage_count 사용.

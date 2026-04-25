@@ -1,0 +1,152 @@
+[gd_resource type="Resource" script_class="EffectTimeline" load_steps=7 format=3]
+
+[ext_resource type="Script" uid="uid://bxkb36dt27gnu" path="res://src/systems/effects/resources/effect_timeline.gd" id="1_timeline"]
+[ext_resource type="Script" uid="uid://n57bvfs2jrcy" path="res://src/systems/effects/resources/effect_cue.gd" id="2_cue"]
+
+[sub_resource type="Resource" id="cue_shake"]
+script = ExtResource("2_cue")
+offset_sec = 0.0
+cue_type = "shake"
+condition = ""
+probability = 1.0
+flash_duration = -1.0
+flash_color = Color(0, 0, 0, 0)
+flash_target_path = ""
+flash_use_finish_color = false
+shake_preset = "finish"
+shake_trauma_override = -1.0
+hitstop_preset = "hit"
+hitstop_duration_override = -1.0
+hitstop_scale_override = -1.0
+screen_flash_color = Color(1, 1, 1, 0.6)
+screen_flash_duration = 0.1
+screen_flash_use_finish_color = false
+afterimage_count = -1
+afterimage_interval = -1.0
+afterimage_fade = -1.0
+afterimage_source_path = ""
+particle_category = "resolve_from_context"
+particle_is_finish = false
+particle_attribute_override = ""
+event_name = &""
+event_args = []
+
+[sub_resource type="Resource" id="cue_hitstop"]
+script = ExtResource("2_cue")
+offset_sec = 0.0
+cue_type = "hitstop"
+condition = ""
+probability = 1.0
+flash_duration = -1.0
+flash_color = Color(0, 0, 0, 0)
+flash_target_path = ""
+flash_use_finish_color = false
+shake_preset = "medium"
+shake_trauma_override = -1.0
+hitstop_preset = "finish"
+hitstop_duration_override = -1.0
+hitstop_scale_override = -1.0
+screen_flash_color = Color(1, 1, 1, 0.6)
+screen_flash_duration = 0.1
+screen_flash_use_finish_color = false
+afterimage_count = -1
+afterimage_interval = -1.0
+afterimage_fade = -1.0
+afterimage_source_path = ""
+particle_category = "resolve_from_context"
+particle_is_finish = false
+particle_attribute_override = ""
+event_name = &""
+event_args = []
+
+[sub_resource type="Resource" id="cue_flash"]
+script = ExtResource("2_cue")
+offset_sec = 0.0
+cue_type = "hit_flash"
+condition = ""
+probability = 1.0
+flash_duration = -1.0
+flash_color = Color(0, 0, 0, 0)
+flash_target_path = ""
+flash_use_finish_color = true
+shake_preset = "medium"
+shake_trauma_override = -1.0
+hitstop_preset = "hit"
+hitstop_duration_override = -1.0
+hitstop_scale_override = -1.0
+screen_flash_color = Color(1, 1, 1, 0.6)
+screen_flash_duration = 0.1
+screen_flash_use_finish_color = false
+afterimage_count = -1
+afterimage_interval = -1.0
+afterimage_fade = -1.0
+afterimage_source_path = ""
+particle_category = "resolve_from_context"
+particle_is_finish = false
+particle_attribute_override = ""
+event_name = &""
+event_args = []
+
+[sub_resource type="Resource" id="cue_particle"]
+script = ExtResource("2_cue")
+offset_sec = 0.0
+cue_type = "hit_particle"
+condition = ""
+probability = 1.0
+flash_duration = -1.0
+flash_color = Color(0, 0, 0, 0)
+flash_target_path = ""
+flash_use_finish_color = false
+shake_preset = "medium"
+shake_trauma_override = -1.0
+hitstop_preset = "hit"
+hitstop_duration_override = -1.0
+hitstop_scale_override = -1.0
+screen_flash_color = Color(1, 1, 1, 0.6)
+screen_flash_duration = 0.1
+screen_flash_use_finish_color = false
+afterimage_count = -1
+afterimage_interval = -1.0
+afterimage_fade = -1.0
+afterimage_source_path = ""
+particle_category = "resolve_from_context"
+particle_is_finish = true
+particle_attribute_override = ""
+event_name = &""
+event_args = []
+
+[sub_resource type="Resource" id="cue_screen_flash"]
+script = ExtResource("2_cue")
+offset_sec = 0.0
+cue_type = "screen_flash"
+condition = ""
+probability = 1.0
+flash_duration = -1.0
+flash_color = Color(0, 0, 0, 0)
+flash_target_path = ""
+flash_use_finish_color = false
+shake_preset = "medium"
+shake_trauma_override = -1.0
+hitstop_preset = "hit"
+hitstop_duration_override = -1.0
+hitstop_scale_override = -1.0
+screen_flash_color = Color(1, 1, 1, 0.6)
+screen_flash_duration = 0.12
+screen_flash_use_finish_color = true
+afterimage_count = -1
+afterimage_interval = -1.0
+afterimage_fade = -1.0
+afterimage_source_path = ""
+particle_category = "resolve_from_context"
+particle_is_finish = false
+particle_attribute_override = ""
+event_name = &""
+event_args = []
+
+[resource]
+script = ExtResource("1_timeline")
+display_name = "Finish — Light"
+time_policy = "ignore"
+expected_duration = 0.12
+allow_during_pause = false
+cues = [SubResource("cue_shake"), SubResource("cue_hitstop"), SubResource("cue_flash"), SubResource("cue_particle"), SubResource("cue_screen_flash")]

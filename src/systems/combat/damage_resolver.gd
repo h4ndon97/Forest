@@ -3,13 +3,13 @@ extends RefCounted
 
 ## hurtbox 접촉 시 데미지·이펙트·이벤트 분배를 전담하는 정적 헬퍼.
 ##
-## Phase 4-0 #1 Step 6 전환 완료:
-##   (a) EventBus.hit_flash_requested / hitstop_requested emit — EffectsSystem이 구독
-##   (b) base_enemy._on_hurtbox_area_entered / base_boss._on_hurtbox_area_entered / boss_weak_point
-##       모두 resolve_hit / resolve_hit_weak_point 위임
-##   (c) 타깃 차이(일반 적 vs 보스, 플래시 duration/color, 파티클 카테고리/오프셋,
-##       데미지 넘버 오프셋, shake preset 기본값)는 타깃이 제공하는 컨트랙트 훅으로 해결
-##   (d) screen_flash_requested emit은 #3 속성 피니시에서 연결 예정 — 본 Step은 TODO만 남김
+## Phase 4-0 #1 Step 6 (이펙트 EventBus 발행) + Effect Timeline Step 2 (선언적 시퀀스) 통합:
+##   (a) base_enemy/base_boss/boss_weak_point 모두 resolve_hit / resolve_hit_weak_point 위임
+##   (b) 타깃 차이(일반 적 vs 보스)는 컨트랙트 훅으로 ctx에 미리 계산해 timeline에 전달
+##   (c) 5종 이펙트(flash/shake/hitstop/particle/screen_flash) 발행은 timeline 1회 호출로 단순화
+##       — timeline_id 매핑은 _resolve_timeline_id, ctx 빌드는 _build_effects_context
+##   (d) timeline cue dispatch가 EventBus.hit_flash_requested / hitstop_requested /
+##       screen_flash_requested / screen_shake_requested 발행 — Step 6의 시그널 부활 유지
 ##
 ## 타깃 컨트랙트 (base_enemy / base_boss 가 구현):
 ##   apply_hit_damage(amount, is_weak_point) -> float (<= 0 이면 연출·숫자·이벤트 스킵)
@@ -20,8 +20,6 @@ extends RefCounted
 ##   get_shake_preset_normal()
 
 const _META_ATTACK_SPEC := "attack_spec"
-## light 피니시 전체 화면 플래시 지속(s). D11: 초기 상수, Phase 5 밸런싱에서 .tres 이전.
-const LIGHT_FINISH_FLASH_DURATION := 0.12
 
 
 ## 일반 hurtbox 접촉. base_enemy/base_boss의 _on_hurtbox_area_entered에서 호출.
@@ -59,7 +57,7 @@ static func _resolve_internal(target: Node, attacker_area: Area2D, is_weak_point
 			target.call("spawn_damage_number", 0.0, false, false, "")
 		return
 
-	# 2) 연출 5종 (플래시/쉐이크/힛스톱/파티클) 발행
+	# 2) 연출 5종(flash/shake/hitstop/particle/screen_flash) timeline 1회 발화
 	_apply_effects(target, spec, is_weak_point)
 
 	# 3) 데미지 숫자
@@ -76,72 +74,61 @@ static func _resolve_internal(target: Node, attacker_area: Area2D, is_weak_point
 
 
 static func _apply_effects(target: Node, spec: AttackSpec, is_weak_point: bool) -> void:
-	# 플래시 — EventBus.hit_flash_requested emit (EffectsSystem._on_hit_flash_requested 수신)
+	var timeline_id: StringName = _resolve_timeline_id(spec, is_weak_point)
+	var ctx: Dictionary = _build_effects_context(target, spec)
+	EffectsSystem.request_timeline_by_id(timeline_id, ctx)
+
+
+static func _resolve_timeline_id(spec: AttackSpec, is_weak_point: bool) -> StringName:
+	if spec.is_finish:
+		match spec.attribute:
+			"light":
+				return &"finish_light"
+			"shadow":
+				return &"finish_shadow"
+			"hybrid":
+				return &"finish_hybrid"
+			_:
+				return &"finish_neutral"
+	if is_weak_point:
+		return &"hit_critical"
+	return &"hit_normal"
+
+
+static func _build_effects_context(target: Node, spec: AttackSpec) -> Dictionary:
+	var ctx: Dictionary = {}
+	ctx[&"finish_attribute"] = spec.attribute
+	ctx[&"is_finish"] = spec.is_finish
+
+	# flash target — get_hit_flash_target() 우선, 없으면 AnimatedSprite2D fallback
 	var flash_target: CanvasItem = null
 	if target.has_method("get_hit_flash_target"):
 		flash_target = target.call("get_hit_flash_target") as CanvasItem
-	else:
+	if flash_target == null:
 		flash_target = target.get_node_or_null("AnimatedSprite2D") as CanvasItem
 	if flash_target != null:
-		var flash_color: Color = _resolve_flash_color(target, spec)
-		var flash_duration: float = _resolve_flash_duration(target)
-		EventBus.hit_flash_requested.emit(flash_target, flash_color, flash_duration)
+		ctx[&"target"] = flash_target
 
-	# 쉐이크 — screen_shake_requested는 Pass 1에서 이미 연결. EffectsSystem.request_shake 경유 유지.
-	EffectsSystem.request_shake(_resolve_shake_preset(target, spec, is_weak_point))
+	# hit_flash base color/duration — cue.flash_color/duration이 비어있을 때 fallback
+	if target.has_method("get_hit_flash_base_color"):
+		ctx[&"flash_color"] = target.call("get_hit_flash_base_color")
+	if target.has_method("get_hit_flash_duration"):
+		ctx[&"flash_duration"] = target.call("get_hit_flash_duration")
 
-	# 힛스톱 — preset을 duration으로 변환한 뒤 EventBus.hitstop_requested emit
-	var hitstop_preset: StringName = _resolve_hitstop_preset(spec.is_finish, is_weak_point)
-	var hitstop_duration: float = EffectsSystem.resolve_hitstop_preset_duration(hitstop_preset)
-	EventBus.hitstop_requested.emit(hitstop_duration, -1.0)
-
-	# 파티클 — 시그널 미정의. 현 상태 EffectsSystem 직접 호출 유지.
+	# 파티클: world_pos = target.global_position + get_hit_particle_offset()
 	if target is Node2D:
 		var offset: Vector2 = Vector2.ZERO
 		if target.has_method("get_hit_particle_offset"):
 			offset = target.call("get_hit_particle_offset")
-		var world_pos: Vector2 = (target as Node2D).global_position + offset
-		var category: StringName = EffectsSystem.CATEGORY_SHADOW
-		if target.has_method("get_hit_particle_category"):
-			category = target.call("get_hit_particle_category")
-		EffectsSystem.request_hit_particle(world_pos, category, spec.is_finish, spec.attribute)
+		ctx[&"world_pos"] = (target as Node2D).global_position + offset
 
-	# light 피니시 순간 전체 화면 플래시 — 고아 시그널 screen_flash_requested 부활.
-	if spec.is_finish and spec.attribute == "light":
-		EventBus.screen_flash_requested.emit(
-			EffectsSystem.get_finish_color(spec.attribute), LIGHT_FINISH_FLASH_DURATION
-		)
+	if target.has_method("get_hit_particle_category"):
+		ctx[&"particle_category"] = target.call("get_hit_particle_category")
 
-
-static func _resolve_flash_color(target: Node, spec: AttackSpec) -> Color:
-	if spec.is_finish and spec.attribute != "none" and spec.attribute != "":
-		return EffectsSystem.get_finish_color(spec.attribute)
-	if target.has_method("get_hit_flash_base_color"):
-		return target.call("get_hit_flash_base_color")
-	return EffectsSystem.get_config().default_flash_color
-
-
-static func _resolve_flash_duration(target: Node) -> float:
-	if target.has_method("get_hit_flash_duration"):
-		return float(target.call("get_hit_flash_duration"))
-	return EffectsSystem.get_config().default_flash_duration
-
-
-static func _resolve_shake_preset(
-	target: Node, spec: AttackSpec, is_weak_point: bool
-) -> StringName:
-	if spec.is_finish:
-		return EffectsSystem.PRESET_FINISH
-	if is_weak_point:
-		return EffectsSystem.PRESET_HEAVY
+	# 일반 hit shake preset (보스=MEDIUM, 일반 적=LIGHT) — hit_normal.tres가 from_context로 수신
 	if target.has_method("get_shake_preset_normal"):
-		return target.call("get_shake_preset_normal")
-	return EffectsSystem.PRESET_LIGHT
+		ctx[&"shake_preset"] = String(target.call("get_shake_preset_normal"))
+	else:
+		ctx[&"shake_preset"] = String(EffectsSystem.PRESET_LIGHT)
 
-
-static func _resolve_hitstop_preset(is_finish: bool, is_weak_point: bool) -> StringName:
-	if is_finish:
-		return EffectsSystem.PRESET_FINISH
-	if is_weak_point:
-		return EffectsSystem.PRESET_CRITICAL
-	return EffectsSystem.PRESET_HIT
+	return ctx
