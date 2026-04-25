@@ -21,14 +21,18 @@ extends Resource
 
 # === 효과 타입 ===
 @export_group("Effect")
-## "melee" / "aoe" / "projectile" / "buff"
-@export var effect_type: String = "melee"
+## "melee" / "aoe" / "projectile" / "buff" / "custom"
+@export_enum("melee", "aoe", "projectile", "buff", "custom") var effect_type: String = "melee"
 ## melee 히트박스 크기
 @export var hitbox_size: Vector2 = Vector2(40, 28)
 ## melee 히트박스 오프셋 (facing 기준)
 @export var hitbox_offset: Vector2 = Vector2(28, -14)
 ## AoE 반경 (effect_type == "aoe" 시)
 @export var aoe_radius: float = 48.0
+## 투사체 씬 (effect_type == "projectile" 시). 비어있으면 발동 실패(push_warning).
+@export var projectile_scene: PackedScene = null
+## 커스텀 실행 스크립트 (effect_type == "custom" 시). SkillCustomBase 상속 필수.
+@export var custom_script: GDScript = null
 
 # === 수치 ===
 @export_group("Parameters")

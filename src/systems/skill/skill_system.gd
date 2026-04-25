@@ -6,12 +6,10 @@ extends Node
 const SkillData = preload("res://data/skills/skill_data.gd")
 const SlotManagerScript = preload("res://src/systems/skill/skill_slot_manager.gd")
 const AttributeResolverScript = preload("res://src/systems/skill/skill_attribute_resolver.gd")
+const ExecutorScript = preload("res://src/systems/skill/skill_executor.gd")
 const HUD_PATH := "res://src/ui/hud/SkillHud.tscn"
 
-const SKILL_PATHS := [
-	"res://data/skills/light_slash.tres",
-	"res://data/skills/shadow_strike.tres",
-]
+const SKILL_DIR := "res://data/skills/"
 ## true면 _ready에서 모든 슬롯에 자동 장착(개발/테스트용).
 ## 인벤토리 [스킬] 탭에서 수동 장착 시연용으로는 false 권장.
 const DEBUG_SKILL_AUTO_EQUIP: bool = true
@@ -58,6 +56,30 @@ func get_equipped_skill(slot_index: int) -> SkillData:
 	if sid.is_empty():
 		return null
 	return _all_skills.get(sid, null)
+
+
+# === Public API: 실행 ===
+
+
+## 슬롯의 스킬을 실행한다. 실패(빈 슬롯/쿨다운/자원 부족) 시 false.
+## caster는 현재 Player 고정. MovementComponent/AnimatedSprite2D 자식 노드 규약.
+func execute(slot_index: int, caster: Node) -> bool:
+	if caster == null:
+		return false
+	if not can_use_skill(slot_index):
+		return false
+
+	var skill: SkillData = get_equipped_skill(slot_index)
+	if skill == null:
+		return false
+
+	var ctx: Dictionary = {
+		"caster": caster,
+		"movement": caster.get_node_or_null("MovementComponent"),
+		"sprite": caster.get_node_or_null("AnimatedSprite2D"),
+		"slot_index": slot_index,
+	}
+	return ExecutorScript.execute(skill, ctx)
 
 
 # === Public API: 쿨다운 ===
@@ -134,14 +156,30 @@ func _create_child(child_name: String, script: GDScript) -> Node:
 	return node
 
 
+## data/skills/ 폴더의 모든 .tres를 런타임 스캔하여 SkillData 인스턴스를 등록한다.
+## 신규 스킬 추가 = .tres 파일 드롭만으로 완료(코드 수정 없음).
 func _load_skills() -> void:
-	for path in SKILL_PATHS:
-		if not ResourceLoader.exists(path):
-			continue
-		var res: Resource = load(path)
-		if res is SkillData:
-			var skill: SkillData = res as SkillData
-			_all_skills[skill.id] = skill
+	var dir := DirAccess.open(SKILL_DIR)
+	if dir == null:
+		push_warning("SkillSystem: cannot open %s" % SKILL_DIR)
+		return
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while entry != "":
+		if not dir.current_is_dir() and entry.ends_with(".tres"):
+			var path := SKILL_DIR + entry
+			var res: Resource = load(path)
+			if res is SkillData:
+				var skill: SkillData = res as SkillData
+				if skill.id.is_empty():
+					push_warning("SkillSystem: %s has empty id, skipped" % path)
+				else:
+					_all_skills[skill.id] = skill
+			else:
+				push_warning("SkillSystem: %s is not SkillData, skipped" % path)
+		entry = dir.get_next()
+	dir.list_dir_end()
+	print("[SkillSystem] Loaded %d skills" % _all_skills.size())
 
 
 func _auto_unlock_all() -> void:
