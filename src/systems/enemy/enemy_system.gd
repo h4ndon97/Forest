@@ -44,6 +44,17 @@ func _ready() -> void:
 	EventBus.lantern_toggled.connect(_on_lantern_toggled)
 	EventBus.enemy_reinforce_requested.connect(_on_reinforce_requested)
 
+	# 초기 TimeSystem state가 이미 FLOWING이면 activation timer 즉시 시작.
+	# time_state_changed 시그널은 "전이"에서만 발행되므로 부팅/워프 시 FLOWING을
+	# 이미 머금고 시작하는 경우(세이브 로드, 테스트 워프 등) 이 폴이 방어망.
+	_check_initial_time_state.call_deferred()
+
+
+func _check_initial_time_state() -> void:
+	if TimeSystem.get_time_state() == TimeStateMachineScript.TimeState.FLOWING:
+		_activation_timer.wait_time = _config.activation_delay
+		_activation_timer.start()
+
 
 ## 적을 시스템에 등록하고 ID를 반환한다.
 ## 적이 활성 상태이면 새로 등록된 적도 즉시 활성화한다 (부활 적 대응).
@@ -60,7 +71,7 @@ func register_enemy(enemy: Node) -> int:
 
 ## 적 사망 처리. 시그널 발신 + 레지스트리 제거.
 ## 처치 시점의 낮/밤 상태를 반환한다 (잔류 정화 조건에 사용).
-func on_enemy_died(enemy_id: int, death_position: Vector2) -> bool:
+func on_enemy_died(enemy_id: int, _death_position: Vector2) -> bool:
 	var enemy: Node = _registry.get_enemy(enemy_id)
 	var enemy_name: String = enemy.name if enemy else ""
 	var killed_during_day: bool = not _is_night
@@ -87,6 +98,12 @@ func get_config() -> EnemyConfigData:
 ## 활성 적 수를 반환한다.
 func get_enemy_count() -> int:
 	return _registry.get_count()
+
+
+## pos에서 max_dist 내의 최근접 살아있는 적을 반환한다(없으면 null).
+## shadow 피니시 텔포 좌표 계산 등에 사용.
+func get_nearest_enemy(pos: Vector2, max_dist: float) -> Node:
+	return _registry.get_nearest(pos, max_dist)
 
 
 # --- 내부 ---
