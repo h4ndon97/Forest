@@ -24,3 +24,6 @@ hurtbox_offset = Vector2(0, -14)
 auto_heal_amount = 2.0
 auto_heal_interval = 1.0
 respawn_delay = 1.0
+respawn_fade_in_duration = 0.6
+respawn_hold_duration = 1.5
+respawn_fade_out_duration = 0.4

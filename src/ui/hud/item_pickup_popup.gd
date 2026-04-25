@@ -1,10 +1,14 @@
 extends CanvasLayer
 
 ## Phase 3-7 Pass 5 Step 1 ④ — 아이템 획득 팝업.
-## EventBus.item_acquired 구독 → 하단 중앙 slide-in 0.2s + hold 1.5s + fade 0.3s.
+## EventBus.item_acquired / item_pickup_full 구독 → 하단 중앙 slide-in + hold + fade.
+## Step 0(흐름 통일): timing은 OverlaySystem 표준 상수 참조.
+
+const FAILURE_COLOR: Color = Color(0.85, 0.55, 0.35, 0.9)  # 가득 참 안내 — 회색조 호박색
 
 const FONT_PATH: String = "res://assets/fonts/galmuri/Galmuri11.ttf"
-const POPUP_LAYER: int = 60
+## stage_transition fade rect(layer 100) 위 — 씬 전환 중에도 popup 가시.
+const POPUP_LAYER: int = 110
 
 const POPUP_WIDTH: float = 200.0
 const POPUP_HEIGHT: float = 28.0
@@ -12,9 +16,6 @@ const ICON_SIZE: float = 16.0
 const SCREEN_WIDTH: float = 640.0
 const BASE_Y: float = 320.0
 const SLIDE_FROM_Y: float = 360.0
-const SLIDE_DURATION: float = 0.2
-const HOLD_DURATION: float = 1.5
-const FADE_DURATION: float = 0.3
 
 const RARITY_BORDER: Dictionary = {
 	ItemData.ItemRarity.COMMON: Color(0.7, 0.7, 0.7, 0.9),
@@ -37,6 +38,7 @@ func _ready() -> void:
 	_load_font()
 	_build_nodes()
 	EventBus.item_acquired.connect(_on_item_acquired)
+	EventBus.item_pickup_full.connect(_on_item_pickup_full)
 
 
 func _load_font() -> void:
@@ -105,6 +107,26 @@ func _on_item_acquired(item_id: String) -> void:
 	_play_popup()
 
 
+## 소모품 가득 차서 획득 실패 시. 사용자가 *왜 안 줍히는지* 알 수 있게 안내.
+func _on_item_pickup_full(item_id: String) -> void:
+	var data: Resource = InventorySystem.get_item_data(item_id)
+	if data == null or not (data is ItemData):
+		return
+	var item_data: ItemData = data as ItemData
+	_label.text = "%s 가득 참" % item_data.display_name
+	_label_settings.font_color = FAILURE_COLOR
+	if item_data.icon != null:
+		_icon.texture = item_data.icon
+		_icon.visible = true
+		_icon_fallback.visible = false
+	else:
+		_icon.texture = null
+		_icon.visible = false
+		_icon_fallback.color = FAILURE_COLOR
+		_icon_fallback.visible = true
+	_play_popup()
+
+
 func _rarity_color(rarity: int) -> Color:
 	return RARITY_BORDER.get(rarity, Color(0.95, 0.92, 0.85))
 
@@ -119,10 +141,10 @@ func _play_popup() -> void:
 	_panel.visible = true
 	_tween = create_tween()
 	_tween.set_ignore_time_scale(true)
-	_tween.tween_property(_panel, "position:y", BASE_Y, SLIDE_DURATION)
-	_tween.parallel().tween_property(_panel, "modulate:a", 1.0, SLIDE_DURATION)
-	_tween.tween_interval(HOLD_DURATION)
-	_tween.tween_property(_panel, "modulate:a", 0.0, FADE_DURATION)
+	_tween.tween_property(_panel, "position:y", BASE_Y, OverlaySystem.TIMING_QUICK)
+	_tween.parallel().tween_property(_panel, "modulate:a", 1.0, OverlaySystem.TIMING_QUICK)
+	_tween.tween_interval(OverlaySystem.HOLD_LONG)
+	_tween.tween_property(_panel, "modulate:a", 0.0, OverlaySystem.TIMING_SOFT)
 	_tween.tween_callback(_on_popup_complete)
 
 

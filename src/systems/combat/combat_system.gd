@@ -25,7 +25,9 @@ func _ready() -> void:
 	_respawn_timer = Timer.new()
 	_respawn_timer.name = "RespawnTimer"
 	_respawn_timer.one_shot = true
-	_respawn_timer.wait_time = _config.respawn_delay
+	# 분위기형 죽음 시퀀스: 페이드인 + 홀드 = 거점 전환 트리거 시점.
+	# 거점 부재 시(_on_respawn_timeout fallback)는 respawn_delay로 단축됨 — Timer wait_time은 분기에서 갱신.
+	_respawn_timer.wait_time = (_config.respawn_fade_in_duration + _config.respawn_hold_duration)
 	_respawn_timer.timeout.connect(_on_respawn_timeout)
 	add_child(_respawn_timer)
 
@@ -144,7 +146,13 @@ func _on_player_died() -> void:
 
 func _on_respawn_timeout() -> void:
 	if not _last_checkpoint_id.is_empty():
-		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint")
+		# 죽음 경로: combat_hud의 검정 오버레이가 이미 풀 알파라 stage_transition은
+		# fade-out 스킵하고 곧바로 씬 로드 → 단일 페이드인으로 노출.
+		var options := {
+			"skip_fade_out": true,
+			"fade_in_duration": _config.respawn_fade_out_duration,
+		}
+		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint", options)
 	else:
 		EventBus.player_respawned.emit(_spawn_point)
 

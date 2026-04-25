@@ -11,6 +11,14 @@ const DISSOLVE_SHADER: Shader = preload("res://assets/shaders/effects/dissolve_t
 const OVERLAY_LAYER: int = 100
 const DISSOLVE_WEIGHT_PARAM: StringName = &"weight"
 
+# === 표준 트랜지션 timing (Pass 5 Step 0) ===
+const TIMING_QUICK: float = 0.18  # 빠른 등장/퇴장 (메뉴 디졸브, 슬라이드)
+const TIMING_SOFT: float = 0.30  # 부드러운 페이드 아웃 (팝업)
+const HOLD_SHORT: float = 1.2  # 짧은 자막 (네임플레이트)
+const HOLD_LONG: float = 1.5  # 정보 유지 (아이템 팝업, 죽음 홀드)
+const HUD_FADE_IN_DELAY: float = 0.4  # stage_transition 페이드인 후 여유
+const HUD_FADE_IN_DURATION: float = 0.6  # HUD 떠오름
+
 var _post_process: ColorRect
 var _vignette: ColorRect
 var _hp_crack: OverlayHpCrack

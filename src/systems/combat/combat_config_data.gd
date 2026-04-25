@@ -46,4 +46,11 @@ extends Resource
 
 # === 리스폰 ===
 @export_group("Respawn")
+## 비-거점 리스폰 fallback 지연 (체크포인트 부재 시 player_respawned 즉시 emit 전 대기).
 @export var respawn_delay: float = 1.0
+## 죽음 시 검정 오버레이 페이드인 (combat_hud).
+@export var respawn_fade_in_duration: float = 0.6
+## 검정 풀 알파 상태 유지 시간 (분위기형). _respawn_timer = fade_in + hold.
+@export var respawn_hold_duration: float = 1.5
+## 거점 리스폰 후 stage_transition 페이드인 시간.
+@export var respawn_fade_out_duration: float = 0.4

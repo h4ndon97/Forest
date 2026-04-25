@@ -162,7 +162,10 @@ func _rebuild_graph() -> void:
 
 	_refresh_spider_icons()
 	_zone_layout.build_overlay(
-		_zone_container, GraphBuilderScript.RING_CENTER, GraphBuilderScript.RING_RADII, ring_populated
+		_zone_container,
+		GraphBuilderScript.RING_CENTER,
+		GraphBuilderScript.RING_RADII,
+		ring_populated
 	)
 	_selected_index = 0
 	_update_selection_highlight()
@@ -226,7 +229,7 @@ func _travel_to_selected() -> void:
 	_visible = false
 	visible = false
 	EventBus.world_map_closed.emit()
-	EventBus.stage_transition_requested.emit(target_id, "checkpoint")
+	EventBus.stage_transition_requested.emit(target_id, "checkpoint", {})
 
 
 # --- 열기/닫기 ---

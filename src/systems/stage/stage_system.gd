@@ -57,11 +57,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not OS.is_debug_build():
 		return
 	if event.is_action_pressed("debug_jump_test_checkpoint"):
-		EventBus.stage_transition_requested.emit("test_checkpoint", "checkpoint")
+		EventBus.stage_transition_requested.emit("test_checkpoint", "checkpoint", {})
 	elif event.is_action_pressed("debug_jump_start_village"):
-		EventBus.stage_transition_requested.emit("start_village", "checkpoint")
+		EventBus.stage_transition_requested.emit("start_village", "checkpoint", {})
 	elif event.is_action_pressed("debug_jump_boss_1b"):
-		EventBus.stage_transition_requested.emit("stage_1_b", "checkpoint")
+		EventBus.stage_transition_requested.emit("stage_1_b", "checkpoint", {})
 
 
 func get_current_stage_id() -> String:
@@ -119,7 +119,9 @@ func get_stage_hour(stage_id: String) -> float:
 	return 12.0
 
 
-func transition_to_stage(target_stage_id: String, entry_direction: String) -> void:
+func transition_to_stage(
+	target_stage_id: String, entry_direction: String, options: Dictionary = {}
+) -> void:
 	if _transition.is_transitioning():
 		return
 
@@ -155,7 +157,7 @@ func transition_to_stage(target_stage_id: String, entry_direction: String) -> vo
 	if was_flowing:
 		EventBus.time_flow_paused.emit()
 
-	await _transition.execute(data.scene_path, entry_direction)
+	await _transition.execute(data.scene_path, entry_direction, options)
 	EventBus.stage_transition_completed.emit(target_stage_id)
 
 	if was_flowing:
@@ -187,7 +189,7 @@ func _try_load_save() -> void:
 	# 초기 씬 로드 완료 후 거점으로 전환 (검정 화면은 _ready에서 이미 적용됨)
 	if not _last_checkpoint_id.is_empty():
 		await get_tree().process_frame
-		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint")
+		EventBus.stage_transition_requested.emit(_last_checkpoint_id, "checkpoint", {})
 
 
 func _load_stage_data() -> void:
@@ -233,14 +235,16 @@ func _on_game_start_requested(is_new_game: bool) -> void:
 		_last_checkpoint_id = ""
 		_stage_hours.clear()
 		_discovered_checkpoints.clear()
-		EventBus.stage_transition_requested.emit("start_village", "checkpoint")
+		EventBus.stage_transition_requested.emit("start_village", "checkpoint", {})
 	else:
 		_transition.set_fade_black()
 		_try_load_save()
 
 
-func _on_transition_requested(target_stage_id: String, entry_direction: String) -> void:
-	transition_to_stage(target_stage_id, entry_direction)
+func _on_transition_requested(
+	target_stage_id: String, entry_direction: String, options: Dictionary
+) -> void:
+	transition_to_stage(target_stage_id, entry_direction, options)
 
 
 func _on_stage_entered(stage_id: String) -> void:

@@ -19,20 +19,32 @@ func _ready() -> void:
 
 
 ## 전환 실행. 페이드 아웃 → Player 보존 → 씬 전환 → Player 재삽입 → 페이드 인.
-func execute(scene_path: String, entry_direction: String) -> void:
+## options 키: fade_color (Color, default BLACK), skip_fade_out (bool, default false),
+## fade_in_duration (float, default FADE_DURATION).
+func execute(scene_path: String, entry_direction: String, options: Dictionary = {}) -> void:
 	if _is_transitioning:
 		return
 	_is_transitioning = true
 	_pending_entry_direction = entry_direction
 
+	var fade_color: Color = options.get("fade_color", Color.BLACK)
+	var skip_fade_out: bool = options.get("skip_fade_out", false)
+	var fade_in_duration: float = options.get("fade_in_duration", FADE_DURATION)
+
 	# 입력 차단
 	get_tree().paused = true
 
-	# 페이드 아웃
-	var tween := create_tween()
-	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(_fade_rect, "color:a", 1.0, FADE_DURATION)
-	await tween.finished
+	# fade_rect의 RGB만 갱신, alpha는 tween이 관리
+	_fade_rect.color = Color(fade_color.r, fade_color.g, fade_color.b, _fade_rect.color.a)
+
+	# 페이드 아웃 (또는 스킵 — 죽음 경로처럼 화면이 이미 검정일 때)
+	if skip_fade_out:
+		_fade_rect.color.a = 1.0
+	else:
+		var tween := create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(_fade_rect, "color:a", 1.0, FADE_DURATION)
+		await tween.finished
 
 	# Player를 씬 트리에서 분리하여 보존
 	var player: CharacterBody2D = get_tree().get_first_node_in_group("player")
@@ -49,10 +61,10 @@ func execute(scene_path: String, entry_direction: String) -> void:
 	# Player를 새 씬에 삽입하고 위치 설정
 	_reinsert_player(player)
 
-	# 페이드 인
+	# 페이드 인 (duration은 options에서 인자화)
 	var tween_in := create_tween()
 	tween_in.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween_in.tween_property(_fade_rect, "color:a", 0.0, FADE_DURATION)
+	tween_in.tween_property(_fade_rect, "color:a", 0.0, fade_in_duration)
 	await tween_in.finished
 
 	# 입력 복원

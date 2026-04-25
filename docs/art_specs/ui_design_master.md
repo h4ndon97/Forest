@@ -1082,19 +1082,28 @@ F 카테고리에서 세부 확정. B-7에서는 **원칙만 명시**:
 
 > **상세 명세**: [../EFFECTS.md](../EFFECTS.md) (Phase 3-7 Pass 1~5c)
 
-#### H-1. 현재 구현
+#### H-1. 현재 구현 (2026-04-25 갱신, Pass 5 Step 0 시점)
 
 | 요소 | 구현 상태 |
 |---|---|
-| 데미지 넘버 | ColorRect Label + 24px 상승 + 페이드 |
-| 힛 플래시 | 미구현 (Pass 2 예정) |
-| 힛스톱 | 미구현 (Pass 2 예정) |
-| 카메라 쉐이크 | 미구현 (Pass 1/2 예정) |
-| 씬 페이드 전환 | 미구현 |
-| 디졸브 트랜지션 | 미구현 (Pass 5a 예정) |
-| 피니시 컷인 | 미구현 (Pass 5c 예정) |
-| 혈흔/파편 파티클 | 미구현 (Pass 2 예정) |
-| 슬래시 트레일 | 미구현 (Pass 5c 예정) |
+| 데미지 넘버 | ✅ Pass 2 Step 2 (D7-4 비트맵 폰트, 3티어) |
+| 힛 플래시 | ✅ Pass 1/2 (피니시 속성별 색 분기) |
+| 힛스톱 | ✅ Pass 1/2 (약/중/강/피니시 4단계) |
+| 카메라 쉐이크 | ✅ Pass 1 (trauma² 기반) |
+| 씬 페이드 전환 | ✅ `stage_transition.gd` (Step 0 후 options Dict — fade_color/skip_fade_out/fade_in_duration) |
+| 디졸브 트랜지션 | ✅ Pass 5 Step 1 ③ (메뉴 enter/exit) |
+| 아이템 픽업 팝업 | ✅ Pass 5 Step 1 ④ (slide+hold+fade) |
+| 스테이지 네임플레이트 | ✅ `stage_nameplate.gd` (display_name + zone, 페이드인/홀드/페이드아웃) |
+| 인트로 시퀀스 | ✅ `intro_sequence.gd` (새 게임 시 3줄 스토리 페이드) |
+| 시간 정지 톤 | ✅ Pass 3 Step 1~4 (세피아 균일 + 블루 펄스 + 잔상) |
+| 앰비언트 파티클 | ✅ Pass 5 Step 2 (낮 꽃가루 / 밤 반딧불) |
+| 빈사 크랙 / 딜레이드 pip | ✅ Pass 5 Step 1 ①② |
+| **흐름 통일 (Pass 5 Step 0)** | ✅ HUD 페이드인 / 표준 timing 상수 / stage_transition options Dict / 죽음 시퀀스 통합 (분위기형) |
+| 피니시 컷인 | 📋 Pass 5 Step 4 계획 |
+| 혈흔/파편 파티클 | ✅ Pass 2 Step 3 (organic/mineral/shadow) |
+| 슬래시 트레일 | 📋 Pass 5 Step 3 계획 |
+| HDR 글로우 | 📋 Pass 5 Step 6 계획 (1구역 아트 후) |
+| 패럴랙스 5층 | 📋 Pass 5 Step 7 계획 (1구역 배경 후) |
 
 #### H-2. 핵심 결정 사항 (EFFECTS.md와 동기화 필요)
 

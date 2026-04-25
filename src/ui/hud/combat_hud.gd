@@ -48,10 +48,12 @@ var _death_label: Label
 var _death_tween: Tween
 var _clear_tween: Tween
 var _recovery_tween: Tween
+var _has_faded_in: bool = false  # Pass 5 Step 0: HUD 페이드인 1회 가드
 
 @onready var combo_orb: ColorRect = $MarginContainer/Cluster/ComboOrb
 @onready var combo_dots_container: HBoxContainer = $MarginContainer/Cluster/ComboDots
 @onready var hp_pips_container: HBoxContainer = $MarginContainer/Cluster/HpPips
+@onready var _hud_root: MarginContainer = $MarginContainer
 
 
 func _ready() -> void:
@@ -64,9 +66,23 @@ func _ready() -> void:
 	EventBus.checkpoint_entered.connect(_on_checkpoint_respawned)
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
 	EventBus.time_state_changed.connect(_on_time_state_changed)
+	EventBus.stage_entered.connect(_on_first_stage_entered)
 
 	_collect_children()
 	_create_death_overlay()
+
+	# Pass 5 Step 0: HUD 페이드인 — 첫 stage_entered까지 alpha 0 유지.
+	_hud_root.modulate.a = 0.0
+
+
+## 첫 거점 진입 시 1회 페이드인. stage_transition 페이드인 후 짧은 여유 → 0.6s 페이드.
+func _on_first_stage_entered(_stage_id: String) -> void:
+	if _has_faded_in:
+		return
+	_has_faded_in = true
+	var tween := create_tween()
+	tween.tween_interval(OverlaySystem.HUD_FADE_IN_DELAY)
+	tween.tween_property(_hud_root, "modulate:a", 1.0, OverlaySystem.HUD_FADE_IN_DURATION)
 
 
 func _process(delta: float) -> void:
@@ -255,7 +271,11 @@ func _on_player_died() -> void:
 		_death_tween.kill()
 	_death_tween = create_tween()
 
-	_death_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0.6), 0.5)
+	# 분위기형 죽음 시퀀스 (Pass 5 Step 0). 검정 풀 페이드 → 자막 → 홀드는 combat_system 타이머가 담당.
+	var cfg: CombatConfigData = CombatSystem.get_config()
+	_death_tween.tween_property(
+		_death_overlay, "color", Color(0, 0, 0, 1.0), cfg.respawn_fade_in_duration
+	)
 
 	_death_tween.tween_callback(
 		func():
@@ -283,10 +303,13 @@ func _clear_death_overlay() -> void:
 	if _clear_tween:
 		_clear_tween.kill()
 
+	# stage_transition fade-in과 동조 — combat_config의 respawn_fade_out_duration 공유.
+	var cfg: CombatConfigData = CombatSystem.get_config()
+	var fade_out: float = cfg.respawn_fade_out_duration
 	_clear_tween = create_tween().set_parallel(true)
-	_clear_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0), 0.3)
+	_clear_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0), fade_out)
 	_clear_tween.tween_property(
-		_death_label, "theme_override_colors/font_color", Color(0.8, 0.2, 0.2, 0), 0.2
+		_death_label, "theme_override_colors/font_color", Color(0.8, 0.2, 0.2, 0), fade_out
 	)
 	_clear_tween.chain().tween_callback(
 		func():

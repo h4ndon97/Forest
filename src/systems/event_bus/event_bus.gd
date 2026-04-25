@@ -39,7 +39,13 @@ signal stage_entered(stage_id: String)
 signal stage_clear_updated(stage_id: String, clear_level: int)
 signal spawn_point_set(position: Vector2)
 signal stage_enemies_sync_requested(stage_id: String, killed_names: Array)
-signal stage_transition_requested(target_stage_id: String, entry_direction: String)
+## options 키 (모두 선택):
+##   fade_color: Color (default Color.BLACK)
+##   skip_fade_out: bool (default false) — 화면 이미 검정일 때 페이드아웃 스킵 (죽음 경로)
+##   fade_in_duration: float (default StageTransition.FADE_DURATION)
+signal stage_transition_requested(
+	target_stage_id: String, entry_direction: String, options: Dictionary
+)
 signal stage_transition_started(from_stage: String, to_stage: String)
 signal stage_transition_completed(stage_id: String)
 signal stage_access_denied(stage_id: String, lock_type: int, reason: String)
@@ -99,6 +105,8 @@ signal time_resource_consume_flat_requested(amount: float)
 # === 인벤토리/장비 시스템 ===
 signal item_acquired(item_id: String)
 signal item_removed(item_id: String)
+## 소모품 소지 한도 가득 차서 획득 실패. ItemPickupPopup이 안내 메시지 표시.
+signal item_pickup_full(item_id: String)
 ## slot_type: 0=weapon, 1=armor, 2~4=accessory. item_id="" = 해제
 signal equipment_changed(slot_type: int, item_id: String)
 signal equipment_stats_changed

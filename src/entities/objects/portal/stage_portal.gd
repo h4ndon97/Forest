@@ -63,7 +63,7 @@ func _activate() -> void:
 
 	_triggered = true
 	var entry_dir := "left" if direction == "right" else "right"
-	EventBus.stage_transition_requested.emit(target_stage_id, entry_dir)
+	EventBus.stage_transition_requested.emit(target_stage_id, entry_dir, {})
 
 
 func _on_access_denied(stage_id: String, _lock_type: int, _reason: String) -> void:
