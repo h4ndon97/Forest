@@ -18,6 +18,7 @@ var _hint_label: Label
 var _tabs: InventoryTabController
 var _equipment_tab: EquipmentTab
 var _skill_tab: SkillTab
+var _fade_tween: Tween
 
 
 func _ready() -> void:
@@ -120,15 +121,29 @@ func _open() -> void:
 	_equipment_tab.refresh()
 	_skill_tab.refresh()
 	_apply_active_tab()
-	EffectsSystem.request_dissolve_flash()
+	_fade_children(0.0, 1.0, MenuFrame.FADE_DURATION)
 	EventBus.inventory_opened.emit()
 
 
 func _close() -> void:
 	_is_open = false
+	_fade_children(1.0, 0.0, MenuFrame.FADE_DURATION)
+	await get_tree().create_timer(MenuFrame.FADE_DURATION, true, false, true).timeout
 	visible = false
-	EffectsSystem.request_dissolve_flash()
 	EventBus.inventory_closed.emit()
+
+
+## 자식 노드 일괄 modulate.a 페이드 (CanvasLayer 자체에는 modulate 없음).
+func _fade_children(from_a: float, to_a: float, duration: float) -> void:
+	if _fade_tween and _fade_tween.is_valid():
+		_fade_tween.kill()
+	_fade_tween = create_tween().set_parallel(true)
+	_fade_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_fade_tween.set_ignore_time_scale(true)
+	for child in get_children():
+		if child is CanvasItem:
+			(child as CanvasItem).modulate.a = from_a
+			_fade_tween.tween_property(child, "modulate:a", to_a, duration)
 
 
 # --- UI 구성 ---

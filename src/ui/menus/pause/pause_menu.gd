@@ -127,17 +127,19 @@ func _open() -> void:
 		AudioServer.set_bus_volume_db(_master_bus_index, _original_master_db + BGM_DUCK_DB)
 	_controller.set_input_active(true)
 	_controller.set_selected_index(0)
-	EffectsSystem.request_dissolve_flash()
+	_frame.open()
 	EventBus.game_paused.emit()
 
 
 func _close() -> void:
 	_is_open = false
-	visible = false
 	get_tree().paused = false
 	_controller.set_input_active(false)
 	_restore_bgm()
-	EffectsSystem.request_dissolve_flash()
+	_frame.close()
+	# CanvasLayer visible은 frame fade 완료 후 (메뉴 입력 차단은 위에서 처리됨).
+	await get_tree().create_timer(MenuFrame.FADE_DURATION, true, false, true).timeout
+	visible = false
 	EventBus.game_resumed.emit()
 
 

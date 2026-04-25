@@ -16,6 +16,8 @@ const TITLE_PAD_TOP: float = 18.0
 const TITLE_AREA_HEIGHT: float = 34.0
 const HINT_PAD_BOTTOM: float = 12.0
 const HINT_AREA_HEIGHT: float = 16.0
+## Pass 5 Step 0 후속 — 메뉴 전용 페이드. 디졸브 셰이더보다 단순/부드러움.
+const FADE_DURATION: float = 0.25
 
 var _frame_size: Vector2 = Vector2(240, 320)
 var _veil: ColorRect
@@ -24,6 +26,7 @@ var _bg: ColorRect
 var _title_label: Label
 var _hint_label: Label
 var _content_root: Control
+var _fade_tween: Tween
 
 
 ## 부모 CanvasLayer에 attach하고 프레임 레이아웃을 구성한다.
@@ -36,6 +39,30 @@ func setup(parent: CanvasLayer, frame_size: Vector2, title_text: String = "") ->
 	_build_layout()
 	set_title(title_text)
 	set_hint("")
+
+
+## 페이드인으로 메뉴를 연다. visible 토글 + modulate.a 0→1 Tween.
+## tree paused 환경에서도 동작하도록 ignore_time_scale.
+func open(duration: float = FADE_DURATION) -> void:
+	if _fade_tween and _fade_tween.is_valid():
+		_fade_tween.kill()
+	visible = true
+	modulate.a = 0.0
+	_fade_tween = create_tween()
+	_fade_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_fade_tween.set_ignore_time_scale(true)
+	_fade_tween.tween_property(self, "modulate:a", 1.0, duration)
+
+
+## 페이드아웃으로 메뉴를 닫는다. 완료 후 visible=false.
+func close(duration: float = FADE_DURATION) -> void:
+	if _fade_tween and _fade_tween.is_valid():
+		_fade_tween.kill()
+	_fade_tween = create_tween()
+	_fade_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	_fade_tween.set_ignore_time_scale(true)
+	_fade_tween.tween_property(self, "modulate:a", 0.0, duration)
+	_fade_tween.tween_callback(func(): visible = false)
 
 
 func set_veil_enabled(enabled: bool) -> void:
