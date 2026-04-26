@@ -115,6 +115,20 @@
   3. 출력물을 `assets/sprites/` 하위 적절한 폴더에 배치
 - **규칙**: ART_PIPELINE.md의 규격 준수
 
+### Recommendations Manager (추천 폴더 관리)
+- **트리거**: 콘텐츠/시스템/연출/UI/사운드/스토리/메타 영역의 신규 작업을 시작할 때
+- **위치**: `docs/recommendations/`
+- **동작**:
+  1. 작업 시작 전 `docs/recommendations/README.md` 인덱스에서 본 작업 영역과 연관된 추천 항목 확인
+  2. `CHANGELOG.md`에서 마지막 작업 이후 변경 사항 훑기
+  3. 채택/구현 시 → 해당 카테고리 .md의 본문 갱신 + README 인덱스 표 상태 셀 갱신 + CHANGELOG에 한 줄 추가
+  4. 작업 중 새 추천 아이디어 발생 시 → 해당 카테고리에 새 ID로 추가 (`REC-{코드}-{3자리}`) + CHANGELOG 한 줄
+  5. 추천 항목의 무효화 조건 충족 확인 → 상태 `STALE` 갱신
+- **규칙**:
+  - 본 폴더 내용은 **추천(PROPOSED)이며 결정 사항이 아님** — 결정 시 사용자 확인 후 ACCEPTED 전환
+  - 인덱스(README.md)와 CHANGELOG.md는 짧은 단위로 편집 (병렬 세션 충돌 최소화)
+  - 본 폴더의 운영 정책 자체는 README.md §0 참조
+
 ---
 
 ## 6. 폴더 구조
