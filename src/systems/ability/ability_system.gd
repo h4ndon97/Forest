@@ -162,7 +162,15 @@ func _dispatch_reward(data: BossStatsData) -> void:
 	if not data.reward_next_zone_flag.is_empty() and has_node("/root/StateFlags"):
 		get_node("/root/StateFlags").set_flag(data.reward_next_zone_flag, true)
 
-	# 5) 아이템 (현재는 EventBus로 분배만 — InventorySystem이 수신)
-	for item_id in data.reward_item_ids:
-		if not str(item_id).is_empty():
-			EventBus.item_acquired.emit(str(item_id))
+	# 5) 아이템 — InventorySystem.acquire_item 직접 호출.
+	#    내부에서 EventBus.item_acquired 자동 emit (팝업 트리거).
+	#    이전 구현은 EventBus만 emit해서 팝업은 떠도 가방에는 추가 안 되는 버그였음
+	#    (Mire Mother mire_pendant에서 발견 — zone1 oakheart는 reward_item_ids 비어있어 미발견).
+	if not data.reward_item_ids.is_empty() and has_node("/root/InventorySystem"):
+		var inventory: Node = get_node("/root/InventorySystem")
+		if inventory.has_method("acquire_item"):
+			for item_id in data.reward_item_ids:
+				if not str(item_id).is_empty():
+					inventory.acquire_item(str(item_id))
+		else:
+			push_warning("AbilitySystem: InventorySystem.acquire_item 미정의")
