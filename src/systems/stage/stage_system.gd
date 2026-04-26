@@ -7,6 +7,7 @@ extends Node
 const RegistryScript = preload("res://src/systems/stage/stage_registry.gd")
 const ClearTrackerScript = preload("res://src/systems/stage/stage_clear_tracker.gd")
 const TransitionScript = preload("res://src/systems/stage/stage_transition.gd")
+const StageDebugScript = preload("res://src/systems/stage/stage_debug.gd")
 const LockValidatorScript = preload("res://src/systems/stage/stage_lock_validator.gd")
 const TimePropagationScript = preload("res://src/systems/stage/time_propagation.gd")
 const SaveManagerScript = preload("res://src/systems/stage/save_manager.gd")
@@ -45,6 +46,10 @@ func _ready() -> void:
 	var prop_config: PropagationConfigData = load(PROPAGATION_CONFIG_PATH) as PropagationConfigData
 	_time_propagation.setup(_registry, _stage_hours, prop_config)
 
+	# 디버그 빌드 한정 — F1 스테이지 점프 오버레이.
+	if OS.is_debug_build():
+		_add_child_node("StageDebug", StageDebugScript)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_delete_save"):
@@ -54,11 +59,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	# 디버그 빌드 한정 점프 핫키 — 가변 룸/카메라/회귀 테스트용.
+	# 일반 점프는 F2 StageDebug 오버레이로 통일 (stage_debug.gd).
 	if not OS.is_debug_build():
 		return
-	if event.is_action_pressed("debug_jump_test_checkpoint"):
-		EventBus.stage_transition_requested.emit("test_checkpoint", "checkpoint", {})
-	elif event.is_action_pressed("debug_jump_start_village"):
+	if event.is_action_pressed("debug_jump_start_village"):
 		EventBus.stage_transition_requested.emit("start_village", "checkpoint", {})
 	elif event.is_action_pressed("debug_jump_boss_1b"):
 		EventBus.stage_transition_requested.emit("stage_1_b", "checkpoint", {})
@@ -130,18 +134,20 @@ func transition_to_stage(
 		push_warning("StageSystem: 전환 대상 스테이지가 등록되지 않음: " + target_stage_id)
 		return
 
-	var lock_result: Dictionary = _lock_validator.validate(data)
-	if not lock_result["accessible"]:
-		(
-			EventBus
-			. stage_access_denied
-			. emit(
-				target_stage_id,
-				lock_result["lock_type"],
-				lock_result["reason"],
+	# 디버그 우회 옵션 — StageDebug 오버레이 등에서 잠금 검증 스킵.
+	if not options.get("bypass_lock", false):
+		var lock_result: Dictionary = _lock_validator.validate(data)
+		if not lock_result["accessible"]:
+			(
+				EventBus
+				. stage_access_denied
+				. emit(
+					target_stage_id,
+					lock_result["lock_type"],
+					lock_result["reason"],
+				)
 			)
-		)
-		return
+			return
 
 	# 현재 스테이지 시간 저장 + 거점 이탈 시그널
 	if not _current_stage_id.is_empty():
