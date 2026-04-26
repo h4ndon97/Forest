@@ -91,8 +91,9 @@ func _draw_fallback() -> void:
 	draw_arc(center, ECLIPSE_RADIUS, 0.0, TAU, 64, COLOR_ECLIPSE_SHADOW, ECLIPSE_THICKNESS, false)
 	if resource_ratio <= 0.0:
 		return
+	# 12시에서 CCW로 스윕 → 가시 영역이 CCW 측에 잔존, 자원 줄수록 경계가 CW로 진행.
 	var start_angle: float = -PI / 2.0
-	var end_angle: float = start_angle + resource_ratio * TAU
+	var end_angle: float = start_angle - resource_ratio * TAU
 	var fill_color := COLOR_ECLIPSE_FALLBACK
 	fill_color.a = ring_alpha
 	draw_arc(

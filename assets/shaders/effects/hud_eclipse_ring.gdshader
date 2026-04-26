@@ -61,11 +61,13 @@ void fragment() {
 	}
 
 	// === 아크 마스크: 12시 기준 시계방향 잠식 ===
+	// 자원 차감 시 잠식 영역이 12시에서 CW로 확장, 잔여 가시 영역은 CCW 측에 잔존.
+	// → 경계선이 CW(12→3→6→9→12)로 진행. AA 밴드는 잠식 측에 둠.
 	vec2 to_center = UV - vec2(0.5);
 	float angle = atan(to_center.y, to_center.x);
 	float clock_angle = mod(angle + HALF_PI_LOCAL, TAU_LOCAL);
-	float consume_threshold = resource_ratio * TAU_LOCAL;
-	float consume_factor = smoothstep(consume_threshold, consume_threshold + arc_aa_band, clock_angle);
+	float consume_threshold = (1.0 - resource_ratio) * TAU_LOCAL;
+	float consume_factor = 1.0 - smoothstep(consume_threshold - arc_aa_band, consume_threshold, clock_angle);
 
 	// 가시 영역 결과
 	vec4 visible = vec4(inner_lit + outer_glow, max(base.a, length(outer_glow) * 0.5));

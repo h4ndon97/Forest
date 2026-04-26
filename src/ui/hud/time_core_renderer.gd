@@ -99,13 +99,13 @@ func _process(delta: float) -> void:
 
 
 func _check_day_night_flash() -> void:
-	# 해가 상단 도달(hour=12) = 밤→낮 금색 / 하단 도달(hour 24→0 랩) = 낮→밤 보라.
+	# 해가 상단 도달(hour=6, 일출) = 밤→낮 금색 / 하단 도달(hour=18, 일몰) = 낮→밤 보라.
 	if _prev_hour < 0.0:
 		_prev_hour = hour_value
 		return
-	if _prev_hour < 12.0 and hour_value >= 12.0:
+	if _prev_hour < 6.0 and hour_value >= 6.0:
 		_trigger_flash(COLOR_FLASH_GOLD)
-	elif _prev_hour > 20.0 and hour_value < 4.0:
+	elif _prev_hour < 18.0 and hour_value >= 18.0:
 		_trigger_flash(COLOR_FLASH_PURPLE)
 	_prev_hour = hour_value
 
@@ -171,7 +171,10 @@ func _clock_color_for_state() -> Color:
 
 func _draw_sun_moon() -> void:
 	var center := Vector2(CENTER_X, CENTER_Y)
-	var sun_angle: float = PI / 2.0 - (hour_value / 24.0) * TAU
+	# Godot 2D(y축 아래) 기준 시계방향 + 좌우=낮/밤 분리.
+	# hour=06 위(일출), hour=12 오른쪽(낮 정점), hour=18 아래(일몰), hour=00 왼쪽(밤 정점).
+	# 06~18 → 궤도 우측, 18~06 → 궤도 좌측. is_day()=[6,18) 정의와 정합.
+	var sun_angle: float = -PI / 2.0 + ((hour_value - 6.0) / 24.0) * TAU
 	var moon_angle: float = sun_angle + PI
 	var sun_pos: Vector2 = center + Vector2(cos(sun_angle), sin(sun_angle)) * ORBIT_RADIUS
 	var moon_pos: Vector2 = center + Vector2(cos(moon_angle), sin(moon_angle)) * ORBIT_RADIUS
