@@ -175,6 +175,11 @@ signal ability_unlocked(ability_id: String)  # subscriber: Phase 5 UI 알림
 signal dialogue_started(npc_id: String)
 signal dialogue_finished(npc_id: String)
 
+# === 컷신 (REC-FX-006, Phase 4-B) ===
+## CutscenePanel(OverlaySystem 산하) emit. 음악/카메라/플레이어 hook 포인트.
+signal cutscene_started(cutscene_id: String)
+signal cutscene_finished(cutscene_id: String)
+
 # === 타이틀/게임 진입 (Phase 3-6) ===
 signal game_start_requested(is_new_game: bool)
 

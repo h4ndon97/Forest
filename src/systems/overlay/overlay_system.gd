@@ -6,6 +6,7 @@ extends CanvasLayer
 
 const OverlayVignetteScript = preload("res://src/systems/overlay/overlay_vignette.gd")
 const OverlayHpCrackScript = preload("res://src/systems/overlay/overlay_hp_crack.gd")
+const CutscenePanelScene: GDScript = preload("res://src/ui/cutscene/cutscene_panel.gd")
 const DISSOLVE_SHADER: Shader = preload("res://assets/shaders/effects/dissolve_transition.gdshader")
 
 const OVERLAY_LAYER: int = 100
@@ -169,6 +170,22 @@ func play_cinematic_bars(slide_duration: float, hold_duration: float, thickness:
 		_cinematic_bar_bottom, "position:y", viewport.y, slide_duration
 	)
 	_cinematic_bars_tween.chain().tween_callback(_on_cinematic_bars_complete)
+
+
+# === 컷신 (REC-FX-006, Phase 4-B) ===
+
+
+## 1회용 CutscenePanel 인스턴스 생성 + 시작. 패널은 종료 시 자동 queue_free.
+## 같은 시점에 여러 컷신을 띄우진 않음 (이미 활성 중이면 무시).
+func play_cutscene(data: CutsceneData) -> void:
+	if data == null:
+		return
+	if get_node_or_null("Cutscene") != null:
+		return
+	var panel: CanvasLayer = CutscenePanelScene.new()
+	panel.name = "Cutscene"
+	add_child(panel)
+	panel.start(data)
 
 
 # === 스크린 플래시 (Pass 1에서 즉시 사용) ===

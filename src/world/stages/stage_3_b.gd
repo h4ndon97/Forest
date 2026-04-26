@@ -10,6 +10,8 @@ const SPAWN_POSITION := Vector2(80, 320)
 const ARENA_WIDTH := 960
 const BG_PATH := "res://assets/backgrounds/bg_stage_3_b.png"
 const GROUND_TILE_PATH := "res://assets/tiles/tile_ground_zone3.png"
+const INTRO_CUTSCENE_PATH := "res://data/cutscenes/throne_echo_intro.tres"
+const INTRO_CUTSCENE_ID := "throne_echo_intro"
 
 var _trigger_consumed: bool = false
 
@@ -43,15 +45,39 @@ func _on_arena_trigger_entered(body: Node2D) -> void:
 	if not body.is_in_group("player"):
 		return
 	_trigger_consumed = true
-	var boss := get_node_or_null("Boss")
-	if boss != null:
-		EnemySystem.on_boss_arena_entered(boss)
 	var trigger := get_node_or_null("BossArenaTrigger") as Area2D
 	if trigger:
 		trigger.set_deferred("monitoring", false)
 	var visual := get_node_or_null("BossArenaTrigger/TriggerVisual") as CanvasItem
 	if visual:
 		visual.visible = false
+	if not _try_play_intro_cutscene():
+		_activate_boss()
+
+
+func _try_play_intro_cutscene() -> bool:
+	if not ResourceLoader.exists(INTRO_CUTSCENE_PATH):
+		return false
+	var data: CutsceneData = load(INTRO_CUTSCENE_PATH) as CutsceneData
+	if data == null:
+		return false
+	EventBus.cutscene_finished.connect(_on_intro_cutscene_finished)
+	OverlaySystem.play_cutscene(data)
+	return true
+
+
+func _on_intro_cutscene_finished(cutscene_id: String) -> void:
+	if cutscene_id != INTRO_CUTSCENE_ID:
+		return
+	if EventBus.cutscene_finished.is_connected(_on_intro_cutscene_finished):
+		EventBus.cutscene_finished.disconnect(_on_intro_cutscene_finished)
+	_activate_boss()
+
+
+func _activate_boss() -> void:
+	var boss := get_node_or_null("Boss")
+	if boss != null:
+		EnemySystem.on_boss_arena_entered(boss)
 	var boss_id := ""
 	if boss and boss.boss_data:
 		boss_id = boss.boss_data.boss_id

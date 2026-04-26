@@ -152,14 +152,28 @@ Ori WotW Shriek 시퀀스:
 
 ## REC-FX-006 — 컷신 (정지 일러스트 + 텍스트박스)
 
-- **상태**: **PARTIAL** (2026-04-26 검증)
+- **상태**: **IMPLEMENTED (인프라)** (2026-04-26)
 - **우선순위**: ★★★
-- **노력**: S~M (인프라 절반 있음, 일러스트 패널 + 5~10장 아트만)
+- **노력**: S 인프라 / M 협업 (일러스트 5~10장 아트)
 - **레퍼런스**: Blasphemous — 정적 일러스트 컷, Skul — 픽셀아트 인서트
-- **관련 시스템**: StorySystem, UI, OverlaySystem
-- **의존**: 아트 작업 (정지 일러스트 5~10장)
+- **관련 시스템**: OverlaySystem, EventBus, UI cutscene
+- **의존**: 아트 작업 (정지 일러스트 5~10장 — placeholder fallback으로 코드는 즉시 작동)
 - **무효화 조건**: 풀 애니 컷신 도입 결정 시
-- **검증**: `OverlaySystem.play_cinematic_bars()` + `DialogueBox` UI 인프라 존재. **일러스트 패널 시스템(이미지 표시 + 페이드인/아웃) + 음악 변화 hook은 미구현**. 페이드/텍스트 typewriter는 이미 dialog 인프라 활용 가능.
+- **검증**:
+  - `data/cutscenes/cutscene_data.gd` + `cutscene_panel_data.gd` 신설 — 시퀀스 + 1장 패널 Resource 분리
+  - `src/ui/cutscene/cutscene_panel.gd` 신설 (~270줄) — CanvasLayer(layer=99), 일러스트 페이드 + RichTextLabel typewriter(32 cps) + 화자 라벨 + 패널 간 fade out→in 자연 전환 + ESC 스킵 + 플레이어 입력 잠금
+  - `src/systems/overlay/overlay_system.gd` 공개 API `play_cutscene(data)` 추가 — 1회용 인스턴스 생성/추가/start, 활성 중 재호출 무시
+  - `src/systems/event_bus/event_bus.gd` `cutscene_started/finished(cutscene_id)` 시그널 신설 (dialogue 신호와 분리)
+  - `data/cutscenes/throne_echo_intro.tres` placeholder 시연 컷신 — 3패널 시조 풍 텍스트 + 보라/검정 톤 ColorRect fallback
+  - `src/world/stages/stage_3_b.gd` 트리거 hook 정비 — BossArenaTrigger 진입 시 컷신 재생 → `cutscene_finished` 수신 후 `_activate_boss()` 호출 (보스가 컷신 중 움직이지 않도록)
+  - `docs/art_specs/cutscene_panel.md` 신설 — 320×180 캔버스 + 수묵화 톤 + 3레이어 규약 적용 가이드 (광원 등장 시) + 1차 우선순위 5장 명세
+  - gdlint 통과 + Godot 헤드리스 로드 통과 (parse error 0, OverlaySystem/CutscenePanel/CutsceneData 정상 등록)
+- **결정 이력**:
+  - 책임 분배: 별도 StorySystem Autoload 신설 대신 **OverlaySystem 산하**. cinematic bars/dissolve가 이미 OverlaySystem에 있고, 컷신은 1회용 패널이라 Autoload 부담 불필요
+  - 렌더 순서: CutscenePanel layer=99 < OverlaySystem layer=100 → 시네마틱 바가 자연스럽게 위에 그려짐
+  - 신호 분리: dialogue_started/finished와 cutscene_started/finished 분리 — 음악/카메라/플레이어 hook 시점이 다르고, NPC 대화창과 컷신은 무게/사용처가 명확히 구분됨
+  - placeholder fallback: 일러스트 미존재 시 `placeholder_tint` 색의 ColorRect 표시 → 메모리 [feedback_art_ready_code] 정책 부합. 작가가 PNG 넣으면 코드 수정 없이 즉시 반영
+  - 첫 시연 위치: zone3 보스 ThroneEcho 등장 — 보스 활성을 컷신 종료 hook으로 분리 (`cutscene_finished` 수신 시 `_activate_boss()`). 이 패턴이 향후 다른 보스/스토리 비트 hook의 표준이 됨
 
 ### 컨셉
 풀 애니 컷신은 1인 개발 부담. **정지 일러스트 + 텍스트박스 + 음악 변화**로 충분. 빛/그림자 왕가 봉인 회상에 적합. 한국 인디 어필 포인트.
@@ -176,11 +190,18 @@ Blasphemous: 정적 일러스트 + 풀보이스 X + 분위기 음악 → 비용 
   - 최종 보스 직전: 두 왕가 결합 직전
 - 일러스트는 게임 픽셀아트와 다른 톤(수묵화 풍, REC-MKT-002)으로 차별화
 
-### 구현 메모
-- StorySystem에 새 cutscene_player 노드
-- 일러스트 sprite + RichTextLabel + 음악 변화
-- 페이드 인/아웃 + 텍스트 typewriter 효과
-- 스킵 가능
+### 구현 메모 (실제 구현 반영, 2026-04-26)
+- ~~StorySystem에 새 cutscene_player 노드~~ → OverlaySystem 산하로 결정 (별도 Autoload 회피)
+- 일러스트 TextureRect + RichTextLabel typewriter(visible_ratio Tween, 32 cps)
+- 패널 간 fade out → 일러스트 교체 → fade in 자연 연결
+- ESC 스킵, F 진행, 자동 진행은 `auto_advance_hold > 0` 시
+- 음악 변화 hook: `EventBus.cutscene_started(cutscene_id)` 구독자가 처리 (현 단계 미구독, AudioSystem 신설 시 연결)
+
+### 후속 작업
+- 일러스트 5장 작가 협업 (REC-FX-006 본문 1차 우선순위 표 참조)
+- AudioSystem 신설 시 `cutscene_started` 수신 → BGM duck/페이드 hook
+- `pause_time_during=true` 컷신 시 TimeSystem 일시정지 hook (현 단계 placeholder, 첫 시연은 false)
+- 3레이어 규약 적용 일러스트 도입 시 `CutscenePanelData`에 `core_path/halo_path` 필드 + cutscene_panel.gd에 컴포지트 노드 추가
 
 ---
 

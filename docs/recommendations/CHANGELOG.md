@@ -89,3 +89,22 @@
 - `[edit]` `project.godot` autoload 2개 등록 (MadnessSystem + MadnessHud).
 - `[verify]` gdlint 통과(class-definitions-order 1건 enum 위치 정정) + Godot 헤드리스 로드 통과.
 - **남은 작업**: 환영 적 entity 디자인 + spawn 코드 (별도 후속, 밸런싱 결정 필요).
+
+## 2026-04-26 (PARTIAL 마무리 — REC-FX-006 컷신 인프라)
+
+- `[impl]` REC-FX-006 PARTIAL → **IMPLEMENTED (인프라)** — 컷신 시스템 풀 인프라 신설. OverlaySystem 산하 1회용 CutscenePanel 패턴.
+- `[add]` `data/cutscenes/cutscene_data.gd` + `cutscene_panel_data.gd` — 시퀀스 + 1장 패널 Resource 분리. typed Array[CutscenePanelData].
+- `[add]` `src/ui/cutscene/cutscene_panel.gd` (~270줄, 300줄 안쪽) — CanvasLayer(layer=99 < OverlaySystem 100), 일러스트 페이드 인/아웃 + RichTextLabel typewriter(visible_ratio Tween, 32 cps) + 화자 라벨 + 패널 간 fade out→교체→in 자연 전환 + ESC 스킵 + F 진행/typewriter 즉시완성 + 플레이어 set_physics_process(false) 잠금.
+- `[edit]` `src/systems/overlay/overlay_system.gd` 공개 API `play_cutscene(data)` 추가 — 1회용 인스턴스 add_child + start. 활성 중 재호출 무시 (`get_node_or_null("Cutscene")` 가드).
+- `[edit]` `src/systems/event_bus/event_bus.gd` `cutscene_started/finished(cutscene_id)` 시그널 신설 — dialogue 신호와 분리 (음악/카메라/플레이어 hook 시점 다름).
+- `[add]` `data/cutscenes/throne_echo_intro.tres` placeholder 시연 컷신 — 3패널 시조 풍 텍스트("빛이 멈춘 시간..." / "옛 왕좌의 메아리" / "멈춘 빛을 풀어야 한다") + 보라/검정 톤 ColorRect fallback.
+- `[edit]` `src/world/stages/stage_3_b.gd` 트리거 hook 정비 — BossArenaTrigger 진입 → 컷신 재생 → `cutscene_finished` 수신 → `_activate_boss()` 분리. 보스가 컷신 중 움직이지 않음. 향후 다른 보스/스토리 비트의 표준 패턴.
+- `[add]` `docs/art_specs/cutscene_panel.md` 신설 — 320×180 캔버스 + 수묵화 톤 차별화 + 6.7 3레이어 규약 적용 가이드(광원 등장 시) + 1차 우선순위 5장 명세 표.
+- `[verify]` gdlint 통과 + Godot --import 로 class_name 캐시 등록 (CutsceneData/CutscenePanelData/CutscenePanel) + 헤드리스 로드 통과 (parse error 0).
+- **placeholder 정책 부합**: 일러스트 미존재 시 `placeholder_tint` ColorRect로 즉시 작동. 작가가 PNG 5~10장 채우면 코드 수정 없이 즉시 반영(메모리 [feedback_art_ready_code]).
+- **다른 ★★★ 추천의 선결 인프라**: REC-MECH-001 Echo Nail / REC-CONT-001 빛령+Light Father / REC-CONT-002 측량사 NPC 모두 컷신/일러스트 패널 호출이 필요하므로, 본 인프라가 다음 작업의 노력을 단축시킴.
+
+## 2026-04-26 (Phase 4-C zone4 진입)
+
+- `[status]` REC-MECH-010 PROPOSED → **ACCEPTED** — Phase 4-C zone4 채택 결정 (zone3에서는 미채택, 1단계 늦은 도입 해소). zone4=그림자 왕가 영역 = 시간 정지 약화 잔재 적 자연. ZONE4_CONTENT_PLAN §2.3 잔영 첨병(`echo_vanguard.tres`)으로 도입. 신규 행동 모듈 `attack_behavior_time_immune.gd` Step 2 작성 예정. RISK-002(시간 정지 만능 카드) 부분 대응 — zone4부터 점진 도입으로 코어 메카닉 깊이 추가.
+- `[meta]` Phase 4-C zone4 Step 0 진입 — `docs/ZONE4_CONTENT_PLAN.md` 신설 + STAGE_INDEX zone4 § 13행 확장. 사용자 결정 C-3(보스=수장의 잔재) + 안전 추천값 7항. C-1·C-2(그림자 왕가 정식 이름·수장) zone5 이월. 등불 트리거 인프라 본 zone에서 신설(`boss_weak_point.gd` source `+torch_lit`). REC-NARR-004 zone4 1권 배치는 Step 5+에서 검토.

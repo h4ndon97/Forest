@@ -120,7 +120,7 @@
 | REC-FX-003 | 발광 잔류 — 빛 피니시 빛줄기 | **IMPLEMENTED** | ★★ | S | EffectsSystem, DamageResolver | effects_residual_light.gd + spawn_residual_light API |
 | REC-FX-004 | 정적 화면, 살아있는 그림자 셰이더 | **IMPLEMENTED** | ★★★ | S | ShadowCaster, ShadowSystem, EventBus | shadow_jitter.gdshader + shadow_caster.gd 통합 |
 | REC-FX-005 | 보스룸 슬로우 패닝 도입부 | PROPOSED | ★★ | S | BossSystem, 카메라 | — |
-| REC-FX-006 | 컷신 — 정지 일러스트 + 텍스트박스 | **PARTIAL** | ★★★ | S~M | StorySystem, UI, OverlaySystem | 일러스트 패널 + 5~10장 아트 |
+| REC-FX-006 | 컷신 — 정지 일러스트 + 텍스트박스 | **IMPLEMENTED (인프라)** | ★★★ | S 인프라 / M 협업 | OverlaySystem, EventBus, UI cutscene | CutscenePanel + placeholder fallback. 일러스트 5장 작가 협업 시 즉시 반영 |
 | REC-FX-007 | 화면 가장자리 비네트 — 그림자 강도 | **IMPLEMENTED** | ★★ | S | ShadowSystem, OverlaySystem, EventBus | effects_shadow_vignette.gd + 우선순위 라우터 |
 
 ### 2.3 콘텐츠/수집/NPC (REC-CONT)

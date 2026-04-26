@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="CutsceneData" load_steps=6 format=3 uid="uid://b7thronecho001"]
+
+[ext_resource type="Script" path="res://data/cutscenes/cutscene_data.gd" id="1_cutscene_data"]
+[ext_resource type="Script" path="res://data/cutscenes/cutscene_panel_data.gd" id="2_panel_data"]
+
+[sub_resource type="Resource" id="Resource_panel1"]
+script = ExtResource("2_panel_data")
+image_path = ""
+speaker = ""
+lines = Array[String](["빛이 멈춘 시간 — 잊혀진 왕좌가 깨어난다.", "이끼와 황혼이 그 자리를 덮은 지 얼마나 오래되었던가."])
+fade_in = 0.8
+fade_out = 0.6
+auto_advance_hold = 0.0
+placeholder_tint = Color(0.10, 0.06, 0.14, 1)
+
+[sub_resource type="Resource" id="Resource_panel2"]
+script = ExtResource("2_panel_data")
+image_path = ""
+speaker = "옛 왕좌의 메아리"
+lines = Array[String]([" … 누구냐. 이 시간을 깨우는 자는.", "이름은 사라졌고, 형상만 남았다."])
+fade_in = 0.5
+fade_out = 0.5
+auto_advance_hold = 0.0
+placeholder_tint = Color(0.16, 0.05, 0.10, 1)
+
+[sub_resource type="Resource" id="Resource_panel3"]
+script = ExtResource("2_panel_data")
+image_path = ""
+speaker = ""
+lines = Array[String](["그 잔향에 잠식되기 전에 —", "멈춘 빛을 풀어야 한다."])
+fade_in = 0.5
+fade_out = 0.8
+auto_advance_hold = 0.0
+placeholder_tint = Color(0.08, 0.04, 0.12, 1)
+
+[resource]
+script = ExtResource("1_cutscene_data")
+cutscene_id = "throne_echo_intro"
+panels = Array[Resource]([SubResource("Resource_panel1"), SubResource("Resource_panel2"), SubResource("Resource_panel3")])
+skippable = true
+pause_time_during = false
+cinematic_bar_thickness = 36.0
