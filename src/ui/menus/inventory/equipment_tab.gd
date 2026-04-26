@@ -8,6 +8,8 @@ const ItemDataClass = preload("res://data/items/item_data.gd")
 const COLOR_COMMON := Color(0.7, 0.7, 0.7, 0.9)
 const COLOR_RARE := Color(0.3, 0.5, 0.9, 0.9)
 const COLOR_UNIQUE := Color(0.9, 0.7, 0.2, 0.9)
+## REC-UX-003: flavor_text 라벨 색조 — 메카닉 설명과 시각 분리.
+const COLOR_FLAVOR := Color(0.55, 0.45, 0.7, 0.85)
 const SLOT_NAMES := ["무기", "방어구", "장신구1", "장신구2", "장신구3"]
 const FONT_TITLE := 9
 const FONT_ITEM := 8
@@ -16,6 +18,7 @@ var _equip_labels: Array[Label] = []
 var _item_labels: Array[Label] = []
 var _bag_container: VBoxContainer
 var _info_label: Label
+var _flavor_label: Label
 var _item_ids: Array[String] = []
 var _selected_index: int = 0
 var _is_at_checkpoint: bool = false
@@ -123,10 +126,20 @@ func _update_selection() -> void:
 
 	if _item_ids.is_empty():
 		_info_label.text = "소지 아이템 없음"
+		_flavor_label.text = ""
+		_flavor_label.visible = false
 		return
 	var sel_data: Resource = InventorySystem.get_item_data(_item_ids[_selected_index])
 	if sel_data:
 		_info_label.text = "%s\n%s" % [sel_data.display_name, sel_data.description]
+		# REC-UX-003: flavor_text 있으면 별도 영역에 시 톤으로 표시.
+		var flavor: String = sel_data.flavor_text if "flavor_text" in sel_data else ""
+		if flavor != "":
+			_flavor_label.text = "  ※ %s" % flavor
+			_flavor_label.visible = true
+		else:
+			_flavor_label.text = ""
+			_flavor_label.visible = false
 
 
 func _build_ui() -> void:
@@ -155,6 +168,16 @@ func _build_ui() -> void:
 	_info_label.add_theme_font_size_override("font_size", FONT_ITEM)
 	_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	vbox.add_child(_info_label)
+
+	# REC-UX-003: flavor_text 표시 영역. 회색 보라 색조로 메카닉 설명과 시각 분리.
+	_flavor_label = Label.new()
+	_flavor_label.name = "FlavorLabel"
+	_flavor_label.text = ""
+	_flavor_label.add_theme_font_size_override("font_size", FONT_ITEM)
+	_flavor_label.add_theme_color_override("font_color", COLOR_FLAVOR)
+	_flavor_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_flavor_label.visible = false
+	vbox.add_child(_flavor_label)
 
 
 func _build_equip_panel(parent: Container) -> void:

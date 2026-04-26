@@ -13,6 +13,9 @@ enum ItemRarity { COMMON, RARE, UNIQUE }
 @export var description: String = ""
 @export var category: ItemCategory = ItemCategory.WEAPON
 @export var rarity: ItemRarity = ItemRarity.COMMON
+## REC-UX-003: 메카닉 설명(description)과 별개의 짧은 시/산문 (Blasphemous Rosary 패턴).
+## 한국어 시조 풍 또는 짧은 산문 권장. 작가 협업 시 채워짐. 빈 문자열이면 표시 안 함.
+@export_multiline var flavor_text: String = ""
 
 @export_group("Visual")
 ## null이면 등급별 ColorRect 플레이스홀더 표시

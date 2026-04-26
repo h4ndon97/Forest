@@ -7,6 +7,7 @@ script = ExtResource("1")
 id = "sword_basic"
 display_name = "낡은 검"
 description = "평범한 검. 쓸만하다."
+flavor_text = "녹슨 날에도 손때는 남아 — 누군가의 길이었으리."
 category = 0
 rarity = 0
 buy_price = 0

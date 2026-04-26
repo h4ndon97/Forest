@@ -78,14 +78,37 @@ HK의 단계적 지도 시스템:
 
 ## REC-UX-003 — 인벤토리 (픽셀 일러스트 + 짧은 시)
 
-- **상태**: **PARTIAL** (2026-04-26 검증)
+- **상태**: **IMPLEMENTED (인프라)** (2026-04-26)
 - **우선순위**: ★★★
-- **노력**: M (스키마 + 아트만)
+- **노력**: S (인프라) / M (작가 협업 후 텍스트 채우기)
 - **레퍼런스**: Blasphemous — Rosary Beads / Prayers
-- **관련 시스템**: InventorySystem, UI
-- **의존**: `item_data.gd` 스키마 확장 + 아트 작업 (아이템 일러스트 + 시 텍스트) + 작가 협업
-- **무효화 조건**: 단순 텍스트 인벤토리 결정 시
-- **검증**: `inventory_menu.gd`, `equipment_tab.gd` 등 인벤토리 UI 풀 구현 확인. `data/items/item_data.gd`에 `icon` 필드 존재(현 placeholder 사용). **`flavor_text` / `poem` 필드 부재 + 일러스트 144×144 sprite 부재** — 데이터 스키마 추가 + 인벤토리 메뉴에 시/일러스트 표시 영역 + 작가 협업으로 완성 가능. REC-NARR-003(Lore Trinkets)과 같은 스키마 공유.
+- **관련 시스템**: InventorySystem, ItemData, equipment_tab
+- **검증 (인프라)**:
+  - `data/items/item_data.gd` — `flavor_text: String` 필드 추가 (`@export_multiline`)
+  - `src/ui/menus/inventory/equipment_tab.gd` — `_flavor_label` 추가 (보라/회색 톤 `Color(0.55, 0.45, 0.7, 0.85)`), `_update_selection`에서 빈 문자열 아닐 때만 표시
+  - `data/items/weapons/sword_basic.tres` placeholder 시조 풍 텍스트 추가 — 시각 검증용
+  - 메모리 [feedback_art_ready_code] 정책 부합 — 텍스트 비어있으면 영역 자동 숨김, 채우면 즉시 반영
+  - gdlint 통과 + Godot 헤드리스 로드 통과
+- **남은 작업 (작가 협업 의존)**: 30~50개 아이템 시 텍스트 채우기 + (옵션) 일러스트 144×144
+
+### 구현 컨셉
+- ItemData 스키마에 `flavor_text` 필드 추가 (메카닉 `description`과 별개)
+- 인벤토리 [장비] 탭의 정보 영역에 별도 라벨 — 메카닉 설명 위에 회색 보라 톤으로 표시
+- 빈 문자열이면 라벨 숨김 — 작가 미작성 아이템도 자연스럽게 작동
+
+### 검증 (UI 시각)
+- 인벤토리 열기 → 낡은 검 선택 → 정보 영역에 표시:
+```
+낡은 검
+평범한 검. 쓸만하다.
+  ※ 녹슨 날에도 손때는 남아 — 누군가의 길이었으리.
+```
+- 다른 아이템(flavor_text 비어있음) 선택 → flavor 라벨 자동 숨김
+
+### 미래 확장
+- REC-NARR-003 Lore Trinkets와 같은 스키마 공유 — 새 카테고리(trinket)에서도 즉시 활용 가능
+- 일러스트 144×144 — 별도 art_specs 작성 필요
+- 한국어 시조 / 동양 철학 톤 (REC-MKT-002/004 시너지)
 
 ### 컨셉
 한국 인디 차별화. 18 스킬 + 장비 4종(검/방어구/장신구3) + 등불 강화 = 약 30~50 아이템. **각 아이템에 2~3줄 시 + 픽셀아트 144×144**. 환경 스토리텔링.
