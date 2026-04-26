@@ -117,6 +117,14 @@ func _physics_process(delta: float) -> void:
 
 func activate() -> void:
 	state_machine.activate()
+	# 시간 정지→재개로 재활성될 때 deactivate가 _target을 null화한 상태이고,
+	# 플레이어는 이미 DetectArea 안에 있어 body_entered가 재발화하지 않는다.
+	# IDLE 직행한 경우(인트로 이미 재생) DetectArea를 재검사해 즉시 CHASE로 진입시킨다.
+	if state_machine.current_state == BossStateMachine.State.IDLE:
+		for body in detect_area.get_overlapping_bodies():
+			if body.is_in_group("player"):
+				state_machine.on_player_detected(body)
+				break
 
 
 func deactivate() -> void:
