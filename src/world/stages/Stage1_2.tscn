@@ -41,7 +41,7 @@ offset_bottom = 16.0
 color = Color(0.28, 0.45, 0.28, 1)
 
 [node name="Platform1" type="StaticBody2D" parent="."]
-position = Vector2(256, 248)
+position = Vector2(256, 270)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
 shape = SubResource("platform_shape")
@@ -54,7 +54,7 @@ offset_bottom = 8.0
 color = Color(0.38, 0.32, 0.22, 1)
 
 [node name="Platform2" type="StaticBody2D" parent="."]
-position = Vector2(480, 184)
+position = Vector2(480, 236)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
 shape = SubResource("platform_shape")
@@ -99,7 +99,7 @@ position = Vector2(432, 320)
 stats_data = ExtResource("rock_stats")
 
 [node name="FlowerEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
-position = Vector2(256, 216)
+position = Vector2(256, 238)
 stats_data = ExtResource("flower_stats")
 
 [node name="Cover1" parent="." instance=ExtResource("cover_scene")]

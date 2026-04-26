@@ -46,7 +46,7 @@ offset_bottom = 16.0
 color = Color(0.3, 0.42, 0.28, 1)
 
 [node name="Platform1" type="StaticBody2D" parent="."]
-position = Vector2(200, 260)
+position = Vector2(200, 279)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
 shape = SubResource("platform_shape")
@@ -59,7 +59,7 @@ offset_bottom = 8.0
 color = Color(0.38, 0.3, 0.22, 1)
 
 [node name="Platform2" type="StaticBody2D" parent="."]
-position = Vector2(440, 220)
+position = Vector2(440, 249)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
 shape = SubResource("platform_shape")
@@ -72,7 +72,7 @@ offset_bottom = 8.0
 color = Color(0.38, 0.3, 0.22, 1)
 
 [node name="Platform3" type="StaticBody2D" parent="."]
-position = Vector2(320, 160)
+position = Vector2(320, 236)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform3"]
 shape = SubResource("platform_shape")
@@ -109,7 +109,7 @@ direction = "right"
 [node name="PortalHidden" parent="." instance=ExtResource("portal")]
 visible = false
 process_mode = 4
-position = Vector2(320, 152)
+position = Vector2(320, 228)
 target_stage_id = "stage_1_h"
 direction = "right"
 
@@ -124,11 +124,11 @@ position = Vector2(480, 320)
 stats_data = ExtResource("rock_stats")
 
 [node name="FlowerEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
-position = Vector2(200, 228)
+position = Vector2(200, 247)
 stats_data = ExtResource("flower_stats")
 
 [node name="PillarEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
-position = Vector2(440, 188)
+position = Vector2(440, 217)
 stats_data = ExtResource("pillar_stats")
 
 [node name="Mirror1" parent="." instance=ExtResource("mirror_scene")]
@@ -144,7 +144,7 @@ position = Vector2(320, 296)
 lens_data = ExtResource("lens_data_basic")
 
 [node name="HiddenPortalSensor" parent="." instance=ExtResource("light_sensor_scene")]
-position = Vector2(320, 124)
+position = Vector2(320, 200)
 data = ExtResource("sensor_data_1_4")
 
 [node name="Hidden1_4Portal" parent="." instance=ExtResource("hidden_revealer_scene")]

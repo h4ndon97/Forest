@@ -37,7 +37,7 @@ offset_bottom = 16.0
 color = Color(0.3, 0.5, 0.3, 1)
 
 [node name="Platform1" type="StaticBody2D" parent="."]
-position = Vector2(320, 244)
+position = Vector2(320, 267)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
 shape = SubResource("platform_shape")
@@ -50,7 +50,7 @@ offset_bottom = 8.0
 color = Color(0.4, 0.35, 0.25, 1)
 
 [node name="Platform2" type="StaticBody2D" parent="."]
-position = Vector2(512, 180)
+position = Vector2(512, 219)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
 shape = SubResource("platform_shape")
@@ -91,7 +91,7 @@ position = Vector2(240, 320)
 stats_data = ExtResource("tree_stats")
 
 [node name="TreeEnemy2" parent="Enemies" instance=ExtResource("enemy_base")]
-position = Vector2(320, 212)
+position = Vector2(320, 235)
 stats_data = ExtResource("tree_stats")
 
 [node name="Mirror1" parent="." instance=ExtResource("mirror_scene")]

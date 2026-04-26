@@ -43,7 +43,7 @@ offset_bottom = 16.0
 color = Color(0.2, 0.3, 0.24, 1)
 
 [node name="Platform1" type="StaticBody2D" parent="."]
-position = Vector2(160, 248)
+position = Vector2(160, 270)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
 shape = SubResource("platform_shape")
@@ -56,7 +56,7 @@ offset_bottom = 8.0
 color = Color(0.28, 0.26, 0.2, 1)
 
 [node name="Platform2" type="StaticBody2D" parent="."]
-position = Vector2(480, 220)
+position = Vector2(480, 249)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
 shape = SubResource("platform_shape")
@@ -101,7 +101,7 @@ position = Vector2(400, 320)
 stats_data = ExtResource("rock_stats")
 
 [node name="PillarEnemy1" parent="Enemies" instance=ExtResource("enemy_base")]
-position = Vector2(160, 216)
+position = Vector2(160, 238)
 stats_data = ExtResource("pillar_stats")
 
 [node name="ReflectiveFloor1" parent="." instance=ExtResource("reflective_floor_scene")]
@@ -115,9 +115,9 @@ data = ExtResource("sensor_data_1_3")
 [node name="SecretMark" type="ColorRect" parent="."]
 visible = false
 offset_left = 468.0
-offset_top = 200.0
+offset_top = 229.0
 offset_right = 492.0
-offset_bottom = 216.0
+offset_bottom = 245.0
 color = Color(0.5, 0.8, 1, 0.8)
 
 [node name="Hidden1_3Reflection" parent="." instance=ExtResource("hidden_revealer_scene")]
