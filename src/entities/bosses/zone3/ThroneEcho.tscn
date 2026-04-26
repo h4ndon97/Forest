@@ -1,0 +1,102 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="Script" path="res://src/entities/bosses/base/base_boss.gd" id="1"]
+[ext_resource type="Script" path="res://src/entities/bosses/base/boss_state_machine.gd" id="2"]
+[ext_resource type="Script" path="res://src/entities/bosses/base/boss_phase_controller.gd" id="3"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_stats.gd" id="4"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_movement.gd" id="5"]
+[ext_resource type="Script" path="res://src/entities/enemies/base/enemy_animation.gd" id="6"]
+[ext_resource type="Script" path="res://src/systems/shadow/shadow_caster.gd" id="7"]
+[ext_resource type="Script" path="res://src/entities/bosses/base/boss_weak_point.gd" id="8"]
+[ext_resource type="Script" path="res://src/entities/bosses/zone3/throne_echo_visual.gd" id="9"]
+[ext_resource type="Resource" path="res://data/bosses/zone3/throne_echo.tres" id="boss_data"]
+
+[sub_resource type="RectangleShape2D" id="body_shape"]
+size = Vector2(56, 72)
+
+[sub_resource type="CircleShape2D" id="detect_shape"]
+radius = 320.0
+
+[sub_resource type="RectangleShape2D" id="hurtbox_shape"]
+size = Vector2(52, 68)
+
+[sub_resource type="CircleShape2D" id="weakpoint_shape"]
+radius = 22.0
+
+[node name="ThroneEcho" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1")
+boss_data = ExtResource("boss_data")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -36)
+shape = SubResource("body_shape")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -40)
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="PhaseController" type="Node" parent="."]
+script = ExtResource("3")
+
+[node name="Stats" type="Node" parent="."]
+script = ExtResource("4")
+
+[node name="Movement" type="Node" parent="."]
+script = ExtResource("5")
+
+[node name="AnimationController" type="Node" parent="."]
+script = ExtResource("6")
+
+[node name="DetectArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="DetectShape" type="CollisionShape2D" parent="DetectArea"]
+shape = SubResource("detect_shape")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 8
+monitorable = false
+
+[node name="HurtboxShape" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -36)
+shape = SubResource("hurtbox_shape")
+
+[node name="ShadowCaster" type="Node2D" parent="."]
+script = ExtResource("7")
+base_offset = Vector2(0, 0)
+shadow_length_pixels = 0.0
+fallback_size = Vector2(56, 12)
+shadow_z_index = 1
+anchor_at_base = true
+
+[node name="WeakPoint" type="Area2D" parent="."]
+script = ExtResource("8")
+collision_layer = 0
+collision_mask = 8
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WeakPoint"]
+shape = SubResource("weakpoint_shape")
+
+[node name="WeakPointVisual" type="ColorRect" parent="WeakPoint"]
+offset_left = -22.0
+offset_top = -22.0
+offset_right = 22.0
+offset_bottom = 22.0
+color = Color(0.95, 0.80, 0.45, 0.55)
+mouse_filter = 2
+
+[node name="AttackBehavior" type="Node" parent="."]
+
+[node name="Defense" type="Node" parent="."]
+
+[node name="Visual" type="Node2D" parent="."]
+script = ExtResource("9")

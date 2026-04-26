@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "mire_outpost"
+display_name = "2-3 경계 초소"
+scene_path = "res://src/world/checkpoints/MireOutpost.tscn"
+initial_hour = 16.0
+zone_id = "zone_2"
+adjacent_stages = Array[String](["stage_2_b", "stage_3_1"])
+lock_type = 0
+lock_requirement = ""
+total_enemies = 0
+total_residues = 0
+is_checkpoint = true
+radius_ring = 2
+angle_deg = 78.0
+radius_offset = 0.0

@@ -3,10 +3,11 @@
 > 이 문서는 구역별 보스의 구조, 전투 방식, 보상을 정의한다.
 > 전투 시스템(COMBAT.md), 적 시스템(ENEMIES.md), 핵심 로직(CORE_SYSTEMS.md) 위에서 설계된다.
 
-> **현재 구현 상태 (2026-04-25)**: 구현 2/5 (1구역 + 2구역).
+> **현재 구현 상태 (2026-04-26)**: 구현 3/5 (1·2·3구역).
 > - 1구역 보스 → **Phase 3-3 완료** — `ancient_oakheart.tres` / 2페이즈 / 약점 lens_focus / 보상 빛 대시
 > - 2구역 보스 → **Phase 4-A 완료** — `mire_mother.tres` / 2페이즈 / 약점 lens_focus(임시) / 보상 그림자 통과
-> - 3~4구역 보스 → Phase 4-B / 4-C
+> - 3구역 보스 → **Phase 4-B 완료** — `throne_echo.tres` / **3페이즈** / 약점 lens_focus(임시) / 보상 빛 도약
+> - 4구역 보스 → Phase 4-C
 > - 5구역 최종 보스 → Phase 4-D
 
 ---
@@ -54,7 +55,7 @@
 ### 미결 사항
 - [x] 1구역 보스 — Phase 3-3 확정 (2페이즈, 거대 오브젝트 괴물화)
 - [x] 2구역 보스 — Phase 4-A 확정 (2페이즈, 안개 습지 테마)
-- [ ] 3구역 보스 — Phase 4-B 확정 (3페이즈, 중반 전환점 — 그림자 왕가 흔적 결합)
+- [x] 3구역 보스 — Phase 4-B 확정 (3페이즈, **왕좌의 잔영** Throne Echo 잠정명. HP 1190/ATK 31/약점 lens_focus/보상 light_leap+GP 9+ruin_signet)
 - [ ] 4구역 보스 — Phase 4-C 확정 (3페이즈, 괴물화 + 그림자 왕가 결합)
 - [ ] 5구역 보스 — Phase 4-D 확정 (4페이즈, 두 왕가의 불완전한 결합체, 최종)
 
@@ -112,3 +113,24 @@
 - ReflectiveFloor 위치 쿼리 인프라 부재 → 텔포 위치는 임시 *플레이어 ±200px 랜덤*. 인게임 단조로움 발견 시 `ReflectiveFloor.get_nearest_anchor()` API 추가 (반나절)
 - 약점 reveal_source `lens_focus` 임시 재활용 — Mire Mother 정체성은 *등불 트리거*가 자연. 등불 트리거 인프라 (`BossWeakPoint` 신규 source 추가)는 Phase 4-B 진입 시
 - `mire_mother_visual.gd` 미작성 — 푸른 늪 톤 시각 정체성. art-spec 작업으로 분리
+
+### 3구역 보스 — 왕좌의 잔영 (Throne Echo, 잠정명)
+
+- **데이터**: `data/bosses/zone3/throne_echo.tres` — HP 1190 / ATK 31 / 접근 범위 150 / **3페이즈** (zone2 ×1.4)
+- **HP 임계**: 0.66 (P1→P2) / 0.33 (P2→P3)
+- **페이즈 1** `phase_1_debris_sweep.tres`: 근접 광역 휘두르기 (220×90, telegraph 0.5s, cd 1.6s)
+  - **기존 패턴 재활용** `boss_melee_aoe.gd` (신규 코드 0). 잔해 낙하 시각 효과는 Step 6 검토
+- **페이즈 2** `phase_2_shadow_echo.tres`: **그림자 왕가 잔재** — 시안 톤 분신 텔포 + 3way 22° 원거리 (220px/s)
+  - **신규 패턴** `boss_shadow_echo.gd` (~115줄, `boss_reflection_teleport` 답습 + `SHADOW_TINT(0.7,0.75,0.95)` 시안 잔영 톤 차별화)
+  - **재활용 패턴** `boss_ranged_spread.gd` cycle (zone2 P2 패턴 답습)
+- **페이즈 3** `phase_3_throne_storm.tres`: 페이즈 1+2 패턴 빠른 순환 (telegraph 0.4s 단축, cd 1.0~1.5s)
+  - **기존 3 패턴 재활용** (boss_melee_aoe + boss_shadow_echo + boss_ranged_spread cycle). 신규 코드 0
+- **약점**: 오프셋 (0, -56), 반경 22, 배율 2.5배, 트리거 소스 `lens_focus` *(임시 재활용 — 등불 트리거 인프라는 Phase 4-C에서)*
+- **보상**: `reward_ability_id="light_leap"` / `reward_growth_points=9` / `reward_item_ids=["ruin_signet"]` / `reward_story_flag="story.zone3.throne_echo_defeated"` / `reward_next_zone_flag="stage_progress.zone4_unlocked"`
+- **보스 인스턴스 씬**: `src/entities/bosses/zone3/ThroneEcho.tscn` — MireMother.tscn 패턴 답습. **Visual은 ColorRect stub** (`throne_echo_visual.gd` ~70줄, 페이즈별 색조 P0 갈색 / P1 보라 / P2 황금. 정식 프로그래밍 아트는 art-spec 작업)
+- **아레나**: width=960 (`Stage3_B.tscn` + `boss_shadow_echo.gd` 텔포 경계 [64, 896] hardcoded)
+
+#### 3구역 보스 미결 (인게임 검증·튜닝 시 결정)
+- 페이즈 3 cycle 가속 체감 — 너무 빠를 시 cooldown 늘림 (Step 6)
+- 약점 reveal_source `lens_focus` 임시 — 등불 트리거 인프라는 Phase 4-C에서
+- `throne_echo_visual.gd` 정식 프로그래밍 아트 — art-spec 작업으로 분리 (mire_mother_visual.gd 290줄 답습 가능)

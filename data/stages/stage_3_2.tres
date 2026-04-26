@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_3_2"
+display_name = "무너진 회랑"
+scene_path = "res://src/world/stages/Stage3_2.tscn"
+initial_hour = 16.0
+zone_id = "zone_3"
+adjacent_stages = Array[String](["stage_3_1", "stage_3_3"])
+lock_type = 0
+lock_requirement = ""
+total_enemies = 3
+total_residues = 3
+is_checkpoint = false
+radius_ring = 3
+angle_deg = 282.0
+radius_offset = 0.0

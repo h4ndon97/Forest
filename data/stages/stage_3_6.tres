@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_3_6"
+display_name = "갈림 유적"
+scene_path = "res://src/world/stages/Stage3_6.tscn"
+initial_hour = 11.0
+zone_id = "zone_3"
+adjacent_stages = Array[String](["stage_3_5", "stage_3_7", "stage_3_8", "stage_3_h"])
+lock_type = 0
+lock_requirement = ""
+total_enemies = 3
+total_residues = 3
+is_checkpoint = false
+radius_ring = 3
+angle_deg = 330.0
+radius_offset = 0.0

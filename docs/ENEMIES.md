@@ -138,13 +138,33 @@
 - `enemy_type="tendril"` — 신규 카테고리 (zone2 시그니처).
 
 **`EnemyStatsData.attack_behavior` enum 확장 (Phase 4-A)**: `"melee" / "ranged" / "none"` → **`+"ground_tether"`** 추가.
+**`EnemyStatsData.attack_behavior` enum 확장 (Phase 4-B)**: `+"ruin_charge"` 추가 (zone3 옛 보초 광역 충격파). `attack_behavior_ruin_charge.gd` (~120줄, ground_tether 답습 + 광역 형상 + 폐허 갈색-주황 톤). `base_enemy._inject_behaviors()` 디스패치 +`"ruin_charge"` 케이스.
+
+### 3구역 — 폐허의 숲 (Phase 4-B 확정, 2026-04-26)
+
+**서브 타입 4종** — `data/enemies/zone3/`
+
+| 베이스 | 3구역 서브 타입 | 주요 델타 (zone2 → zone3, 약 ×1.4) |
+|---|---|---|
+| 나무 | **고사목 보초** (`withered_sentinel.tres`) | HP 130→185, ATK 13→18 |
+| 바위 | **무너진 석상** (`toppled_statue.tres`) | HP 180→250, dmg_reduction 3→4 |
+| 꽃 | **잿빛 백합** (`ash_lily.tres`) | HP 65→90, ATK 7→10, 분열체는 `pollen_spore.tres` 재활용 |
+| 돌기둥 | **부서진 비석** (`shattered_stele.tres`) | HP 100→140, ATK 14→20, 투사체 속도 160→180 |
+
+**구역 고유 적 — 옛 보초** (`old_sentinel.tres`)
+- **신규 행동 카테고리**: `attack_behavior="ruin_charge"` (~120줄 신규 모듈, `attack_behavior_ruin_charge.gd`).
+- **거동**: telegraph 후 짧고 둥근 광역 hitbox (50×40). ground_tether와 차별화 — 추적 가능(base_speed=40), 폐허 갈색-주황 톤 fallback.
+- **데이터**: HP 90 / ATK 14 / collision 22×28 / hitbox_active_duration 0.35.
+- `enemy_type="sentinel"` — 신규 카테고리 (zone3 시그니처).
+- 시야 내 짧은 돌진 burst 시각 효과는 Step 6 인게임 검증 후 확장 검토.
 
 **`base_enemy._inject_behaviors()` 디스패치** — `match attack_type`에 `"ground_tether"` 케이스 추가 (`attack_behavior_ground_tether.gd` 동적 로드).
 
 ### 미결 사항
-- **스케줄**: 서브 타입 + 구역 고유 적 설계는 각 구역 Phase 진입 시 확정 — 1구역 ✅ (Phase 3-2), 2구역 ✅ (Phase 4-A), 3~5구역은 Phase 4-B/C/D 각 진입 시.
+- **스케줄**: 서브 타입 + 구역 고유 적 설계는 각 구역 Phase 진입 시 확정 — 1구역 ✅ (Phase 3-2), 2구역 ✅ (Phase 4-A), **3구역 ✅ (Phase 4-B Step 2)**, 4~5구역은 Phase 4-C/D 각 진입 시.
 - [x] 1구역 서브 타입 목록 + 공격 패턴 + 고유 적 + 그림자 반응 수치
 - [x] 2구역 서브 타입 목록 + 공격 패턴 + 고유 적 (늪 촉수, 신규 ground_tether 행동)
+- [x] 3구역 서브 타입 목록 + 공격 패턴 + 고유 적 (옛 보초, 신규 ruin_charge 행동)
 - [ ] 3~5구역 서브 타입 목록
 - [ ] 3~5구역 고유 오브젝트 및 신규 적 종류
 - [ ] Phase 5 밸런싱:

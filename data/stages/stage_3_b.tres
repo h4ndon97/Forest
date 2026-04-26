@@ -4,18 +4,18 @@
 
 [resource]
 script = ExtResource("1")
-stage_id = "stage_2_b"
-display_name = "늪의 어머니의 뜰"
-scene_path = "res://src/world/stages/Stage2_B.tscn"
+stage_id = "stage_3_b"
+display_name = "옛 왕좌의 뜰"
+scene_path = "res://src/world/stages/Stage3_B.tscn"
 initial_hour = 17.0
-zone_id = "zone_2"
-adjacent_stages = Array[String](["stage_2_7", "border_checkpoint", "mire_village"])
+zone_id = "zone_3"
+adjacent_stages = Array[String](["stage_3_9", "border_checkpoint"])
 lock_type = 0
 lock_requirement = ""
 total_enemies = 1
 total_residues = 0
 is_checkpoint = false
 room_size = Vector2(960, 360)
-radius_ring = 2
-angle_deg = 112.5
+radius_ring = 3
+angle_deg = 6.0
 radius_offset = 0.0

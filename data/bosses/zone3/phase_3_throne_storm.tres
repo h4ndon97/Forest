@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BossPhasePattern" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/bosses/boss_phase_pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+pattern_name = "throne_storm"
+attack_scripts = PackedStringArray("res://src/entities/bosses/base/behaviors/attack_behavior_boss_melee_aoe.gd", "res://src/entities/bosses/base/behaviors/attack_behavior_boss_shadow_echo.gd", "res://src/entities/bosses/base/behaviors/attack_behavior_boss_ranged_spread.gd")
+attack_cooldowns = PackedFloat32Array(1.2, 1.5, 1.0)
+telegraph_durations = PackedFloat32Array(0.4, 0.4, 0.4)
+hitbox_size = Vector2(220, 90)
+hitbox_offset = Vector2(0, -45)
+hitbox_active_duration = 0.4
+projectile_scene_path = "res://src/entities/enemies/projectile/EnemyProjectile.tscn"
+projectile_speed = 240.0
+projectile_spread_count = 3
+projectile_spread_angle = 25.0
+root_stats_path = ""
+root_count = 0
+root_spacing = 0.0

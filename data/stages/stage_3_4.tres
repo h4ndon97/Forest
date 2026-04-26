@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_3_4"
+display_name = "깨어진 광장"
+scene_path = "res://src/world/stages/Stage3_4.tscn"
+initial_hour = 14.0
+zone_id = "zone_3"
+adjacent_stages = Array[String](["stage_3_3", "stage_3_5"])
+lock_type = 3
+lock_requirement = "light_sensor:sensor_3_4_arch"
+total_enemies = 4
+total_residues = 4
+is_checkpoint = false
+radius_ring = 3
+angle_deg = 306.0
+radius_offset = 0.0

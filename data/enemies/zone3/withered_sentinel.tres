@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "고사목 보초"
+enemy_type = "tree"
+base_hp = 185.0
+base_attack = 18.0
+attack_range = 44.0
+attack_cooldown = 1.5
+base_speed = 38.0
+patrol_speed = 18.0
+detect_range = 130.0
+lose_range = 190.0
+min_intensity = 0.2
+max_intensity = 1.5
+collision_width = 24.0
+collision_height = 32.0
+gravity_scale = 1.0
+leaves_residue = true
+attack_behavior = "melee"
+hitbox_size = Vector2(44.0, 26.0)
+hitbox_offset = Vector2(28.0, -12.0)
+hitbox_active_duration = 0.38

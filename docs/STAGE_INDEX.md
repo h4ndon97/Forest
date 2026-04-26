@@ -3,7 +3,7 @@
 > 모든 구역의 스테이지·거점 일람. 각 항목의 잠금/적/기믹/추가조작/구현상태를 한눈에 본다.
 > **갱신 규칙**: 새 스테이지가 .tres로 등록되거나 잠금/기믹이 변경되면 본 문서를 즉시 갱신.
 > 출처: [STAGES.md](STAGES.md) / [ZONE2_CONTENT_PLAN.md](ZONE2_CONTENT_PLAN.md) / `data/stages/*.tres`
-> 마지막 갱신: 2026-04-25
+> 마지막 갱신: 2026-04-26
 
 ---
 
@@ -68,19 +68,29 @@
 
 ---
 
-## 3구역 — 폐허의 숲 ⏳ (Phase 4-B)
+## 3구역 — 폐허의 숲 ✅ (Phase 4-B Step 5 완료, Step 6 사용자 수시 / Step 7 마이그레이션 대기)
 
-| 항목 | 값 |
-|---|---|
-| 분위기 | 고목 + 옛 왕국 유적, 인공물 등장 |
-| 스토리 | **전환점** — 그림자 왕가 흔적 발견 |
-| 스테이지 수 | 통상 ~9 + 숨김 1 + 보스 1 = 10 ([WORLD_DESIGN §1](WORLD_DESIGN.md)) |
-| 보스 페이즈 | 3 |
-| 보스 보상 능력 | `light_leap` ([PHASE_4_0 §5.1](PHASE_4_0_ENGINE_HARDENING.md)) |
-| 추가조작 | 봉인 제단 활성화 → 이후 구역 잠금 해제 |
-| 자연 경계 (3-4) | 무너진 성벽/유적 |
+진입: (2-3 경계 거점) → `stage_3_1` ... 출구: `stage_3_b` → (zone4 진입 거점, Phase 4-C)
 
-상세 설계: Phase 4-B 진입 시 `docs/ZONE3_CONTENT_PLAN.md` 작성.
+| ID | 표시명(잠정) | 시간 | 잠금 | 적 / 잔류 | 기믹/환경 | 추가조작/숨김 | 스토리 비트 | 상태 |
+|---|---|---|---|---|---|---|---|---|
+| `stage_3_1` | 잔해의 길 | 18 | ABILITY(`shadow_phase`) | 3 / 3 | 폐허 도입(DustOverlay α0.10, 갈색 톤). 적: zone2 placeholder (weeping_willow + mire_stone + miasma_lily) — *분위기 검증 후 zone3 교체 결정* | PortalLeft→`mire_village` ✅ / PortalRight→`stage_3_2` ✅ | "낯선 돌이 발에 채인다" *(미적용)* | ✅ Step 1+5 |
+| `stage_3_2` | 무너진 회랑 | 16 | NONE | 3 / 3 | 옛 회랑 잔해. zone3 베이스 3 (withered/statue/lily) | NPC 미배치 (선조 기록 단편 2 위치 후보) | 봉인 거래 명시 *(미적용)* | ✅ Step 5-A |
+| `stage_3_3` | 옛 빛탑 | 22 | LIGHT | 4 / 4 | 빛탑 학습, 짙은 어둠(BG 0.14,0.12,0.10). **Lens + ArchSensor(`sensor_3_4_arch`)** — 3-4 진입 게이트 활성화. zone3 4종 + **first old_sentinel 도입** | — | — | ✅ Step 5-A |
+| `stage_3_4` | 깨어진 광장 | 14 | ENVIRONMENT(`light_sensor:sensor_3_4_arch`) | 4 / 4 | 환경 잠금 본격 (3-3 안의 Lens 회전으로 활성화). zone3 4종 (withered + lily + sentinel + stele) | — | — | ✅ Step 5-A |
+| `stage_3_5` | 정화의 안마당 | 19 | PURIFY (`stage_3_3`) | 4 / 4 | 정화 재학습. zone3 베이스 4종 (sentinel 제외 — zone2 패턴 답습) | — | — | ✅ Step 5-A |
+| `stage_3_6` | 갈림 유적 | 11 | NONE | 3 / 3 | 호흡 + 분기 (3-7/3-8). zone3 베이스 3종 + Lens + HiddenSensor(`sensor_3_6_hidden`) | **3-H 숨김 힌트** (Lens 회전 → HiddenSensor 점등 → Hidden3_HRevealer가 PortalHidden(stage_3_h) 노출. zone1 1-4·zone2 2-6 답습) | — | ✅ Step 5-B |
+| `stage_3_7` | 부서진 첨탑 | 23 | LIGHT | 5 / 5 | 보스 직전 검증 1. zone3 5종 모두 종합. 가장 어두운 BG (0.13,0.10,0.09) | — | — | ✅ Step 5-B |
+| `stage_3_8` | 잠긴 수로 | 13 | NONE | 4 / 4 | zone3 베이스 4종 + **Hidden3_HFloodgateRevealer**(FLAG 모드) — `world.zone2.floodgate_opened` flag set 시 PortalHidden(stage_3_h) 노출 | (옵션) zone2 H 발견자 보너스 경로 | — | ✅ Step 5-B |
+| `stage_3_9` | 왕좌 앞 | 21 | LIGHT | 5 / 5 | 보스 직전 종합 검증. zone3 5종 모두 + 옛 보초 강조 | — | — | ✅ Step 5-B |
+| `stage_3_h` | 봉인의 단 | 6 | 숨김 (HiddenRevealer 3-6 메인 / 3-8 옵션) | 2 / 2 | **추가조작: SealingPedestal 1개** + 옛 보초×2. 6시 새벽 — 가장 밝은 zone3 톤. 한 번만 활성화 가드 | 활성화 시 `world.zone3.sealing_altar_opened` flag set (Phase 4-C에서 zone4 활용처 결정) | — | ✅ Step 5-C |
+| `stage_3_b` | 옛 왕좌의 뜰 | 17 | NONE (3-1~3-9 fully cleared) | 1(보스) / 0 | **보스: Throne Echo (잠정명)** ✅ (HP 1190/ATK 31, 3페이즈, 약점 lens_focus). ThroneEcho.tscn + Stage3_B.tscn + Lens×2 + BossArenaTrigger. Visual은 fallback ColorRect (throne_echo_visual.gd 페이즈별 색조 stub, art-spec 추후) | 보상: `light_leap` + GP×9 + `ruin_signet` + `story.zone3.throne_echo_defeated` + `stage_progress.zone4_unlocked` | "분노만 남은 무엇이다" → light_leap 해금 | ✅ Step 5-C |
+
+**2-3 경계 거점** ✅ Step 5-C 신설: `mire_village` (마을형, NPC 미배치 — 선조 기록 단편 2 NPC는 Step 7+) + `mire_outpost` (간이형, 복수 진입 통로). 둘 다 `stage_2_b ↔ stage_3_1` 경유. zone2 stage_2_b PortalRight=`mire_village`로 갱신.
+
+**3구역 통계**: 통상 9 + 숨김 1 + 보스 1 = 11 / 적 총 ~37 / 잔류 총 ~33
+
+상세 설계: [`docs/ZONE3_CONTENT_PLAN.md`](ZONE3_CONTENT_PLAN.md).
 
 ---
 
@@ -121,8 +131,8 @@
 |---|---|---|---|---|
 | `start_village` | 시작점 | 마을형 | ✅ | 게임 홈 베이스, NPC 상점·스토리 |
 | `border_checkpoint` | 1-2 경계 | 간이형 | ✅ | 회복·세이브·월드맵 |
-| (TBD) | 2-3 경계 A | 마을형 | ⏳ | 스토리 NPC, 봉인 거래 단서 |
-| (TBD) | 2-3 경계 B | 간이형 | ⏳ | 복수 진입 통로 |
+| `mire_village` | 2-3 경계 A | 마을형 | ✅ Step 5-C | NPC 미배치 (선조 기록 단편 2 NPC는 Step 7+) |
+| `mire_outpost` | 2-3 경계 B | 간이형 | ✅ Step 5-C | 복수 진입 통로 (Step 5에서 미연결, future) |
 | (TBD) | 3-4 경계 | 마을형 | ⏳ | 진실 관련 NPC |
 | (TBD) | 4구역 내부 | 간이형 | ⏳ | 큰 구역 중간 체크포인트 |
 | (TBD) | 4-5 경계 | 간이형 | ⏳ | 심부 진입 전 마지막 보급 |
@@ -138,7 +148,7 @@
 |---|---|---|---|---|---|---|
 | 1구역 | 6 | 1 | 1 | 2 | 10 | ✅ |
 | 2구역 | 7 | 1 | 1 | 2 | 11 | ⚙️ |
-| 3구역 | 9 | 1 | 1 | 1 | 12 | ⏳ |
+| 3구역 | 9 | 1 | 1 | 1 | 12 | ⚙️ |
 | 4구역 | 11 | 1 | 1 | 2 | 15 | ⏳ |
 | 5구역 | 13 | 1 | 1 | 1 | 16 | ⏳ |
 | **총** | **46** | **5** | **5** | **8** | **64** | — |
@@ -164,3 +174,6 @@
 | 2026-04-25 | Step 5-7 — stage_2_h '잠긴 수문' 양산. Floodgate 1개 + marsh_tendril×2. 8시 아침 — 휴식·발견 분위기. 통상 7개 + 숨김 1 = 8개 zone2 일반 스테이지 모두 양산 완료. |
 | 2026-04-25 | Step 5-8 — stage_2_b '늪의 어머니의 뜰' + MireMother.tscn 양산. AncientOakheart.tscn + stage_1_b.gd 패턴 답습. room_size 960×360 보스 아레나. Lens×2 + BossArenaTrigger. Visual은 fallback ColorRect (mire_mother_visual.gd 미작성). 2-7 PortalRight 추가. **zone2 9 스테이지 모두 양산 완료**. |
 | 2026-04-25 | Step 7 — 본 문서 마이그레이션 + stage_2_1 적 zone2 교체. ENEMIES.md / BOSSES.md / STORY.md / WORLD_DESIGN.md 4 문서에 zone2 결정사항 미결→확정. Step 6은 사용자 수시 진행 통과. |
+| 2026-04-26 | **Phase 4-B Step 0** — zone3 § 11행 확장 (placeholder, 잠금 5종 모두 1번씩, ZONE3_CONTENT_PLAN.md 신설과 동기). zone3 헤더 ⏳→⚙️ + 통계 요약 갱신. 진입=2-3 경계 / 출구=3-4 경계. |
+| 2026-04-26 | **Phase 4-B Step 1** — stage_3_1 '잔해의 길' 양산. stage_2_1 패턴 답습. zone2 적 placeholder 3 + 폐허 갈색 톤. ABILITY(shadow_phase) 잠금. 헤드리스 ERROR 0. |
+| 2026-04-26 | **Phase 4-B Step 5** — zone3 9 스테이지(3-2~3-9 + 3-H) + stage_3_b 보스 아레나 + ThroneEcho.tscn + 2-3 경계 거점 2개(mire_village 마을형 / mire_outpost 간이형). zone2 stage_2_b PortalRight target=`mire_village` 갱신. 신규 37 + Edit 4. 행별 상태 ⏳→✅ 일괄 갱신은 Step 7 마이그레이션에서. 헤드리스 ERROR 0. |

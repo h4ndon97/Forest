@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SealingPedestalData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/sealing_pedestal_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "봉인 제단"
+prompt_text = "봉인 제단 활성화"
+can_interact = true
+interaction_radius = 56.0
+influence_radius = 0.0
+sprite_path = ""
+flag_id = "world.zone3.sealing_altar_opened"
+body_size = Vector2(56, 40)
+inactive_color = Color(0.30, 0.27, 0.24, 1.0)
+active_color = Color(0.85, 0.75, 0.45, 0.9)
+body_border_color = Color(0.18, 0.16, 0.14, 1.0)

@@ -1,11 +1,11 @@
 [gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://src/entities/player/Player.tscn" id="1"]
-[ext_resource type="Script" path="res://src/world/stages/stage_2_b.gd" id="stage_script"]
+[ext_resource type="Script" path="res://src/world/stages/stage_3_b.gd" id="stage_script"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
 [ext_resource type="PackedScene" path="res://src/entities/objects/environment/lens/Lens.tscn" id="lens_scene"]
 [ext_resource type="Resource" path="res://data/environment/lens_basic.tres" id="lens_data_basic"]
-[ext_resource type="PackedScene" path="res://src/entities/bosses/zone2/MireMother.tscn" id="boss_scene"]
+[ext_resource type="PackedScene" path="res://src/entities/bosses/zone3/ThroneEcho.tscn" id="boss_scene"]
 
 [sub_resource type="RectangleShape2D" id="floor_shape"]
 size = Vector2(960, 32)
@@ -19,7 +19,7 @@ size = Vector2(960, 16)
 [sub_resource type="RectangleShape2D" id="trigger_shape"]
 size = Vector2(32, 360)
 
-[node name="Stage2_B" type="Node2D"]
+[node name="Stage3_B" type="Node2D"]
 script = ExtResource("stage_script")
 
 [node name="Player" parent="." instance=ExtResource("1")]
@@ -36,7 +36,7 @@ offset_left = -480.0
 offset_top = -16.0
 offset_right = 480.0
 offset_bottom = 16.0
-color = Color(0.18, 0.24, 0.3, 1)
+color = Color(0.26, 0.22, 0.20, 1)
 
 [node name="WallLeft" type="StaticBody2D" parent="."]
 position = Vector2(-16, 180)
@@ -58,7 +58,7 @@ shape = SubResource("ceiling_shape")
 
 [node name="PortalLeft" parent="." instance=ExtResource("portal")]
 position = Vector2(32, 328)
-target_stage_id = "stage_2_7"
+target_stage_id = "stage_3_9"
 direction = "left"
 
 [node name="BossArenaTrigger" type="Area2D" parent="."]
@@ -75,7 +75,7 @@ offset_left = -16.0
 offset_top = -180.0
 offset_right = 16.0
 offset_bottom = 180.0
-color = Color(0.4, 0.6, 0.85, 0.18)
+color = Color(0.95, 0.65, 0.30, 0.18)
 
 [node name="Boss" parent="." instance=ExtResource("boss_scene")]
 position = Vector2(800, 320)
@@ -90,16 +90,16 @@ lens_data = ExtResource("lens_data_basic")
 
 [node name="PortalRight" parent="." instance=ExtResource("portal")]
 position = Vector2(928, 328)
-target_stage_id = "mire_village"
+target_stage_id = "border_checkpoint"
 direction = "right"
 
-[node name="FogOverlay" type="ColorRect" parent="."]
+[node name="DustOverlay" type="ColorRect" parent="."]
 z_index = 5
 offset_left = -100.0
 offset_top = -100.0
 offset_right = 1060.0
 offset_bottom = 460.0
-color = Color(0.45, 0.55, 0.65, 0.22)
+color = Color(0.85, 0.65, 0.45, 0.18)
 mouse_filter = 2
 
 [node name="BG" type="ColorRect" parent="."]
@@ -108,4 +108,4 @@ offset_left = -100.0
 offset_top = -100.0
 offset_right = 1060.0
 offset_bottom = 460.0
-color = Color(0.1, 0.14, 0.2, 1)
+color = Color(0.16, 0.13, 0.11, 1)

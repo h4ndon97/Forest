@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="BossStatsData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://data/bosses/boss_stats_data.gd" id="1"]
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="2"]
+[ext_resource type="Resource" path="res://data/bosses/zone3/phase_1_debris_sweep.tres" id="3"]
+[ext_resource type="Resource" path="res://data/bosses/zone3/phase_2_shadow_echo.tres" id="4"]
+[ext_resource type="Resource" path="res://data/bosses/zone3/phase_3_throne_storm.tres" id="5"]
+
+[sub_resource type="Resource" id="base_stats"]
+script = ExtResource("2")
+enemy_name = "왕좌의 잔영"
+enemy_type = "boss"
+base_hp = 1190.0
+base_attack = 31.0
+attack_range = 150.0
+attack_cooldown = 1.5
+base_speed = 55.0
+patrol_speed = 0.0
+detect_range = 320.0
+lose_range = 480.0
+min_intensity = 1.0
+max_intensity = 1.0
+collision_width = 56.0
+collision_height = 72.0
+gravity_scale = 1.0
+leaves_residue = false
+attack_behavior = "melee"
+death_behavior = "none"
+hitbox_size = Vector2(220.0, 90.0)
+hitbox_offset = Vector2(0.0, -45.0)
+hitbox_active_duration = 0.4
+damage_reduction_flat = 22.0
+hurt_resistance_chance = 0.15
+projectile_scene_path = ""
+projectile_speed = 200.0
+projectile_lifetime = 3.0
+projectile_telegraph = 0.55
+spore_stats_path = ""
+spore_count = 0
+spore_spread_radius = 0.0
+is_spore = false
+movement_profile = "ground"
+homing_turn_rate = 3.0
+homing_max_speed = 60.0
+
+[resource]
+script = ExtResource("1")
+boss_id = "throne_echo"
+display_name = "왕좌의 잔영"
+intro_duration = 1.5
+defeat_duration = 2.5
+base_stats = SubResource("base_stats")
+phase_count = 3
+phase_hp_thresholds = PackedFloat32Array(0.66, 0.33)
+phase_transition_duration = 1.8
+phase_patterns = Array[BossPhasePattern]([ExtResource("3"), ExtResource("4"), ExtResource("5")])
+weak_point_offset = Vector2(0, -56)
+weak_point_radius = 22.0
+weak_point_damage_multiplier = 2.5
+weak_point_reveal_source = "lens_focus"
+reward_ability_id = "light_leap"
+reward_growth_points = 9
+reward_item_ids = PackedStringArray("ruin_signet")
+reward_story_flag = "story.zone3.throne_echo_defeated"
+reward_next_zone_flag = "stage_progress.zone4_unlocked"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/accessory_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ruin_signet"
+display_name = "유적의 인장"
+description = "왕좌의 잔영이 깃든 인장. 빛의 흔적이 더 깊게 새겨진다."
+category = 2
+rarity = 1
+buy_price = 0
+sell_price = 80
+attack_bonus = 3.0
+hp_bonus = 0.0
+defense_bonus = 0.0
+time_max_bonus = 0.0
+time_recovery_bonus = 0.0
+special_effect_id = ""
