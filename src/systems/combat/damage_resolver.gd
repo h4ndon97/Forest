@@ -77,6 +77,12 @@ static func _apply_effects(target: Node, spec: AttackSpec, is_weak_point: bool) 
 	var timeline_id: StringName = _resolve_timeline_id(spec, is_weak_point)
 	var ctx: Dictionary = _build_effects_context(target, spec)
 	EffectsSystem.request_timeline_by_id(timeline_id, ctx)
+	# REC-FX-003: 빛 피니시 후속 거동 — 적 위치에 1~2초 발광 잔류.
+	# EffectTimeline의 단발 cue(0~0.12s) 모델에 안 맞는 지속 효과라 분리 처리.
+	if spec.is_finish and spec.attribute == "light":
+		var pos_var: Variant = ctx.get(&"world_pos", null)
+		if pos_var != null:
+			EffectsSystem.spawn_residual_light(pos_var as Vector2, "light")
 
 
 static func _resolve_timeline_id(spec: AttackSpec, is_weak_point: bool) -> StringName:

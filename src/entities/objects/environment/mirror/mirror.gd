@@ -15,6 +15,8 @@ var _preset_index: int = 0
 
 func _ready() -> void:
 	super._ready()
+	# REC-MECH-007: finish_light가 그룹 검색으로 빛 굴절 콤보 트리거.
+	add_to_group("mirror")
 	if mirror_data == null:
 		push_warning("Mirror: mirror_data 미설정")
 		return

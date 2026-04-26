@@ -1,3 +1,4 @@
+# gdlint:ignore = max-public-methods
 extends Node
 
 ## Phase 3-7 Pass 1 — 이펙트 시스템 Autoload 진입점.
@@ -17,9 +18,13 @@ const HitFlashScript = preload("res://src/systems/effects/effects_hit_flash.gd")
 const HitstopScript = preload("res://src/systems/effects/effects_hitstop.gd")
 const HitParticleScript = preload("res://src/systems/effects/effects_hit_particle.gd")
 const TimeStopScript = preload("res://src/systems/effects/effects_time_stop.gd")
+const TimeStopShutterScript = preload("res://src/systems/effects/effects_time_stop_shutter.gd")
 const FreezableScript = preload("res://src/systems/effects/effects_freezable.gd")
 const AfterimageScript = preload("res://src/systems/effects/effects_afterimage.gd")
 const DuskWarningScript = preload("res://src/systems/effects/effects_dusk_warning.gd")
+const ShadowVignetteScript = preload("res://src/systems/effects/effects_shadow_vignette.gd")
+const ResidualLightScript = preload("res://src/systems/effects/effects_residual_light.gd")
+const LightBeamScript = preload("res://src/systems/effects/effects_light_beam.gd")
 const HpCrackScript = preload("res://src/systems/effects/effects_hp_crack.gd")
 const FinishCutinScript = preload("res://src/systems/effects/effects_finish_cutin.gd")
 const TimelineManagerScript = preload("res://src/systems/effects/effects_timeline_manager.gd")
@@ -44,9 +49,13 @@ var _hit_flash: EffectsHitFlash
 var _hitstop: EffectsHitstop
 var _hit_particle: EffectsHitParticle
 var _time_stop: EffectsTimeStop
+var _time_stop_shutter: EffectsTimeStopShutter
 var _freezable: EffectsFreezable
 var _afterimage: EffectsAfterimage
 var _dusk_warning: EffectsDuskWarning
+var _shadow_vignette: EffectsShadowVignette
+var _residual_light: EffectsResidualLight
+var _light_beam: EffectsLightBeam
 var _hp_crack: EffectsHpCrack
 var _finish_cutin: EffectsFinishCutin
 var _timeline_manager: EffectsTimelineManager
@@ -61,9 +70,17 @@ func _ready() -> void:
 	_hitstop = HitstopScript.new(get_tree(), _config.hitstop_scale, _config.hitstop_enabled)
 	_hit_particle = HitParticleScript.new(self, _load_particle_presets())
 	_time_stop = TimeStopScript.new(self, _config)
+	# REC-FX-001: 시간 정지 발동 0.15초 셔터(색수차 + 플래시).
+	_time_stop_shutter = TimeStopShutterScript.new(self, _config)
 	_freezable = FreezableScript.new(self)
 	_afterimage = AfterimageScript.new(self)
 	_dusk_warning = DuskWarningScript.new(self, _config)
+	# REC-FX-007: 그림자 강도 비네트. DuskWarning 비활성 시에만 작동.
+	_shadow_vignette = ShadowVignetteScript.new(self, _config)
+	# REC-FX-003: 빛 피니시 잔류 빛줄기 후속 거동.
+	_residual_light = ResidualLightScript.new(self, _config)
+	# REC-MECH-007: 거울 반사 빛 빔 시각.
+	_light_beam = LightBeamScript.new(self, _config)
 	_hp_crack = HpCrackScript.new(self, _config)
 	_finish_cutin = FinishCutinScript.new(self, _config)
 	_timeline_manager = TimelineManagerScript.new(self)
@@ -177,6 +194,33 @@ func request_finish_cutin(world_pos: Vector2, attribute: String = "") -> void:
 	if _finish_cutin == null:
 		return
 	_finish_cutin.request(world_pos, attribute)
+
+
+# === 공개 API: 잔류 빛줄기 (REC-FX-003) ===
+
+
+## 빛 피니시 후 적 위치(world_pos)에 1~2초 발광 잔류 spawn.
+## attribute: "light"/"shadow"/"hybrid" — 잔류 색 결정.
+## duration <= 0 이면 config.residual_light_duration 사용.
+## 일반적으로 damage_resolver._apply_effects 후속에서 호출.
+func spawn_residual_light(
+	world_pos: Vector2, attribute: String = "light", duration: float = -1.0
+) -> void:
+	if _residual_light == null:
+		return
+	_residual_light.spawn(world_pos, attribute, duration)
+
+
+# === 공개 API: 거울 반사 빛 빔 (REC-MECH-007) ===
+
+
+## 거울 위치/각도로 빛 빔 시각 spawn. hitbox는 호출자(finish_light)가 별도 생성.
+## start_pos: 거울 global_position. angle: 거울 회전 (rad).
+## duration <= 0 이면 config.light_beam_fade_duration 사용.
+func spawn_light_beam(start_pos: Vector2, angle: float, duration: float = -1.0) -> void:
+	if _light_beam == null:
+		return
+	_light_beam.spawn(start_pos, angle, duration)
 
 
 # === 공개 API: 기타 ===

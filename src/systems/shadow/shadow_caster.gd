@@ -4,8 +4,18 @@ extends Node2D
 ## 낮: ShadowSystem의 전역 파라미터를 시그널로 수신하여 그림자 갱신.
 ## 밤+등불 ON: _process에서 per-object 계산으로 그림자 갱신.
 ## 아트 리소스가 없으면 fallback(ColorRect)으로 동작한다.
+##
+## REC-FX-004 (2026-04-26): 시간 정지 중 그림자 sprite 미세 떨림.
+## TimeSystem.time_flow_started/stopped 구독 + ShadowSystem 강도에 따라 진폭 조정.
+## enable_jitter=false 면 비활성 (환경 오브젝트 등 떨림 부적절한 곳용).
 
 const TimeStateMachineScript = preload("res://src/systems/time/time_state_machine.gd")
+const JITTER_SHADER: Shader = preload("res://assets/shaders/effects/shadow_jitter.gdshader")
+const _JITTER_PARAM_ACTIVE: StringName = &"active"
+const _JITTER_PARAM_INTENSITY: StringName = &"intensity"
+const _JITTER_PARAM_SEED: StringName = &"seed"
+const _JITTER_BASE_AMPLITUDE: float = 0.6
+const _JITTER_MAX_AMPLITUDE: float = 1.4
 
 @export var shadow_sprite: Sprite2D
 @export var base_offset: Vector2 = Vector2(0, 32)
@@ -15,6 +25,8 @@ const TimeStateMachineScript = preload("res://src/systems/time/time_state_machin
 @export var shadow_z_index: int = -1
 ## true: 발밑 고정, 방향으로 뻗음 (적용). false: 오프셋 이동 (환경 오브젝트용).
 @export var anchor_at_base: bool = false
+## REC-FX-004: 시간 정지 중 그림자 떨림 활성화. false면 셰이더 미부착(no-op).
+@export var enable_jitter: bool = true
 
 var _fallback_rect: ColorRect
 var _using_fallback: bool = false
@@ -22,6 +34,8 @@ var _is_night_mode: bool = false
 var _shadow_visible: bool = true
 var _owner_instance_id: int = 0
 var _locked: bool = false
+var _jitter_material: ShaderMaterial = null
+var _jitter_intensity: float = 0.0
 
 
 func _ready() -> void:
@@ -29,6 +43,12 @@ func _ready() -> void:
 
 	if not shadow_sprite:
 		_create_fallback()
+
+	# REC-FX-004: 떨림 셰이더 부착(enable_jitter=true 한정).
+	if enable_jitter:
+		_setup_jitter_material()
+		EventBus.time_flow_stopped.connect(_on_time_flow_stopped_jitter)
+		EventBus.time_flow_started.connect(_on_time_flow_started_jitter)
 
 	EventBus.shadow_params_changed.connect(_on_shadow_params_changed)
 	EventBus.day_night_changed.connect(_on_day_night_changed)
@@ -155,3 +175,42 @@ func _create_fallback() -> void:
 	_fallback_rect.size = fallback_size
 	_fallback_rect.z_index = shadow_z_index
 	add_child(_fallback_rect)
+
+
+# === REC-FX-004: 시간 정지 중 그림자 떨림 ===
+
+
+func _setup_jitter_material() -> void:
+	_jitter_material = ShaderMaterial.new()
+	_jitter_material.shader = JITTER_SHADER
+	# 인스턴스별 위상 차이 — get_instance_id 끝자리로 고유 seed.
+	var seed_value: float = float(_owner_instance_id % 1000) * 0.01
+	_jitter_material.set_shader_parameter(_JITTER_PARAM_SEED, seed_value)
+	_jitter_material.set_shader_parameter(_JITTER_PARAM_ACTIVE, 0.0)
+	_jitter_material.set_shader_parameter(_JITTER_PARAM_INTENSITY, _JITTER_BASE_AMPLITUDE)
+	if shadow_sprite != null:
+		shadow_sprite.material = _jitter_material
+	elif _fallback_rect != null:
+		_fallback_rect.material = _jitter_material
+
+
+func _on_time_flow_stopped_jitter(_current_hour: float) -> void:
+	if _jitter_material == null:
+		return
+	_jitter_material.set_shader_parameter(_JITTER_PARAM_ACTIVE, 1.0)
+	_refresh_jitter_intensity()
+
+
+func _on_time_flow_started_jitter(_current_hour: float) -> void:
+	if _jitter_material == null:
+		return
+	_jitter_material.set_shader_parameter(_JITTER_PARAM_ACTIVE, 0.0)
+
+
+func _refresh_jitter_intensity() -> void:
+	if _jitter_material == null:
+		return
+	# 그림자 강도(0~1.5) → 진폭 0.6~1.4 선형 매핑.
+	var multiplier: float = clampf(ShadowSystem.get_intensity_multiplier() / 1.5, 0.0, 1.0)
+	var amp: float = lerpf(_JITTER_BASE_AMPLITUDE, _JITTER_MAX_AMPLITUDE, multiplier)
+	_jitter_material.set_shader_parameter(_JITTER_PARAM_INTENSITY, amp)

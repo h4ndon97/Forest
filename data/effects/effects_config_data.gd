@@ -113,6 +113,23 @@ extends Resource
 ## 한 사이클 시간(초). 4단계 cycle이라 한 단계 = period/4.
 @export_range(0.04, 0.5, 0.01) var dusk_warning_shake_period: float = 0.16
 
+# === 땅거미 발자국 (REC-MECH-005 — Pass 5 후속) ===
+# 화면 가장자리에서 안쪽으로 침투하는 발자국 5단계.
+# 보라색 맥동 경고는 유지(작은 아이콘), 발자국은 공간 자체를 카운터로.
+@export_group("Dusk Footprint (REC-MECH-005)")
+## 발자국 풀 크기. 5단계 매핑: 거리2=2개/거리1=4개/거리0=5개+안쪽 이동.
+@export_range(3, 10, 1) var footprint_pool_size: int = 5
+## 발자국 색 — 어두운 보라 (그림자 왕가 팔레트).
+@export var footprint_color: Color = Color(0.3, 0.05, 0.5, 1.0)
+## 발자국 placeholder 크기 (sprite 도착 시 자동 교체).
+@export var footprint_size: Vector2 = Vector2(12.0, 12.0)
+## 가장자리 시작 마진(px) — 화면 좌우 안쪽으로 들어옴.
+@export var footprint_edge_margin: float = 24.0
+## 거리 1일 때 발자국이 안쪽으로 이동하는 추가 픽셀.
+@export var footprint_inward_drift: float = 36.0
+## 발자국 fade in/out duration.
+@export var footprint_fade_duration: float = 0.45
+
 # === UI 감성 (Pass 5 Step 1) ===
 @export_group("UI Feedback (Pass 5)")
 ## 빈사 크랙 임계 HP 비율 (기본 0.20 = HP 20% 이하).
@@ -138,6 +155,64 @@ extends Resource
 @export var finish_cutin_slowmo_duration: float = 0.4
 ## 상·하단 블랙바 두께(px, 640×360 기준).
 @export var finish_cutin_bar_thickness: float = 16.0
+
+# === 시간 정지 셔터 (REC-FX-001 — Pass 5 후속) ===
+# 시간 정지 발동 순간 0.15초 색수차 + 화면 플래시. 코어 메카닉 첫 인상 강화.
+@export_group("Time Stop Shutter (REC-FX-001)")
+## 셔터 총 지속(초). 0.15s 권장. 0이면 비활성.
+@export var shutter_duration: float = 0.15
+## 색수차 절정 강도 (UV 단위, 0.02 ≈ ±13px @640). 0이면 색수차 비활성.
+@export_range(0.0, 0.05, 0.001) var shutter_chromatic_max: float = 0.020
+## 화면 플래시 색.
+@export var shutter_flash_color: Color = Color(1.0, 1.0, 1.0, 1.0)
+## 화면 플래시 알파. 0이면 플래시 비활성.
+@export_range(0.0, 1.0, 0.01) var shutter_flash_alpha: float = 0.35
+
+# === 그림자 강도 비네트 (REC-FX-007 — Pass 5 후속) ===
+# DuskWarning 비활성 시에만 표시. 그림자 강도 임계값 이상부터 가장자리 어두움 점진.
+@export_group("Shadow Vignette (REC-FX-007)")
+## 비네트 색 — 어두운 보라/검정. 그림자 왕가 팔레트와 톤 맞춤.
+@export var shadow_vignette_color: Color = Color(0.05, 0.0, 0.10, 1.0)
+## 이 강도 이상부터 비네트 점진 시작 (강도 0~1.5 범위 가정).
+@export_range(0.0, 1.5, 0.01) var shadow_vignette_threshold: float = 0.50
+## 풀 강도(1.5) 도달 시 비네트 알파.
+@export_range(0.0, 1.0, 0.01) var shadow_vignette_alpha_max: float = 0.35
+## 강도 변화 시 색·알파 Tween 시간(초).
+@export var shadow_vignette_transition_duration: float = 0.30
+
+# === 빛 굴절 콤보 (REC-MECH-007 — Pass 5 후속) ===
+# 빛 피니시 시 같은 룸 거울에서 빛 빔 반사. 빔 hitbox는 거울 회전 방향 자동 추적.
+@export_group("Light Beam (REC-MECH-007)")
+## 빛 빔 길이(px). 거울 위치 기준 한 방향.
+@export var light_beam_length: float = 320.0
+## 빛 빔 두께(px) — hitbox & 시각.
+@export var light_beam_width: float = 18.0
+## 빔 active 시간(s). 짧을수록 단발 임팩트.
+@export var light_beam_active_duration: float = 0.15
+## 시각 페이드 시간(s). active_duration보다 약간 길게 권장.
+@export var light_beam_fade_duration: float = 0.22
+## 빔 데미지 비율 (빛 피니시 데미지의 %). 0.5 = 50%.
+@export_range(0.0, 1.0, 0.05) var light_beam_damage_ratio: float = 0.5
+## 빔 발광 색 (HDR 클램프 — Polygon2D는 LDR이라 1.0 이내).
+@export var light_beam_color: Color = Color(1.0, 0.95, 0.7, 1.0)
+## 빔 시작 알파.
+@export_range(0.0, 1.0, 0.01) var light_beam_alpha: float = 0.85
+
+# === 잔류 빛줄기 (REC-FX-003 — Pass 5 후속) ===
+# 빛 피니시 후 적 위치에 1~2초 발광 잔류. core(밝음) + halo(외곽 페이드).
+@export_group("Residual Light (REC-FX-003)")
+## 잔류 지속(초). 0보다 큰 값.
+@export var residual_light_duration: float = 1.2
+## halo 반경(px).
+@export var residual_light_halo_radius: float = 22.0
+## core 반경(px). halo의 절반 정도 권장.
+@export var residual_light_core_radius: float = 10.0
+## halo 시작 알파.
+@export_range(0.0, 1.0, 0.01) var residual_light_halo_alpha: float = 0.45
+## core 시작 알파.
+@export_range(0.0, 1.0, 0.01) var residual_light_core_alpha: float = 0.85
+## 종료 시점 스케일 배율 (1.0 = 원본 유지, 1.4 = 살짝 퍼짐).
+@export var residual_light_end_scale: float = 1.30
 
 # === 접근성 (Phase 5-2에서 UI 노출) ===
 @export_group("Accessibility")
