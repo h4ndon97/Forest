@@ -101,7 +101,7 @@
 | ID | 이름 | 상태 | 우선 | 노력 | 관련 시스템 | 의존 |
 |---|---|---|---|---|---|---|
 | REC-MECH-001 | Echo Nail — 정지 잔상 들여다보기 | PROPOSED | ★★★ | M | StorySystem, EffectTimeline, EnemySystem | — |
-| REC-MECH-002 | 그림자 광기 — 장기 노출 페널티 | PROPOSED | ★★★ | M | ShadowSystem, EnemySystem | — |
+| REC-MECH-002 | 그림자 광기 — 장기 노출 페널티 | **IMPLEMENTED (인프라)** | ★★★ | M 인프라 / L 환영 적 후속 | MadnessSystem(신설), MadnessHud, EventBus, effects_shadow_vignette | 게이지 + 4단계 + 시너지. 환영 적 entity는 후속 |
 | REC-MECH-003 | 양방향 패리 — 빛/그림자 패리 구분 | PROPOSED | ★★ | M | CombatSystem | — |
 | REC-MECH-004 | 시간 잔향 종 — 환경 오브젝트 #5 | PROPOSED | ★★ | M | TimeSystem, 환경 오브젝트 | — |
 | REC-MECH-005 | 그림자 발자국 — 땅거미 추적 전조 UI | **IMPLEMENTED** | ★★★ | S | DuskSpiderSystem, dusk_spider_hud, EventBus | 5단계 풀 + sprite 자동 교체 fallback |
@@ -159,7 +159,7 @@
 |---|---|---|---|---|---|---|
 | REC-UX-001 | 모래시계 그림자 — 시간 자원 시각화 | **STALE** | — | S | HUD, TimeSystem | 일식링 디자인 만족 (2026-04-26 확정) |
 | REC-UX-002 | 미니맵 단계 시스템 (Cornifer 의존) | PROPOSED | ★★★ | M | WorldMapUI, MiniMap | REC-CONT-002 |
-| REC-UX-003 | 인벤토리 — 픽셀 일러스트 + 짧은 시 | **PARTIAL** | ★★★ | M | InventorySystem, UI | flavor_text 스키마 + 일러스트 144×144 + 작가 |
+| REC-UX-003 | 인벤토리 — 픽셀 일러스트 + 짧은 시 | **IMPLEMENTED (인프라)** | ★★★ | S 인프라 / M 협업 | InventorySystem, ItemData, equipment_tab | flavor_text 필드 + 보라톤 라벨, 작가 협업 시 텍스트 채우면 즉시 반영 |
 | REC-UX-004 | 시간 정지 자동 보조 모드 | PROPOSED | ★★ | S | TimeSystem, 옵션 메뉴 | — |
 | REC-UX-005 | 한글 픽셀아트 폰트 통합 | **IMPLEMENTED** | ★★★ | S | UI 전체 | main_theme.tres + project.godot 등록 |
 | REC-UX-006 | Tunic식 디제틱 가이드 (매뉴얼 발견형) | PROPOSED | ★★★ | S | StorySystem, UI | REC-CONT-005 |

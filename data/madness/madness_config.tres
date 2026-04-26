@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MadnessConfigData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/madness/madness_config_data.gd" id="1_madness_cfg"]
+
+[resource]
+script = ExtResource("1_madness_cfg")
+intensity_threshold = 0.5
+accumulation_rate = 5.0
+recovery_rate = 10.0
+max_value = 100.0
+stage_safe_end = 0.30
+stage_warning_end = 0.60
+stage_alert_end = 0.85
+vignette_boost_warning = 0.05
+vignette_boost_alert = 0.12
+vignette_boost_critical = 0.20

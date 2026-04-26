@@ -38,33 +38,42 @@ HK의 Dream Nail:
 
 ## REC-MECH-002 — 그림자 광기 (장기 노출 페널티)
 
-- **상태**: PROPOSED
+- **상태**: **IMPLEMENTED (인프라)** (2026-04-26)
 - **우선순위**: ★★★
-- **노력**: M
+- **노력**: M (인프라) / L (환영 적 entity 후속)
 - **레퍼런스**: Don't Starve — Sanity / Shadow Creature
-- **관련 시스템**: ShadowSystem, EnemySystem, OverlaySystem
-- **의존**: —
-- **무효화 조건**: 1·2구역 밸런싱에서 코어 게임 길이가 짧아지면 우선순위 하락
+- **관련 시스템**: ShadowSystem, EventBus, MadnessSystem(신설), MadnessHud(신설)
+- **검증 (인프라)**:
+  - `data/madness/madness_config_data.gd` + `madness_config.tres` 신설 — 임계/누적/회복/단계/시너지 파라미터
+  - `src/systems/madness/madness_system.gd` Autoload 신설 — 강도≥threshold일 때 `delta×강도×accumulation_rate` 누적, 시간 정지 중 회복, 4단계 분류 + EventBus emit
+  - `event_bus.gd` 시그널 추가: `madness_changed(value, max)` + `madness_stage_changed(old, new)`
+  - `src/ui/hud/madness_hud.gd` 신설 — Autoload, ProgressBar placeholder + 단계별 색조 (SAFE→CRITICAL 보라→빨강 그라데이션)
+  - `src/systems/effects/effects_shadow_vignette.gd` — 광기 단계 시너지 추가 (`madness_stage_changed` 구독 → 비네트 알파 추가 보정)
+  - `project.godot` MadnessSystem + MadnessHud autoload 등록
+  - gdlint 통과 + Godot 헤드리스 로드 통과
+- **남은 작업 (후속)**: 환영 적 entity 디자인 + spawn 코드 (밸런싱 + Phase 4-C 이후 작업으로 분리)
 
-### 컨셉
-"그림자가 크면 적이 강하다"는 코어 룰의 **시간축 확장**. 큰 그림자 영역에 5분 이상 머물면 환영 적이 추가 스폰. 시간 정지 1초당 광기 회복 → 코어 자원이 카운터로 자연 통합.
+### 4단계 정책
+| 단계 | 비율 | 비네트 추가 보정 | 환영 적 |
+|---|---|---|---|
+| SAFE (0) | 0~30% | +0.00 | 없음 |
+| WARNING (1) | 30~60% | +0.05 | 신호만 |
+| ALERT (2) | 60~85% | +0.12 | 향후 1체 |
+| CRITICAL (3) | 85~100% | +0.20 | 향후 다수 + 처치 시 Memory Shard |
 
-### 레퍼런스 분석
-Don't Starve Sanity:
-- 어둠/괴물 근접/생식 음식으로 정신력 하락
-- 82.5% 미만부터 화면 왜곡 + 투명 Shadow Creature 출현
-- 15% 미만에서만 공격 가능 (역설)
+### 누적/회복 정책 (config 기본값)
+- 누적: 강도 ≥ 0.5일 때 `강도 × 5.0 × delta` (강도 1.0 = 20초 만에 풀)
+- 회복: 시간 정지 중 `10.0 × delta` (10초 만에 풀 회복)
+- 코어 메카닉 통합: 위험을 감수해 큰 그림자에서 머물면 광기 누적, 시간 정지로 회복 = 코어 자원이 카운터로 자연 통합
 
-### 이 프로젝트 적용
-- 광기 게이지는 시간 자원과 별도 (또는 시간 자원의 음수 영역으로 통합)
-- 큰 그림자 영역 노출 누적 → 화면 가장자리 어둠(REC-FX-007) + 환영 적 스폰
-- 환영 적은 일반 적과 구별되는 외형 + 처치 시 Memory Shard 드롭 (REC-MECH-001 시너지)
-- 시간 정지 = 광기 회복으로 코어 메카닉이 자연 통합
+### 시너지 (REC-FX-007)
+광기 단계 → `effects_shadow_vignette` 가 비네트 알파에 추가 보정 적용. 광기 단계가 높을수록 화면 가장자리 어둠 강조.
 
-### 구현 메모
-- 노출 누적은 ShadowSystem이 매 프레임 그림자 강도 적분
-- 광기 단계 5단계: 안전/주의/경고/위험/광기
-- 단계별 OverlaySystem 화면 효과 (셰이더로 처리, godot-shaders-fx skill)
+### 미래 확장 (후속 작업)
+- **환영 적 entity** (Don't Starve Shadow Creature 패턴): 단계 ALERT 이상부터 spawn. 일반 적과 구별되는 외형 + 처치 시 보상.
+- 거점 진입 시 광기 즉시 회복 (HP 회복과 같은 패턴).
+- NG+ 균열 깊이(REC-META-004)와 결합 — 깊이 높을수록 누적 속도 증가.
+- 셰이더 화면 왜곡 (Don't Starve 풀 광기 효과) — Pass 5 후속.
 
 ---
 

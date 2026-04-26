@@ -26,6 +26,13 @@ signal day_night_changed(is_day: bool)
 signal shadow_params_changed(direction: Vector2, scale: float, intensity: float)
 signal shadow_scale_changed(object_id: int, scale: float)
 
+# === 광기 시스템 (REC-MECH-002) ===
+## 광기 게이지 변화. 매 프레임 또는 변화량 일정 이상일 때 emit.
+signal madness_changed(value: float, max_value: float)
+## 광기 단계 변화 (SAFE/WARNING/ALERT/CRITICAL → MadnessSystem.MadnessStage 상수).
+## 환영 적 spawn / 비네트 시너지 / HUD 강조 등 단계 트리거에 활용.
+signal madness_stage_changed(old_stage: int, new_stage: int)
+
 # === 적 시스템 ===
 signal enemy_spawned(enemy_id: int)  # subscriber: 통계 예약
 signal enemy_killed(enemy_id: int, enemy_name: String)

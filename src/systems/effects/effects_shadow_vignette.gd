@@ -19,6 +19,7 @@ var _host: Node
 var _config: EffectsConfigData
 var _dusk_active: bool = false
 var _shadow_intensity: float = 0.0
+var _madness_stage: int = 0
 var _color_tween: Tween = null
 var _current_color: Color = Color(0.0, 0.0, 0.0, 0.0)
 
@@ -28,6 +29,8 @@ func _init(host: Node, config: EffectsConfigData) -> void:
 	_config = config
 	EventBus.shadow_params_changed.connect(_on_shadow_params_changed)
 	EventBus.dusk_spider_approached.connect(_on_dusk_distance_changed)
+	# REC-MECH-002 시너지: 광기 단계 → 비네트 알파 추가 보정.
+	EventBus.madness_stage_changed.connect(_on_madness_stage_changed)
 
 
 # === 내부 ===
@@ -48,6 +51,11 @@ func _on_dusk_distance_changed(distance: int) -> void:
 	# 별도 clear 호출하지 않는다 — 같은 프레임에 DuskWarning이 덮어쓸 것.
 
 
+func _on_madness_stage_changed(_old_stage: int, new_stage: int) -> void:
+	_madness_stage = new_stage
+	_apply()
+
+
 func _apply() -> void:
 	if _dusk_active:
 		return
@@ -63,7 +71,8 @@ func _apply() -> void:
 
 func _resolve_target_color() -> Color:
 	var threshold: float = _config.shadow_vignette_threshold
-	if _shadow_intensity < threshold:
+	var madness_boost: float = _resolve_madness_boost()
+	if _shadow_intensity < threshold and madness_boost <= 0.0:
 		var off_color: Color = _config.shadow_vignette_color
 		off_color.a = 0.0
 		return off_color
@@ -71,8 +80,25 @@ func _resolve_target_color() -> Color:
 	var span: float = max(1.5 - threshold, 0.001)
 	var t: float = clampf((_shadow_intensity - threshold) / span, 0.0, 1.0)
 	var color: Color = _config.shadow_vignette_color
-	color.a = t * _config.shadow_vignette_alpha_max
+	# 기본 비네트 알파 + 광기 단계별 추가 보정. max는 1.0으로 클램프.
+	color.a = clampf(t * _config.shadow_vignette_alpha_max + madness_boost, 0.0, 1.0)
 	return color
+
+
+func _resolve_madness_boost() -> float:
+	# MadnessSystem이 EffectsSystem보다 늦게 _ready 되어 첫 호출 시 config null 가능.
+	var madness_config: MadnessConfigData = MadnessSystem.get_config()
+	if madness_config == null:
+		return 0.0
+	match _madness_stage:
+		1:
+			return madness_config.vignette_boost_warning
+		2:
+			return madness_config.vignette_boost_alert
+		3:
+			return madness_config.vignette_boost_critical
+		_:
+			return 0.0
 
 
 func _set_color(value: Color) -> void:

@@ -75,3 +75,17 @@
 - `[verify]` gdlint 통과 + Godot 헤드리스 로드 테스트 통과.
 
 **Tier A 5건 모두 IMPLEMENTED**: UX-005(한글 폰트 사전적용 발견) + FX-001/003/004/007 + MECH-005/007. STALE 1건(UX-001). 5 카테고리 IMPLEMENTED + STALE 1 + ACCEPTED 0.
+
+## 2026-04-26 (Tier A 후속 — PARTIAL 마무리 1건)
+
+- `[impl]` REC-UX-003 PARTIAL → **IMPLEMENTED (인프라)** — `item_data.gd`에 `flavor_text: String` `@export_multiline` 필드 추가. `equipment_tab.gd`에 `_flavor_label` 추가(보라/회색 톤 `Color(0.55, 0.45, 0.7, 0.85)`), 빈 문자열 아닐 때만 표시. `sword_basic.tres`에 placeholder 시조 풍 텍스트 추가(시각 검증용). 작가 협업 시 30~50개 아이템 텍스트만 채우면 즉시 반영(메모리 [feedback_art_ready_code] 정책 부합).
+- `[verify]` gdlint 통과 + Godot 헤드리스 로드 통과 (ItemRegistry 8개 정상 로드).
+
+## 2026-04-26 (Tier A 후속 — REC-MECH-002 인프라)
+
+- `[impl]` REC-MECH-002 PROPOSED → **IMPLEMENTED (인프라)** — `MadnessSystem` Autoload 신설(`src/systems/madness/`). 강도≥0.5 영역에서 누적, 시간 정지 중 회복, 4단계(SAFE/WARNING/ALERT/CRITICAL) 분류. `madness_config.tres` 신설, `event_bus.gd`에 madness_changed + madness_stage_changed 시그널 추가.
+- `[add]` `MadnessHud` Autoload 신설 — placeholder ProgressBar + 단계별 색조 (보라→빨강 그라데이션). 좌상단 시간 코어 아래 잠정 위치(Pass 5 재배치 검토).
+- `[edit]` `effects_shadow_vignette.gd` REC-FX-007 시너지 — 광기 단계 시그널 → 비네트 알파 추가 보정 (warning +0.05 / alert +0.12 / critical +0.20).
+- `[edit]` `project.godot` autoload 2개 등록 (MadnessSystem + MadnessHud).
+- `[verify]` gdlint 통과(class-definitions-order 1건 enum 위치 정정) + Godot 헤드리스 로드 통과.
+- **남은 작업**: 환영 적 entity 디자인 + spawn 코드 (별도 후속, 밸런싱 결정 필요).
