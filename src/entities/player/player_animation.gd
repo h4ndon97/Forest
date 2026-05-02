@@ -72,12 +72,21 @@ const LOOPING_ANIMS := {
 
 const DEFAULT_ANIM_SPEED := 10.0
 
+## idle 변형별 연속 재생 횟수. 키 없으면 기본 1회.
+## 예: idle_00을 3번 연속 재생 후 idle_01로 전환, idle_01은 1번만 재생 후 idle_00으로 복귀.
+const IDLE_VARIANT_REPEATS := {
+	"idle_00": 3,
+	"idle_01": 1,
+}
+
 var _sprite: AnimatedSprite2D
 var _loaded_anims: Dictionary = {}
 
 ## idle_NN 변형 목록. 정렬된 상태로 보관 — 0번부터 순차 재생 후 wrap.
 var _idle_variants: Array[String] = []
 var _current_idle_index: int = 0
+## 현재 변형이 연속 재생된 횟수. IDLE_VARIANT_REPEATS 도달 시 다음 변형으로 전환.
+var _current_idle_repeats: int = 0
 
 
 func setup(sprite: AnimatedSprite2D) -> void:
@@ -145,6 +154,7 @@ func _detect_idle_variants() -> void:
 	for n in candidates:
 		_idle_variants.append(n)
 	_current_idle_index = 0
+	_current_idle_repeats = 0
 
 
 func _is_idle_variant(anim_name: String) -> bool:
@@ -194,7 +204,7 @@ func play_follow_up(state_tag: String) -> void:
 	# PNG 미로드 — 현재 애니메이션 유지
 
 
-## non-loop인 idle 변형이 끝났을 때 다음 변형으로 swap.
+## non-loop인 idle 변형이 끝났을 때 IDLE_VARIANT_REPEATS 만큼 반복 후 다음 변형으로 swap.
 func _on_animation_finished() -> void:
 	var current: String = String(_sprite.animation)
 	if not _is_idle_variant(current):
@@ -203,7 +213,11 @@ func _on_animation_finished() -> void:
 		# 변형 1개뿐이면 그대로 다시 재생 (loop 효과)
 		_sprite.play(current)
 		return
-	_current_idle_index = (_current_idle_index + 1) % _idle_variants.size()
+	_current_idle_repeats += 1
+	var max_repeats: int = IDLE_VARIANT_REPEATS.get(current, 1)
+	if _current_idle_repeats >= max_repeats:
+		_current_idle_index = (_current_idle_index + 1) % _idle_variants.size()
+		_current_idle_repeats = 0
 	_sprite.play(_idle_variants[_current_idle_index])
 
 
@@ -228,8 +242,38 @@ func _load_dynamic_animations() -> void:
 		var texture: Texture2D = load(path)
 		if texture == null:
 			continue
-		_register_animation(anim_name, texture)
+		_register_animation(anim_name, texture, path)
 		_loaded_anims[anim_name] = true
+
+
+## Aseprite가 export한 .json에서 프레임별 duration(ms) 추출. 없으면 빈 배열.
+## JSON 포맷: { "frames": { "<frame_key>": { "duration": <ms> }, ... }, "meta": ... }
+func _load_frame_durations(json_path: String, frame_count: int) -> Array:
+	var result: Array = []
+	if not FileAccess.file_exists(json_path):
+		return result
+	var content: String = FileAccess.get_file_as_string(json_path)
+	if content.is_empty():
+		return result
+	var parsed: Variant = JSON.parse_string(content)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return result
+	var data: Dictionary = parsed
+	if not data.has("frames"):
+		return result
+	var frames_data: Variant = data["frames"]
+	if typeof(frames_data) != TYPE_DICTIONARY:
+		return result
+	# Aseprite Hash 포맷 — 키 순서가 export 순서. Godot Dictionary는 insertion order 보존.
+	for key in frames_data.keys():
+		var frame_info: Variant = frames_data[key]
+		if typeof(frame_info) != TYPE_DICTIONARY:
+			continue
+		var ms: float = float(frame_info.get("duration", 100.0))
+		result.append(ms / 1000.0)  # ms → seconds
+		if result.size() >= frame_count:
+			break
+	return result
 
 
 ## 전용 slash_1~4 파일이 없을 때만 기존 "slash"를 복제 등록(타격별 모션 분리가 없는 초기 상태).
@@ -273,7 +317,8 @@ func _is_action_anim(anim_name: String) -> bool:
 
 ## 가로 스트립 텍스처를 AtlasTexture로 슬라이스해 등록.
 ## 프레임은 정사각형 전제 → width = height. frame_count = texture.width / height.
-func _register_animation(anim_name: String, texture: Texture2D) -> void:
+## png_path가 주어지면 같은 경로의 .json에서 프레임별 duration을 읽어 적용 (Aseprite ms 메타).
+func _register_animation(anim_name: String, texture: Texture2D, png_path: String = "") -> void:
 	var frames: SpriteFrames = _sprite.sprite_frames
 	var frame_size: int = texture.get_height()
 	if frame_size <= 0:
@@ -297,8 +342,20 @@ func _register_animation(anim_name: String, texture: Texture2D) -> void:
 	frames.set_animation_loop(anim_name, LOOPING_ANIMS.get(anim_name, false))
 	frames.set_animation_speed(anim_name, DEFAULT_ANIM_SPEED)
 
+	# JSON에서 프레임별 duration(초) 로드. 없으면 균일 fps fallback.
+	var durations: Array = []
+	if not png_path.is_empty():
+		var json_path: String = png_path.get_basename() + ".json"
+		durations = _load_frame_durations(json_path, frame_count)
+
 	for i in frame_count:
 		var atlas := AtlasTexture.new()
 		atlas.atlas = texture
 		atlas.region = Rect2(frame_size * i, 0, frame_size, frame_size)
-		frames.add_frame(anim_name, atlas)
+		# SpriteFrames duration은 speed 상대값 — frame_seconds = duration / speed.
+		# frame_seconds = ms/1000 → duration = (ms/1000) * speed.
+		if i < durations.size():
+			var dur_relative: float = durations[i] * DEFAULT_ANIM_SPEED
+			frames.add_frame(anim_name, atlas, dur_relative)
+		else:
+			frames.add_frame(anim_name, atlas)
