@@ -22,6 +22,7 @@ var _enemies_active: bool = false
 var _parent: CharacterBody2D
 var _sprite: AnimatedSprite2D
 var _movement: Node
+var _animation_controller: Node
 var _config: CombatConfigData
 
 ## 사망/리셋 시 잔존 히트 방지용 안전장치 — active_duration 만료 전 즉시 cancel.
@@ -36,6 +37,7 @@ func setup(parent: CharacterBody2D, config: CombatConfigData) -> void:
 	_parent = parent
 	_sprite = parent.get_node("AnimatedSprite2D")
 	_movement = parent.get_node("MovementComponent")
+	_animation_controller = parent.get_node("AnimationController")
 	_config = config
 	_create_timers()
 	EventBus.player_died.connect(_on_player_died)
@@ -73,6 +75,15 @@ func _start_hit(hit_number: int) -> void:
 	_is_attacking = true
 	_input_buffered = false
 
+	# 슬래시 호 VFX (적 유무 무관 — 시각 자기 표현, 2026-05-02 (가)+(A) 리팩토링).
+	# 검 자체는 캐릭터 PNG에 상시 — 본 호출은 호/검기 흔적만 spawn.
+	EffectsSystem.request_slash_arc(
+		_parent.global_position,
+		_movement.facing_direction,
+		_resolve_finish_attribute(),
+		hit_number,
+	)
+
 	if _enemies_active:
 		_cancel_current_attack()
 		if _combo_count >= _config.combo_max_hits:
@@ -80,12 +91,10 @@ func _start_hit(hit_number: int) -> void:
 		else:
 			_execute_normal_hit()
 
-	var anim_name := "slash_%d" % hit_number
-	if _sprite and _sprite.sprite_frames:
-		if _sprite.sprite_frames.has_animation(anim_name):
-			_sprite.play(anim_name)
-		elif _sprite.sprite_frames.has_animation("slash"):
-			_sprite.play("slash")
+	# AnimationController에 위임 — _loaded_anims 메타데이터를 보고 PNG 미로드 시 무동작.
+	# (직접 has_animation 체크는 embedded placeholder를 가짜 양성으로 재생하므로 사용 금지.)
+	if _animation_controller:
+		_animation_controller.play_attack(hit_number)
 
 	_hit_timer.start()
 	EventBus.combo_hit_landed.emit(hit_number)

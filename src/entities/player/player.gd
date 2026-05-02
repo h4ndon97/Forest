@@ -120,6 +120,13 @@ func _physics_process(delta: float) -> void:
 	if input_handler.attribute_toggle_pressed:
 		state_machine.toggle_attribute()
 
+	# Echo Nail (G 키, REC-MECH-001) — 정지된 적/오브젝트 잔상 발동.
+	# 시간 정지/근접 가드는 EchoTarget.can_reveal()이 처리.
+	if input_handler.echo_nail_pressed:
+		var closest = EchoSystem.find_closest_revealable(global_position)
+		if closest != null:
+			EchoSystem.try_reveal(closest)
+
 	# 넉백 중에는 입력/상태/이동 계산 건너뛰고 마찰+중력만 적용
 	if health.is_knocked_back():
 		var gravity := ProjectSettings.get_setting("physics/2d/default_gravity", 980.0) as float

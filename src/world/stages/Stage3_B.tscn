@@ -90,7 +90,7 @@ lens_data = ExtResource("lens_data_basic")
 
 [node name="PortalRight" parent="." instance=ExtResource("portal")]
 position = Vector2(928, 328)
-target_stage_id = "border_checkpoint"
+target_stage_id = "ruined_village"
 direction = "right"
 
 [node name="DustOverlay" type="ColorRect" parent="."]

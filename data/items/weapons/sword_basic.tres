@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "sword_basic"
-display_name = "낡은 검"
-description = "평범한 검. 쓸만하다."
-flavor_text = "녹슨 날에도 손때는 남아 — 누군가의 길이었으리."
+display_name = "낡은 등불"
+description = "평범한 등불. 빛 검을 만들어낼 수 있다."
+flavor_text = "그을음 깊은 유리 안에서도 빛은 살아 있다 — 누군가가 끝까지 들고 있었으리."
 category = 0
 rarity = 0
 buy_price = 0

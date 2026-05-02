@@ -111,6 +111,19 @@ func get_cooldown_ratio(slot_index: int) -> float:
 	return _slot_manager.get_ratio(slot_index)
 
 
+# === Public API: 자원 ===
+
+
+## 슬롯에 장착된 스킬이 현재 시간자원으로 사용 가능한지 검사.
+## 빈 슬롯 / time_cost 없음 / 보유 자원 ≥ 필요 자원 → true.
+func has_enough_resource(slot_index: int) -> bool:
+	var skill: SkillData = get_equipped_skill(slot_index)
+	if skill == null or skill.time_cost <= 0.0:
+		return true
+	var res_data: Dictionary = TimeSystem.get_resource_data()
+	return res_data.get("current", 0.0) >= skill.time_cost
+
+
 # === Public API: 속성 ===
 
 

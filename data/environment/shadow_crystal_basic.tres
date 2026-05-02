@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShadowCrystalData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/shadow_crystal_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "그림자 결정"
+prompt_text = "그림자 결정 동조"
+can_interact = true
+interaction_radius = 60.0
+influence_radius = 0.0
+sprite_path = ""
+flag_id = "world.zone4.shadow_crystal_attuned"
+body_size = Vector2(64, 48)
+inactive_color = Color(0.18, 0.14, 0.22, 1.0)
+active_color = Color(0.65, 0.40, 0.85, 0.9)
+body_border_color = Color(0.10, 0.08, 0.14, 1.0)

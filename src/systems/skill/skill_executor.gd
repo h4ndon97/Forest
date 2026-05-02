@@ -71,12 +71,13 @@ static func _dispatch(skill: SkillData, ctx: Dictionary) -> void:
 			push_warning("SkillExecutor: unknown effect_type '%s'" % skill.effect_type)
 
 
+## AnimationController에 위임 — _loaded_anims 메타데이터를 보고 PNG 미로드 시 무동작.
+## (직접 sprite_frames.has_animation 체크는 embedded placeholder를 가짜 양성으로 재생.)
 static func _play_animation(skill: SkillData, ctx: Dictionary) -> void:
-	var sprite: AnimatedSprite2D = ctx.get("sprite")
-	if sprite == null or sprite.sprite_frames == null:
+	var caster: Node = ctx.get("caster")
+	if caster == null:
 		return
-	var anim_name := "skill_%s" % skill.id
-	if not sprite.sprite_frames.has_animation(anim_name):
-		anim_name = EFFECT_ANIM_FALLBACK.get(skill.effect_type, "slash")
-	if sprite.sprite_frames.has_animation(anim_name):
-		sprite.play(anim_name)
+	var anim_ctrl: Node = caster.get_node_or_null("AnimationController")
+	if anim_ctrl == null or not anim_ctrl.has_method("play_skill"):
+		return
+	anim_ctrl.play_skill(skill.id, skill.effect_type)

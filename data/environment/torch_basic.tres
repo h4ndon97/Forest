@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TorchData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/environment/torch_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+object_name = "횃불"
+prompt_text = "횃불 점화"
+can_interact = true
+interaction_radius = 48.0
+influence_radius = 0.0
+sprite_path = ""
+body_size = Vector2(24, 56)
+unlit_color = Color(0.30, 0.20, 0.16, 1.0)
+lit_color = Color(0.95, 0.65, 0.30, 0.95)

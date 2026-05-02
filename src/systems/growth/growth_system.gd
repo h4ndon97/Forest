@@ -1,7 +1,9 @@
+# gdlint:ignore = max-public-methods
 extends Node
 
 ## 성장 시스템 Autoload.
-## 강화 포인트 투자, 능력치 보너스, 리스펙을 관리한다.
+## 강화 포인트 투자, 능력치 보너스, 리스펙, Memory Shard(REC-MECH-001)를 관리한다.
+## facade 패턴 — PointTracker/StatCalculator로 책임 분리. 외부에는 단일 진입점만 노출.
 ## 소비 시스템(HP, 공격력, 등불, 시간자원)은 growth_stats_changed 시그널로 재조회.
 
 const GrowthConfigData = preload("res://data/growth/growth_config_data.gd")
@@ -93,6 +95,18 @@ func respec() -> bool:
 		return false
 	EventBus.growth_stats_changed.emit()
 	return true
+
+
+# === Public API: Memory Shard (REC-MECH-001) ===
+
+
+## EchoSystem이 잔상 발동 종료 시 호출. amount<=0이면 무시.
+func add_memory_shards(amount: int) -> void:
+	_tracker.add_memory_shards(amount)
+
+
+func get_memory_shards() -> int:
+	return _tracker.memory_shards
 
 
 # === Public API: 보너스 조회 (소비 시스템용) ===

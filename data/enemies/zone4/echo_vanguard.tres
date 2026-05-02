@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "잔영 첨병"
+enemy_type = "vanguard"
+base_hp = 130.0
+base_attack = 17.0
+attack_range = 42.0
+attack_cooldown = 1.4
+base_speed = 44.0
+patrol_speed = 20.0
+detect_range = 160.0
+lose_range = 220.0
+min_intensity = 0.2
+max_intensity = 1.5
+collision_width = 20.0
+collision_height = 28.0
+gravity_scale = 1.0
+leaves_residue = true
+time_immune = true
+attack_behavior = "melee"
+hitbox_size = Vector2(36.0, 22.0)
+hitbox_offset = Vector2(22.0, -12.0)
+hitbox_active_duration = 0.34

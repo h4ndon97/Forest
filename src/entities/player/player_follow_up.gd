@@ -138,20 +138,15 @@ func _request_attack(state: int) -> void:
 	CombatSystem.request_attack(spec)
 
 
-## 전용 애니메이션 → slash_4 → slash 순으로 fallback. 재생되면 player_animation이 자동 보호.
+## AnimationController에 위임 — _loaded_anims 메타데이터 기반 fallback.
+## (직접 sprite_frames.has_animation 체크는 embedded placeholder를 가짜 양성으로 재생.)
 func _play_animation(state: int) -> void:
-	if _sprite == null or _sprite.sprite_frames == null:
+	if _parent == null:
 		return
-	var dedicated: String = FOLLOW_UP_ANIM_PREFIX + _state_tag(state)
-	var frames: SpriteFrames = _sprite.sprite_frames
-	if frames.has_animation(dedicated):
-		_sprite.play(dedicated)
+	var anim_ctrl: Node = _parent.get_node_or_null("AnimationController")
+	if anim_ctrl == null or not anim_ctrl.has_method("play_follow_up"):
 		return
-	if frames.has_animation(FALLBACK_ANIM_FINISH):
-		_sprite.play(FALLBACK_ANIM_FINISH)
-		return
-	if frames.has_animation(FALLBACK_ANIM_NORMAL):
-		_sprite.play(FALLBACK_ANIM_NORMAL)
+	anim_ctrl.play_follow_up(_state_tag(state))
 
 
 func _play_visual_burst(state: int) -> void:

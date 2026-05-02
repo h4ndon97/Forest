@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BossPhasePattern" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/bosses/boss_phase_pattern.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+pattern_name = "lord_storm"
+attack_scripts = PackedStringArray("res://src/entities/bosses/base/behaviors/attack_behavior_boss_melee_aoe.gd", "res://src/entities/bosses/base/behaviors/attack_behavior_boss_remnant_echo.gd", "res://src/entities/bosses/base/behaviors/attack_behavior_boss_ranged_spread.gd")
+attack_cooldowns = PackedFloat32Array(1.0, 1.3, 0.9)
+telegraph_durations = PackedFloat32Array(0.35, 0.35, 0.35)
+hitbox_size = Vector2(240, 100)
+hitbox_offset = Vector2(0, -50)
+hitbox_active_duration = 0.4
+projectile_scene_path = "res://src/entities/enemies/projectile/EnemyProjectile.tscn"
+projectile_speed = 260.0
+projectile_spread_count = 4
+projectile_spread_angle = 26.0
+root_stats_path = ""
+root_count = 0
+root_spacing = 0.0

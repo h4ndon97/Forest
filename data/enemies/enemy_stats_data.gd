@@ -35,6 +35,11 @@ extends Resource
 @export_group("잔류")
 @export var leaves_residue: bool = true
 
+@export_group("시간 정지 응답")
+## 정지 면역 (true 시 시간 정지 중에도 active 유지). zone4 정지 면역 엘리트 등.
+## base_enemy.deactivate()에서 가드 — _registry.deactivate_all 호출 시에도 활성 유지.
+@export var time_immune: bool = false
+
 @export_group("행동 타입")
 ## 공격 행동 (melee / ranged / none / ground_tether / ruin_charge)
 @export_enum("melee", "ranged", "none", "ground_tether", "ruin_charge")

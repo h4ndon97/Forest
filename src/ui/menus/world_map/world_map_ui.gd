@@ -8,12 +8,24 @@ extends CanvasLayer
 const GraphBuilderScript = preload("res://src/ui/menus/world_map/world_map_graph_builder.gd")
 const ZoneLayoutScript = preload("res://src/ui/menus/world_map/world_map_zone_layout.gd")
 const DetailPanelScript = preload("res://src/ui/menus/world_map/world_map_detail_panel.gd")
-const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
+const InputRouterScript = preload("res://src/ui/menus/world_map/world_map_input_router.gd")
+const NodeHoverScript = preload("res://src/ui/menus/world_map/world_map_node_hover.gd")
+const PolygonRendererScript = preload(
+	"res://src/ui/menus/world_map/world_map_zone_polygon_renderer.gd"
+)
 const SELECTED_COLOR := Color(1.0, 1.0, 1.0)
+
+# 열기 모드 — 거점 포털 진입 시 FAST_TRAVEL, M키 상시 열람 시 VIEW_ONLY.
+const MODE_FAST_TRAVEL: int = 0
+const MODE_VIEW_ONLY: int = 1
 
 var _visible: bool = false
 var _builder: Node
 var _zone_layout: Node
+var _input_router: Node
+var _node_hover: Node
+var _polygon_renderer: Node
+var _polygon_container: Control
 var _bg: ColorRect
 var _hint_label: Label
 var _node_container: Control
@@ -26,6 +38,9 @@ var _zone_container: Control
 var _detail_panel: PanelContainer
 var _selectable_ids: Array = []  # 이동 가능한 거점 ID 목록
 var _selected_index: int = 0
+var _open_mode: int = MODE_FAST_TRAVEL
+var _detail_show: bool = false  # view-only 초기엔 숨김. 사용자가 ←→ 누를 때 표시.
+var _hover_id: String = ""  # 마우스 호버 중인 stage_id. 비면 selection fallback.
 
 
 func _ready() -> void:
@@ -43,40 +58,63 @@ func _ready() -> void:
 	_zone_layout.set_script(ZoneLayoutScript)
 	add_child(_zone_layout)
 
+	_input_router = Node.new()
+	_input_router.name = "InputRouter"
+	_input_router.set_script(InputRouterScript)
+	add_child(_input_router)
+
+	_node_hover = Node.new()
+	_node_hover.name = "NodeHover"
+	_node_hover.set_script(NodeHoverScript)
+	add_child(_node_hover)
+
+	_polygon_renderer = Node.new()
+	_polygon_renderer.name = "PolygonRenderer"
+	_polygon_renderer.set_script(PolygonRendererScript)
+	add_child(_polygon_renderer)
+
 	_build_ui_frame()
 	EventBus.world_map_opened.connect(_on_open)
-	EventBus.time_flow_started.connect(_on_time_flow_changed)
-	EventBus.time_flow_stopped.connect(_on_time_flow_changed)
-	EventBus.current_hour_changed.connect(_on_current_hour_changed)
+	EventBus.time_flow_started.connect(_on_time_signal)
+	EventBus.time_flow_stopped.connect(_on_time_signal)
+	EventBus.current_hour_changed.connect(_on_time_signal)
 	EventBus.dusk_spider_spawned.connect(_on_spider_state_changed)
 	EventBus.dusk_spider_arrived.connect(_on_spider_state_changed)
 	EventBus.dusk_spider_defeated.connect(_on_spider_state_changed)
 
 
-func _process(_delta: float) -> void:
-	if not _visible:
-		return
-
-	if Input.is_action_just_pressed("interact") or Input.is_action_just_pressed("ui_cancel"):
-		_close()
-		return
-
-	if _selectable_ids.is_empty():
-		return
-
-	if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("ui_left"):
-		_navigate(-1)
-	elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("ui_right"):
-		_navigate(1)
-	elif Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("ui_accept"):
-		_travel_to_selected()
-
-
-# --- UI 구축 ---
+# --- 공개 API (input_router/portal 호출) ---
 
 
 func is_open() -> bool:
 	return _visible
+
+
+func has_selectables() -> bool:
+	return not _selectable_ids.is_empty()
+
+
+func get_open_mode() -> int:
+	return _open_mode
+
+
+func set_open_mode(mode: int) -> void:
+	_open_mode = mode
+
+
+func get_hover_id() -> String:
+	return _hover_id
+
+
+func set_hover_id(stage_id: String) -> void:
+	if _hover_id == stage_id:
+		return
+	_hover_id = stage_id
+	if _visible:
+		_update_selection_highlight()
+
+
+# --- UI 구축 ---
 
 
 func _build_ui_frame() -> void:
@@ -96,6 +134,7 @@ func _build_ui_frame() -> void:
 	_hint_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	add_child(_hint_label)
 
+	_polygon_container = _make_container("ZonePolygons")
 	_line_container = _make_container("Lines")
 	_zone_container = _make_container("ZoneLabels")
 	_node_container = _make_container("Nodes")
@@ -115,44 +154,23 @@ func _make_container(container_name: String) -> Control:
 
 
 func _rebuild_graph() -> void:
-	for c in [_node_container, _line_container, _spider_container, _zone_container]:
+	var containers: Array = [
+		_polygon_container, _node_container, _line_container, _spider_container, _zone_container
+	]
+	for c in containers:
 		for child in c.get_children():
 			child.queue_free()
 	_stage_nodes.clear()
 	_stage_positions.clear()
 	_spider_icons.clear()
 	_selectable_ids.clear()
+	_hover_id = ""
 
-	var stopped: bool = _is_time_stopped()
-	var all_ids: Array = StageSystem.get_all_stage_ids()
-	var polar_ids: Array = []
-	var ring_populated: Dictionary = {}
-
-	for stage_id in all_ids:
-		var data: StageData = StageSystem.get_stage_data(stage_id)
-		if not _builder.is_polar(data):
-			continue
-		var pos: Vector2 = _builder.compute_node_position(data)
-		_stage_positions[stage_id] = pos
-		polar_ids.append(stage_id)
-		ring_populated[data.radius_ring] = true
-		var dot: PanelContainer = _builder.create_stage_node(
-			stage_id, pos, stopped, _node_container
-		)
-		if dot:
-			_stage_nodes[stage_id] = dot
-
-	for stage_id in polar_ids:
-		var data: StageData = StageSystem.get_stage_data(stage_id)
-		for adj_id in data.adjacent_stages:
-			if stage_id >= adj_id:
-				continue
-			if not _stage_positions.has(adj_id):
-				continue
-			var adj_data: StageData = StageSystem.get_stage_data(adj_id)
-			var line: Line2D = _builder.create_connection(data, adj_data)
-			if line:
-				_line_container.add_child(line)
+	_polygon_renderer.build(_polygon_container)
+	var result: Dictionary = _builder.build_all(_node_container, _line_container)
+	_stage_nodes = result["stage_nodes"]
+	_stage_positions = result["stage_positions"]
+	_node_hover.attach(_stage_nodes)
 
 	var discovered: Array = StageSystem.get_discovered_checkpoints()
 	var current: String = StageSystem.get_current_stage_id()
@@ -160,13 +178,8 @@ func _rebuild_graph() -> void:
 		if cp_id != current and _stage_positions.has(cp_id):
 			_selectable_ids.append(cp_id)
 
-	_refresh_spider_icons()
-	_zone_layout.build_overlay(
-		_zone_container,
-		GraphBuilderScript.RING_CENTER,
-		GraphBuilderScript.RING_RADII,
-		ring_populated
-	)
+	_spider_icons = _builder.refresh_spider_icons(_spider_container, _stage_positions)
+	_zone_layout.build_overlay(_zone_container, result["zone_populated"])
 	_selected_index = 0
 	_update_selection_highlight()
 	_update_hint_label()
@@ -175,9 +188,10 @@ func _rebuild_graph() -> void:
 # --- 네비게이션 ---
 
 
-func _navigate(direction: int) -> void:
+func navigate(direction: int) -> void:
 	if _selectable_ids.is_empty():
 		return
+	_detail_show = true
 	_selected_index = wrapi(_selected_index + direction, 0, _selectable_ids.size())
 	_update_selection_highlight()
 
@@ -193,41 +207,46 @@ func _update_selection_highlight() -> void:
 			style.border_color = _builder.get_border_color(stage_id, data)
 			style.set_border_width_all(2)
 
-	if _selectable_ids.is_empty():
-		_detail_panel.visible = false
+	var detail_id: String = _resolve_detail_target()
+	if detail_id.is_empty():
+		_detail_panel.hide_panel()
 		return
-	var selected_id: String = _selectable_ids[_selected_index]
-	if _stage_nodes.has(selected_id):
-		var dot: PanelContainer = _stage_nodes[selected_id]
+	if _stage_nodes.has(detail_id):
+		var dot: PanelContainer = _stage_nodes[detail_id]
 		var style: StyleBoxFlat = dot.get_theme_stylebox("panel") as StyleBoxFlat
 		if style:
 			style.border_color = SELECTED_COLOR
 			style.set_border_width_all(3)
-	_detail_panel.refresh(selected_id)
-	var node_pos: Vector2 = _stage_positions.get(selected_id, Vector2.ZERO)
-	var ps: Vector2 = _detail_panel.size
-	var x: float = node_pos.x + 20.0
-	if x + ps.x > 636.0:
-		x = node_pos.x - 20.0 - ps.x
-	_detail_panel.position = Vector2(
-		clamp(x, 4.0, 636.0 - ps.x), clamp(node_pos.y - ps.y / 2.0, 4.0, 356.0 - ps.y)
-	)
-	_detail_panel.visible = true
+	_detail_panel.show_for(detail_id, _stage_positions.get(detail_id, Vector2.ZERO))
+
+
+func _resolve_detail_target() -> String:
+	if not _hover_id.is_empty() and _stage_nodes.has(_hover_id):
+		return _hover_id
+	if _detail_show and not _selectable_ids.is_empty():
+		return _selectable_ids[_selected_index]
+	return ""
 
 
 func _update_hint_label() -> void:
-	if _selectable_ids.is_empty():
-		_hint_label.text = "[F/ESC] 닫기"
+	if _open_mode == MODE_VIEW_ONLY:
+		if _selectable_ids.is_empty():
+			_hint_label.text = "[F/ESC/M] 닫기"
+		else:
+			_hint_label.text = "[←→] 거점 보기  [F/ESC/M] 닫기"
+	elif _selectable_ids.is_empty():
+		_hint_label.text = "[F/ESC/M] 닫기"
 	else:
-		_hint_label.text = "[←→] 거점 선택  [↑] 이동  [F/ESC] 닫기"
+		_hint_label.text = "[←→] 거점 선택  [↑] 이동  [F/ESC/M] 닫기"
 
 
-func _travel_to_selected() -> void:
+func travel_to_selected() -> void:
 	if _selectable_ids.is_empty():
 		return
 	var target_id: String = _selectable_ids[_selected_index]
 	_visible = false
 	visible = false
+	_open_mode = MODE_FAST_TRAVEL
 	EventBus.world_map_closed.emit()
 	EventBus.stage_transition_requested.emit(target_id, "checkpoint", {})
 
@@ -240,62 +259,30 @@ func _on_open() -> void:
 		return
 	_visible = true
 	visible = true
+	_detail_show = (_open_mode == MODE_FAST_TRAVEL)
 	_rebuild_graph()
 
 
-func _close() -> void:
+func close_world_map() -> void:
 	if not _visible:
 		return
 	_visible = false
 	visible = false
+	_open_mode = MODE_FAST_TRAVEL
 	EventBus.world_map_closed.emit()
 
 
-# --- 시간 오버레이 갱신 (3-5-a) ---
+# --- 시간 오버레이 갱신 (graph_builder 위임) ---
 
 
-func _is_time_stopped() -> bool:
-	return TimeSystem.get_time_state() == TimeStateMachine.TimeState.STOPPED
+func _on_time_signal(_hour: float) -> void:
+	if _visible and _builder:
+		_builder.refresh_all_node_bg_colors(_stage_nodes)
 
 
-func _on_time_flow_changed(_hour: float) -> void:
-	if _visible:
-		_refresh_bg_colors()
-
-
-func _on_current_hour_changed(_hour: float) -> void:
-	if _visible:
-		_refresh_bg_colors()
-
-
-## 모든 노드의 배경색만 갱신한다(테두리/크기는 유지).
-func _refresh_bg_colors() -> void:
-	var stopped: bool = _is_time_stopped()
-	for stage_id in _stage_nodes:
-		var panel: PanelContainer = _stage_nodes[stage_id]
-		var style: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
-		if style:
-			style.bg_color = _builder.compute_node_bg_color(stage_id, stopped)
-
-
-# --- 땅거미 아이콘 갱신 (3-5-b) ---
+# --- 땅거미 아이콘 갱신 (graph_builder 위임) ---
 
 
 func _on_spider_state_changed(_arg) -> void:
-	if _visible:
-		_refresh_spider_icons()
-
-
-## 땅거미가 점유한 스테이지 위에 ⚠ 아이콘을 배치한다.
-func _refresh_spider_icons() -> void:
-	for child in _spider_container.get_children():
-		child.queue_free()
-	_spider_icons.clear()
-
-	var active: Array = DuskSpiderSystem.get_active_stages()
-	for stage_id in active:
-		if not _stage_positions.has(stage_id):
-			continue
-		var icon: Label = _builder.create_spider_icon(_stage_positions[stage_id])
-		_spider_container.add_child(icon)
-		_spider_icons[stage_id] = icon
+	if _visible and _builder:
+		_spider_icons = _builder.refresh_spider_icons(_spider_container, _stage_positions)

@@ -186,7 +186,7 @@ script = ExtResource("1")
 stats = ExtResource("7")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(0, -16)
+position = Vector2(0, -31)
 sprite_frames = SubResource("sprite_frames")
 animation = &"idle"
 autoplay = "idle"

@@ -165,6 +165,9 @@ func _on_resource_depleted() -> void:
 func _on_time_set_requested(hour: float) -> void:
 	_clock.set_hour(hour)
 
+	# 시각 변경 시 이전 manipulation limit 무효
+	_state_machine.unblock_manipulation()
+
 	# 시간 상태를 STOPPED으로 초기화
 	if _state_machine.current_state != TimeStateMachine.TimeState.STOPPED:
 		_state_machine.transition_to(TimeStateMachine.TimeState.STOPPED)
@@ -222,6 +225,8 @@ func _on_checkpoint_exited(_checkpoint_id: String) -> void:
 
 func _on_full_recovery_requested() -> void:
 	_resource.full_recover()
+	# 거점 회복 시 manipulation limit도 함께 해제
+	_state_machine.unblock_manipulation()
 
 
 func _on_consume_flat_requested(amount: float) -> void:

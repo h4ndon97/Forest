@@ -127,6 +127,10 @@ func activate() -> void:
 
 
 func deactivate() -> void:
+	# 정지 면역(time_immune) 적은 시간 정지 중에도 active 유지 — zone4 잔영 첨병 등.
+	# EnemySystem._deactivate_enemies가 _registry.deactivate_all → enemy.deactivate 호출 시에도 가드.
+	if stats_data != null and stats_data.time_immune:
+		return
 	state_machine.deactivate()
 
 

@@ -17,6 +17,7 @@ func _process(_delta: float) -> void:
 	if not _player_in_area or _cooldown:
 		return
 	if Input.is_action_just_pressed("interact"):
+		WorldMapUI.set_open_mode(WorldMapUI.MODE_FAST_TRAVEL)
 		EventBus.world_map_opened.emit()
 
 

@@ -24,6 +24,15 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# 디버그 빌드 한정 점프 핫키 — 가변 룸/카메라/회귀 테스트용 (StageSystem에서 이주).
+	# 일반 점프는 F2 본 오버레이로 통일.
+	if event.is_action_pressed("debug_jump_start_village"):
+		EventBus.stage_transition_requested.emit("start_village", "checkpoint", {})
+		return
+	if event.is_action_pressed("debug_jump_boss_1b"):
+		EventBus.stage_transition_requested.emit("stage_1_b", "checkpoint", {})
+		return
+
 	if not (event is InputEventKey) or not event.pressed or event.echo:
 		return
 	var key_event: InputEventKey = event

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_4_3"
+display_name = "흑요석 안마당"
+scene_path = "res://src/world/stages/Stage4_3.tscn"
+initial_hour = 23.0
+zone_id = "zone_4"
+adjacent_stages = Array[String](["stage_4_2", "stage_4_4"])
+lock_type = 1
+lock_requirement = ""
+total_enemies = 4
+total_residues = 4
+is_checkpoint = false
+radius_ring = 4
+angle_deg = 292.0
+radius_offset = 0.0

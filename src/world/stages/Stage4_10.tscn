@@ -1,0 +1,121 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="PackedScene" path="res://src/entities/player/Player.tscn" id="1"]
+[ext_resource type="Script" path="res://src/world/stages/stage_4_10.gd" id="stage_script"]
+[ext_resource type="PackedScene" path="res://src/entities/enemies/base/BaseEnemy.tscn" id="enemy_base"]
+[ext_resource type="Resource" path="res://data/enemies/zone4/blackwood_watcher.tres" id="tree_stats"]
+[ext_resource type="Resource" path="res://data/enemies/zone4/dark_crystal.tres" id="rock_stats"]
+[ext_resource type="Resource" path="res://data/enemies/zone4/obsidian_stele.tres" id="pillar_stats"]
+[ext_resource type="Resource" path="res://data/enemies/zone4/echo_vanguard.tres" id="vanguard_stats"]
+[ext_resource type="PackedScene" path="res://src/entities/objects/portal/StagePortal.tscn" id="portal"]
+
+[sub_resource type="RectangleShape2D" id="floor_shape"]
+size = Vector2(640, 32)
+
+[sub_resource type="RectangleShape2D" id="platform_shape"]
+size = Vector2(192, 16)
+
+[sub_resource type="RectangleShape2D" id="wall_shape"]
+size = Vector2(32, 360)
+
+[node name="Stage4_10" type="Node2D"]
+script = ExtResource("stage_script")
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(80, 320)
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(320, 344)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]
+shape = SubResource("floor_shape")
+
+[node name="FloorSprite" type="ColorRect" parent="Floor"]
+offset_left = -320.0
+offset_top = -16.0
+offset_right = 320.0
+offset_bottom = 16.0
+color = Color(0.20, 0.18, 0.24, 1)
+
+[node name="Platform1" type="StaticBody2D" parent="."]
+position = Vector2(220, 248)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
+shape = SubResource("platform_shape")
+
+[node name="PlatformSprite" type="ColorRect" parent="Platform1"]
+offset_left = -96.0
+offset_top = -8.0
+offset_right = 96.0
+offset_bottom = 8.0
+color = Color(0.26, 0.22, 0.30, 1)
+
+[node name="Platform2" type="StaticBody2D" parent="."]
+position = Vector2(460, 192)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
+shape = SubResource("platform_shape")
+
+[node name="PlatformSprite" type="ColorRect" parent="Platform2"]
+offset_left = -96.0
+offset_top = -8.0
+offset_right = 96.0
+offset_bottom = 8.0
+color = Color(0.26, 0.22, 0.30, 1)
+
+[node name="WallLeft" type="StaticBody2D" parent="."]
+position = Vector2(-16, 180)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallLeft"]
+shape = SubResource("wall_shape")
+
+[node name="WallRight" type="StaticBody2D" parent="."]
+position = Vector2(656, 180)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="WallRight"]
+shape = SubResource("wall_shape")
+
+[node name="PortalLeft" parent="." instance=ExtResource("portal")]
+position = Vector2(32, 328)
+target_stage_id = "stage_4_9"
+direction = "left"
+
+[node name="PortalRight" parent="." instance=ExtResource("portal")]
+position = Vector2(608, 328)
+target_stage_id = "stage_4_11"
+direction = "right"
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="BlackwoodWatcher1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(260, 320)
+stats_data = ExtResource("tree_stats")
+
+[node name="DarkCrystal1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(380, 320)
+stats_data = ExtResource("rock_stats")
+
+[node name="EchoVanguard1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(500, 320)
+stats_data = ExtResource("vanguard_stats")
+
+[node name="ObsidianStele1" parent="Enemies" instance=ExtResource("enemy_base")]
+position = Vector2(460, 176)
+stats_data = ExtResource("pillar_stats")
+
+[node name="DustOverlay" type="ColorRect" parent="."]
+z_index = 5
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 740.0
+offset_bottom = 460.0
+color = Color(0.55, 0.50, 0.65, 0.14)
+mouse_filter = 2
+
+[node name="BG" type="ColorRect" parent="."]
+z_index = -10
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 740.0
+offset_bottom = 460.0
+color = Color(0.13, 0.11, 0.16, 1)

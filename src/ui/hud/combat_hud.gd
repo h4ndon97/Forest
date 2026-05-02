@@ -1,28 +1,18 @@
 extends CanvasLayer
 
-## 전투 HUD — 좌상단 클러스터 (속성 오브 + 콤보 도트 + HP 불씨 pip + 상태이상 배지).
+## 전투 HUD — 좌상단 HP 불씨 pip 클러스터.
 ## EventBus 시그널만 수신하여 갱신한다.
-## ui_design_master.md §A-5/A-6/A-10 / UI_IMPLEMENTATION_PLAN.md §1.1/§2.3.
+## 콤보 인디케이터는 메모리 [project_combo_indicator_decision.md] 결정으로 제거됨 (2026-04-26).
+## ui_design_master.md §A-5/§A-10 / UI_IMPLEMENTATION_PLAN.md §1.1/§2.3.
 
 const TimeStateMachine = preload("res://src/systems/time/time_state_machine.gd")
 
 const MAX_HP_DEFAULT: float = 100.0
 const HP_PER_PIP: float = 20.0
 
-# 콤보 도트 색
-const DOT_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 1.0)  # #4A4A50
-const DOT_COLOR_ACTIVE := Color(0.95, 0.95, 0.95, 1.0)
-const DOT_COLOR_FINISH := Color(0.949, 0.8, 0.4, 1.0)  # 금색 피니시
-
 # HP pip 색 (횃불 불씨)
 const PIP_COLOR_FULL := Color(0.949, 0.8, 0.4, 1.0)  # #F2CC66
 const PIP_COLOR_EMPTY := Color(0.29, 0.29, 0.31, 0.6)  # dim
-
-# 속성 오브 색 (A-6)
-const ORB_COLOR_NEUTRAL := Color(0.541, 0.541, 0.565, 0.9)  # #8A8A90
-const ORB_COLOR_LIGHT := Color(0.949, 0.8, 0.4, 1.0)  # #F2CC66
-const ORB_COLOR_SHADOW := Color(0.545, 0.184, 0.776, 1.0)  # #8B2FC6
-const ORB_COLOR_HYBRID := Color(0.8, 0.5, 0.6, 1.0)  # placeholder (Pass 2: pulse)
 
 # A-10 펄스 (§2.3): STOPPED 호흡 1.0s, 저체력(<20%) 경고 0.8s — A-7/B-5와 리듬 동조
 const BREATH_PERIOD: float = 1.0
@@ -35,44 +25,54 @@ const LOW_HP_TINT := Color(0.9, 0.275, 0.275, 1.0)  # #E64646
 const PIP_FADE_DELAY: float = 0.30
 const PIP_FADE_DURATION: float = 0.20
 
-var _combo_dots: Array[ColorRect] = []
-var _hp_pips: Array[ColorRect] = []
+# 동적 pip 레이아웃 — max_hp 변동 시 pip 추가/제거.
+const PIP_VISUAL_WIDTH: int = 16
+const PIP_SEPARATION: int = 2
+const FRAME_HORIZONTAL_MARGIN: int = 16  # NinePatch 캡 16px과 정합 — pip이 캡 안쪽 끝에서 시작
+const FRAME_HEIGHT: int = 32
+
+# A-1 PNG 드롭인 (파일 없으면 ColorRect/TextureRect fallback).
+const HP_PIP_PNG := "res://assets/ui/hud/hud_hp_pip.png"
+const TORCH_CORE_PNG := "res://assets/ui/hud/hud_torch_core.png"
+const HP_FRAME_PNG := "res://assets/ui/hud/hud_hp_frame.png"
+
+const DeathOverlayScript = preload("res://src/ui/hud/combat_hud_death_overlay.gd")
+
+var _hp_pips: Array[Control] = []
 var _pip_fade_tweens: Array[Tween] = []
 var _pip_empty: Array[bool] = []
 var _max_hp: float = MAX_HP_DEFAULT
 var _current_hp: float = MAX_HP_DEFAULT
 var _time_state: int = TimeStateMachine.TimeState.STOPPED
 var _pulse_t: float = 0.0
-var _death_overlay: ColorRect
-var _death_label: Label
-var _death_tween: Tween
-var _clear_tween: Tween
 var _recovery_tween: Tween
 var _has_faded_in: bool = false  # Pass 5 Step 0: HUD 페이드인 1회 가드
 
-@onready var combo_orb: ColorRect = $MarginContainer/Cluster/ComboOrb
-@onready var combo_dots_container: HBoxContainer = $MarginContainer/Cluster/ComboDots
-@onready var hp_pips_container: HBoxContainer = $MarginContainer/Cluster/HpPips
+@onready var hp_pips_container: HBoxContainer = $MarginContainer/Cluster/HpClusterWrapper/HpPips
+@onready var _hp_cluster_wrapper: Control = $MarginContainer/Cluster/HpClusterWrapper
+@onready var _torch_frame: TextureRect = $MarginContainer/Cluster/TorchCorePanel/TorchFrame
+@onready var _hp_frame: NinePatchRect = $MarginContainer/Cluster/HpClusterWrapper/HpFrame
 @onready var _hud_root: MarginContainer = $MarginContainer
 
 
 func _ready() -> void:
 	EventBus.health_changed.connect(_on_health_changed)
-	EventBus.combo_hit_landed.connect(_on_combo_hit_landed)
-	EventBus.combo_finished.connect(_on_combo_finished)
-	EventBus.combo_resetted.connect(_on_combo_resetted)
-	EventBus.player_died.connect(_on_player_died)
-	EventBus.player_respawned.connect(_on_player_respawned)
-	EventBus.checkpoint_entered.connect(_on_checkpoint_respawned)
 	EventBus.full_recovery_requested.connect(_on_full_recovery)
 	EventBus.time_state_changed.connect(_on_time_state_changed)
 	EventBus.stage_entered.connect(_on_first_stage_entered)
 
 	_collect_children()
-	_create_death_overlay()
+	add_child(DeathOverlayScript.new())  # 사망 오버레이는 별도 노드가 자체 시그널 처리
+	_initialize_visual_state()
 
 	# Pass 5 Step 0: HUD 페이드인 — 첫 stage_entered까지 alpha 0 유지.
 	_hud_root.modulate.a = 0.0
+
+
+func _initialize_visual_state() -> void:
+	# 베이스 색을 self_modulate로 즉시 설정 — signal 전에 white 깜빡임 방지.
+	for pip in _hp_pips:
+		pip.self_modulate = PIP_COLOR_FULL
 
 
 ## 첫 거점 진입 시 1회 페이드인. stage_transition 페이드인 후 짧은 여유 → 0.6s 페이드.
@@ -91,35 +91,90 @@ func _process(delta: float) -> void:
 
 
 func _collect_children() -> void:
-	for child in combo_dots_container.get_children():
-		if child is ColorRect:
-			_combo_dots.append(child)
-	for child in hp_pips_container.get_children():
-		if child is ColorRect:
-			_hp_pips.append(child)
+	# 씬의 첫 pip을 텍스처로 교체(있으면), 나머지는 코드가 동적 spawn.
+	var existing: Array = hp_pips_container.get_children()
+	for i in range(existing.size()):
+		var child: Node = existing[i]
+		if i == 0 and child is ColorRect:
+			_hp_pips.append(_maybe_replace_with_texture(child, HP_PIP_PNG))
+		else:
+			hp_pips_container.remove_child(child)
+			child.queue_free()
 	_pip_fade_tweens.resize(_hp_pips.size())
 	_pip_empty.resize(_hp_pips.size())
+	_load_decoration_textures()
+	_resize_hp_cluster()
 
 
-func _create_death_overlay() -> void:
-	_death_overlay = ColorRect.new()
-	_death_overlay.name = "DeathOverlay"
-	_death_overlay.color = Color(0, 0, 0, 0)
-	_death_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_death_overlay.visible = false
-	add_child(_death_overlay)
-	_death_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+func _ensure_pip_count(target_count: int) -> void:
+	target_count = max(target_count, 1)
+	while _hp_pips.size() < target_count:
+		_add_pip()
+	while _hp_pips.size() > target_count:
+		_remove_pip()
+	_pip_fade_tweens.resize(_hp_pips.size())
+	_pip_empty.resize(_hp_pips.size())
+	_resize_hp_cluster()
 
-	_death_label = Label.new()
-	_death_label.name = "DeathLabel"
-	_death_label.text = ""
-	_death_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_death_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_death_label.add_theme_font_size_override("font_size", 12)
-	_death_label.add_theme_color_override("font_color", Color(0.8, 0.2, 0.2, 0))
-	_death_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_death_overlay.add_child(_death_label)
-	_death_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+func _add_pip() -> void:
+	if _hp_pips.is_empty():
+		return
+	var template: Control = _hp_pips[0]
+	var new_pip: Control = template.duplicate() as Control
+	hp_pips_container.add_child(new_pip)
+	_hp_pips.append(new_pip)
+
+
+func _remove_pip() -> void:
+	if _hp_pips.size() <= 1:
+		return  # 최소 1개 유지
+	var pip: Control = _hp_pips.pop_back()
+	hp_pips_container.remove_child(pip)
+	pip.queue_free()
+
+
+func _resize_hp_cluster() -> void:
+	if _hp_cluster_wrapper == null:
+		return
+	var pip_count: int = _hp_pips.size()
+	var pips_width: int = pip_count * PIP_VISUAL_WIDTH + max(0, pip_count - 1) * PIP_SEPARATION
+	var wrapper_width: int = pips_width + FRAME_HORIZONTAL_MARGIN * 2
+	_hp_cluster_wrapper.custom_minimum_size = Vector2(wrapper_width, FRAME_HEIGHT)
+
+
+func _load_decoration_textures() -> void:
+	# 데코레이션 PNG 드롭인. 없으면 TextureRect는 빈 채로 둠 (Label만 보임).
+	if ResourceLoader.exists(TORCH_CORE_PNG):
+		_torch_frame.texture = load(TORCH_CORE_PNG) as Texture2D
+	if ResourceLoader.exists(HP_FRAME_PNG):
+		_hp_frame.texture = load(HP_FRAME_PNG) as Texture2D
+
+
+func _maybe_replace_with_texture(rect: Control, png_path: String) -> Control:
+	# PNG 있으면 ColorRect → TextureRect로 교체 (self_modulate/modulate/size 보존).
+	if not ResourceLoader.exists(png_path):
+		return rect
+	var tex: Texture2D = load(png_path) as Texture2D
+	if tex == null:
+		return rect
+	var tex_rect := TextureRect.new()
+	tex_rect.name = rect.name
+	tex_rect.texture = tex
+	tex_rect.custom_minimum_size = rect.custom_minimum_size
+	tex_rect.self_modulate = rect.self_modulate
+	tex_rect.modulate = rect.modulate
+	# PoT 캔버스 + 패딩 호환: cell 크기는 custom_minimum_size 유지, 텍스처는 자연 크기 중앙 정렬.
+	tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var idx: int = rect.get_index()
+	var parent: Node = rect.get_parent()
+	parent.remove_child(rect)
+	rect.queue_free()
+	parent.add_child(tex_rect)
+	parent.move_child(tex_rect, idx)
+	return tex_rect
 
 
 # === HP pip ===
@@ -128,6 +183,10 @@ func _create_death_overlay() -> void:
 func _on_health_changed(current_hp: float, max_hp: float) -> void:
 	_max_hp = max_hp if max_hp > 0.0 else MAX_HP_DEFAULT
 	_current_hp = current_hp
+	# max_hp 변동 시 pip 개수 동기화 (각 pip = HP_PER_PIP 고정)
+	var target_pip_count: int = int(ceil(_max_hp / HP_PER_PIP))
+	if target_pip_count != _hp_pips.size():
+		_ensure_pip_count(target_pip_count)
 	if _recovery_tween and _recovery_tween.is_running():
 		return
 	_apply_pip_state()
@@ -137,25 +196,25 @@ func _apply_pip_state() -> void:
 	var filled_count: int = int(ceil(_current_hp / HP_PER_PIP))
 	filled_count = clamp(filled_count, 0, _hp_pips.size())
 	for i in _hp_pips.size():
-		var pip: ColorRect = _hp_pips[i]
+		var pip: Control = _hp_pips[i]
 		var should_be_filled: bool = i < filled_count
 		_kill_pip_tween(i)
 		if should_be_filled:
-			pip.color = PIP_COLOR_FULL
+			pip.self_modulate = PIP_COLOR_FULL
 			pip.modulate = Color.WHITE
 			_pip_empty[i] = false
 		else:
 			if _pip_empty[i]:
 				pip.modulate = Color.WHITE
 				continue
-			pip.color = PIP_COLOR_FULL
+			pip.self_modulate = PIP_COLOR_FULL
 			pip.modulate = Color.WHITE
 			_start_pip_fadeout(i)
 	_apply_pip_pulse()
 
 
 func _start_pip_fadeout(i: int) -> void:
-	var pip: ColorRect = _hp_pips[i]
+	var pip: Control = _hp_pips[i]
 	var fade: Tween = create_tween()
 	fade.set_ignore_time_scale(true)
 	fade.tween_interval(PIP_FADE_DELAY)
@@ -167,8 +226,8 @@ func _start_pip_fadeout(i: int) -> void:
 func _on_pip_fade_complete(i: int) -> void:
 	if i >= _hp_pips.size():
 		return
-	var pip: ColorRect = _hp_pips[i]
-	pip.color = PIP_COLOR_EMPTY
+	var pip: Control = _hp_pips[i]
+	pip.self_modulate = PIP_COLOR_EMPTY
 	pip.modulate = Color.WHITE
 	_pip_empty[i] = true
 	_pip_fade_tweens[i] = null
@@ -223,96 +282,3 @@ func _on_full_recovery() -> void:
 
 func _on_time_state_changed(_old_state: int, new_state: int) -> void:
 	_time_state = new_state
-
-
-# === 콤보 ===
-
-
-func _on_combo_hit_landed(hit_number: int) -> void:
-	if hit_number < 1 or hit_number > _combo_dots.size():
-		return
-	for i in _combo_dots.size():
-		_combo_dots[i].color = DOT_COLOR_ACTIVE if i < hit_number else DOT_COLOR_EMPTY
-
-
-func _on_combo_finished(attribute: String) -> void:
-	for dot in _combo_dots:
-		dot.color = DOT_COLOR_FINISH
-	combo_orb.color = _orb_color_for(attribute)
-
-
-func _on_combo_resetted() -> void:
-	for dot in _combo_dots:
-		dot.color = DOT_COLOR_EMPTY
-	combo_orb.color = ORB_COLOR_NEUTRAL
-
-
-func _orb_color_for(attribute: String) -> Color:
-	match attribute:
-		"light":
-			return ORB_COLOR_LIGHT
-		"shadow":
-			return ORB_COLOR_SHADOW
-		"hybrid":
-			return ORB_COLOR_HYBRID
-		_:
-			return ORB_COLOR_NEUTRAL
-
-
-# === 사망/리스폰 ===
-
-
-func _on_player_died() -> void:
-	_death_overlay.visible = true
-	_death_overlay.color = Color(0, 0, 0, 0)
-	_death_label.text = ""
-
-	if _death_tween:
-		_death_tween.kill()
-	_death_tween = create_tween()
-
-	# 분위기형 죽음 시퀀스 (Pass 5 Step 0). 검정 풀 페이드 → 자막 → 홀드는 combat_system 타이머가 담당.
-	var cfg: CombatConfigData = CombatSystem.get_config()
-	_death_tween.tween_property(
-		_death_overlay, "color", Color(0, 0, 0, 1.0), cfg.respawn_fade_in_duration
-	)
-
-	_death_tween.tween_callback(
-		func():
-			_death_label.text = "..."
-			_death_label.add_theme_color_override("font_color", Color(0.8, 0.2, 0.2, 0))
-	)
-	_death_tween.tween_property(
-		_death_label, "theme_override_colors/font_color", Color(0.8, 0.2, 0.2, 1.0), 0.3
-	)
-
-
-func _on_player_respawned(_position: Vector2) -> void:
-	_clear_death_overlay()
-
-
-func _on_checkpoint_respawned(_checkpoint_id: String) -> void:
-	if not _death_overlay.visible:
-		return
-	_clear_death_overlay()
-
-
-func _clear_death_overlay() -> void:
-	if _death_tween:
-		_death_tween.kill()
-	if _clear_tween:
-		_clear_tween.kill()
-
-	# stage_transition fade-in과 동조 — combat_config의 respawn_fade_out_duration 공유.
-	var cfg: CombatConfigData = CombatSystem.get_config()
-	var fade_out: float = cfg.respawn_fade_out_duration
-	_clear_tween = create_tween().set_parallel(true)
-	_clear_tween.tween_property(_death_overlay, "color", Color(0, 0, 0, 0), fade_out)
-	_clear_tween.tween_property(
-		_death_label, "theme_override_colors/font_color", Color(0.8, 0.2, 0.2, 0), fade_out
-	)
-	_clear_tween.chain().tween_callback(
-		func():
-			_death_overlay.visible = false
-			_death_label.text = ""
-	)

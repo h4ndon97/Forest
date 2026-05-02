@@ -1,21 +1,27 @@
 extends CanvasLayer
 
 ## 스킬 슬롯 HUD 코디네이터.
-## 4개 SkillSlot 생성 + 시그널 라우팅 + 쿨다운 프레임 갱신.
-## 개별 슬롯 드로잉은 skill_slot.gd / skill_icons.gd 참조.
+## 4 SkillSlot을 우하단에 가로로 배치 (통합 프레임 없음, 개별 슬롯 + 상단 keycap ornament).
+## 슬롯 자체 드로잉/keycap은 skill_slot.gd.
 
 const SkillData = preload("res://data/skills/skill_data.gd")
 const SkillSlot = preload("res://src/ui/hud/skill_slot.gd")
 
 const MAX_SLOTS := 4
+const SLOT_SIZE := 32
+const SLOT_GAP := 10  # 슬롯 사이 간격 (프레임 외곽 장식 + 2px 숨쉴 공간)
 
-# 완만한 오름 호 좌표 (ui_design_master.md §A-5, 640×360 기준, 슬롯 top-left)
-const SLOT_COORDS: Array[Vector2] = [
-	Vector2(486, 316),  # U
-	Vector2(524, 311),  # I
-	Vector2(562, 305),  # K
-	Vector2(600, 298),  # L
-]
+# 슬롯 위 keycap ornament 영역 (skill_slot.gd가 직접 child로 그림)
+const KEYCAP_HEIGHT := 14
+const KEYCAP_GAP := 4
+
+# 우하단 클러스터 배치 (640×360, 소모품 바닥선 344에 슬롯 하단 정렬)
+const CLUSTER_WIDTH := SLOT_SIZE * MAX_SLOTS + SLOT_GAP * (MAX_SLOTS - 1)  # 128+12=140
+const CLUSTER_HEIGHT := KEYCAP_HEIGHT + KEYCAP_GAP + SLOT_SIZE  # 14+4+32=50
+const CLUSTER_RIGHT_EDGE := 624  # 소모품 좌측 마진 16과 대칭
+const CLUSTER_X := CLUSTER_RIGHT_EDGE - CLUSTER_WIDTH  # 484
+const CLUSTER_Y := 344 - CLUSTER_HEIGHT  # 294 (cluster top, keycap top 위치)
+const SLOT_Y_OFFSET := KEYCAP_HEIGHT + KEYCAP_GAP  # 18 (cluster 내부 슬롯 y)
 
 const KEY_LABELS: Array[String] = ["U", "I", "K", "L"]
 
@@ -24,7 +30,7 @@ var _slots: Array[SkillSlot] = []
 
 func _ready() -> void:
 	layer = 10
-	_build_slots()
+	_build_cluster()
 
 	EventBus.skill_equipped.connect(_on_skill_equipped)
 	EventBus.skill_unequipped.connect(_on_skill_unequipped)
@@ -42,21 +48,31 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	for i in range(MAX_SLOTS):
 		_slots[i].set_cooldown_ratio(SkillSystem.get_cooldown_ratio(i))
+		_slots[i].set_resource_insufficient(not SkillSystem.has_enough_resource(i))
 
 
-func _build_slots() -> void:
+func _build_cluster() -> void:
 	var root := Control.new()
-	root.name = "SlotRoot"
+	root.name = "ClusterRoot"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
+	var wrapper := Control.new()
+	wrapper.name = "ClusterWrapper"
+	wrapper.position = Vector2(CLUSTER_X, CLUSTER_Y)
+	wrapper.custom_minimum_size = Vector2(CLUSTER_WIDTH, CLUSTER_HEIGHT)
+	wrapper.size = Vector2(CLUSTER_WIDTH, CLUSTER_HEIGHT)
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(wrapper)
+
+	# 슬롯 4개를 4px 간격으로 가로 배치, 슬롯이 keycap 자체적으로 위에 그림
 	for i in range(MAX_SLOTS):
 		var slot := SkillSlot.new()
 		slot.name = "Slot_%d" % i
-		slot.position = SLOT_COORDS[i]
+		slot.position = Vector2(i * (SLOT_SIZE + SLOT_GAP), SLOT_Y_OFFSET)
 		slot.set_key_label(KEY_LABELS[i])
-		root.add_child(slot)
+		wrapper.add_child(slot)
 		_slots.append(slot)
 
 

@@ -3,21 +3,36 @@ extends Node2D
 ## 플레이어 등불 컴포넌트.
 ## PointLight2D로 분위기 조명을 제공하고,
 ## EventBus.lantern_toggled 시그널로 등불 상태를 방송한다.
+## 등불 색은 속성 토글에 따라 4종(light=금/shadow=보라/neutral=흰/hybrid=백금) 자동 변경.
+## 발현되는 빛 검(player_blade_visual) 색과 동일 매핑 — "등불 빛 = 검 색" 컨셉(Q2-B (c)).
 
 const CONFIG_PATH := "res://data/lantern/lantern_config.tres"
+
+# 속성별 등불 색 (player_blade_visual.ATTRIBUTE_COLORS와 동일).
+const ATTRIBUTE_COLORS := {
+	"light": Color(1.0, 0.82, 0.29, 1.0),
+	"shadow": Color(0.55, 0.18, 0.78, 1.0),
+	"neutral": Color(0.96, 0.96, 0.91, 1.0),
+	"hybrid": Color(0.91, 0.87, 1.0, 1.0),
+}
 
 var _config: LanternConfigData
 var _light: PointLight2D
 var _is_on: bool = false
 var _facing_right: bool = true
 var _base_energy: float = 1.0
+var _base_color: Color = Color.WHITE
 
 
 func _ready() -> void:
 	_config = load(CONFIG_PATH) as LanternConfigData
 	_base_energy = _config.light_energy
+	_base_color = _config.light_color
 	_create_light()
 	EventBus.growth_stats_changed.connect(_on_growth_stats_changed)
+	EventBus.finish_attribute_changed.connect(_on_finish_attribute_changed)
+	if SkillSystem:
+		_apply_attribute_color(SkillSystem.get_finish_attribute())
 
 
 func toggle() -> void:
@@ -67,6 +82,17 @@ func _update_light_position() -> void:
 func _on_growth_stats_changed() -> void:
 	if _light:
 		_light.energy = _base_energy + GrowthSystem.get_lantern_brightness_bonus()
+
+
+func _on_finish_attribute_changed(attribute: String) -> void:
+	_apply_attribute_color(attribute)
+
+
+func _apply_attribute_color(attribute: String) -> void:
+	if not _light:
+		return
+	# Phase 5 hook: WeaponData.light_color override가 우선되면 그걸 사용 (현재는 자동 매핑만).
+	_light.color = ATTRIBUTE_COLORS.get(attribute, _base_color)
 
 
 func _create_light_texture() -> Texture2D:

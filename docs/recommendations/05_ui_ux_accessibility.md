@@ -233,10 +233,112 @@ Tunic Manual:
 
 ---
 
+## REC-UX-007 — 월드맵 상시 열람 + 일러스트 맵 + 시간 반영
+
+- **상태**: ACCEPTED (2026-04-26 사용자 결정)
+- **우선순위**: ★★★
+- **노력**: M (Stage 0~2 인프라) / L (Stage 3 일러스트 협업)
+- **레퍼런스**: Hollow Knight (월드맵 토글) + Ori (일러스트 배경 맵) + 본 게임 시간 모티프
+- **관련 시스템**: WorldMapUI, OverlaySystem, EventBus, TimeSystem, StageSystem
+- **검증 (현 상태)**:
+  - 트리거: `src/entities/objects/portal/world_map_portal.gd:19-20` — 거점 포털 `interact` 키로만 `world_map_opened.emit()`
+  - UI: `src/ui/menus/world_map/world_map_ui.gd` (302줄, Autoload CanvasLayer layer=90)
+  - 시간 반영: `_refresh_bg_colors()` (line 272~) 노드 bg color만 갱신, 영역 일러스트 미존재
+  - 입력 차단: `src/entities/player/player.gd:81-82` `world_map_opened/closed` → `_input_blocked` 토글
+- **무효화 조건**: 현 원형 노드 그래프 디자인이 사용자 만족 상태로 확정되고 일러스트 방향 자체가 폐기될 경우
+
+### 컨셉
+
+현재 월드맵의 두 가지 한계:
+1. **거점 포털에서만 열림** — 메트로배니아 표준 위반 (HK/Ori/Salt and Sanctuary 모두 어디서든 토글 가능)
+2. **추상 원형 노드 그래프** — 본 게임의 시간/빛/그림자 모티프와 시각적 연결 약함
+
+본 추천은 두 변경을 분리 처리:
+1. **상시 열람** (Stage 0): 코드 변경만으로 즉시 — 새 입력 액션 + 어디서든 토글
+2. **영역 polygon + 시간 셰이더 + 일러스트 swap** (Stage 1~3): 점진적 비주얼 강화 — 영역 마스크 인프라가 일러스트 단계까지 그대로 이어짐
+
+### 단계적 진행
+
+| Stage | 내용 | 비용 | 출력 |
+|---|---|---|---|
+| 0 | 상시 열람 라우팅. 새 입력 액션 + portal 외 트리거. 전투 중 정책 결정 | S | 어디서든 M 키로 월드맵 |
+| **0.5** | **마우스 호버 detail panel + 미발견 스테이지 fog (`???`)** | M | 메트로배니아 표준 발견 보상감 |
+| 1 | 영역 polygon + zone별 색 분리 fallback. 노드 재배치/유지 결정 | M | 일러스트 부재 시 시각 빈약 회피 |
+| 2 | 영역 마스크 + 시간 셰이더 톤 변화 (낮=따뜻 / 저녁=황혼 / 밤=차가움) | M | 일러스트 없이도 시간 모티프 표현 |
+| 3 | 영역 일러스트 텍스처 swap + ShaderMaterial 통합 | L (아트 협업) | 비주얼 완성. 코드 거의 무수정 |
+
+### Stage 0 구현 메모 (상시 열람)
+
+- 새 InputMap 액션 신설 (예: `toggle_world_map`, 기본 키 `M`)
+- 토글 처리 위치: 글로벌 입력 처리 — 후보 (1) `world_map_ui.gd._unhandled_input` (2) 새 Autoload `MapInputRouter` (3) `pause_menu.gd` 확장
+- 결정 필요: **전투 중 열림 가능?** — 옵션 A 일시정지 / 옵션 B 단순 오버레이 (시간/적 계속) / 옵션 C 전투 중 잠금
+- 거점 포털은 **fast-travel 진입점으로 유지** (포털에서 열면 패스트트래블 모드, 일반 열기는 view-only 모드 분기 가능)
+- 인벤토리/일시정지 등 다른 UI와 키 충돌 정책 확립 필요
+
+### Stage 0.5 구현 메모 (마우스 호버 + fog)
+
+**호버**:
+- 모든 노드를 호버 대상으로 (거점/일반 구분 없음)
+- 키보드 ←→는 유지 — 거점만 순회 (fast-travel 용도, 패드 호환)
+- 호버 detail panel은 selection과 별개 — `_hover_id` 우선, 비면 `_selectable_ids[_selected_index]` fallback
+- fast-travel은 키보드 selection 기반만 (호버로 이동 X)
+- Control mouse_entered/exited 시그널 활용. `world_map_node_hover.gd` 신규 파일이 connect 처리
+
+**fog**:
+- 기준: **Stage 단위 발견** — 첫 입장 시 `_discovered_stages`에 set
+- 시작 마을(`start_village`)은 처음부터 발견 상태
+- 노드 색: 짙은 회색 단색 + 테두리 없음(또는 짙은 회색)
+- detail panel: 이름 "???", 시각 "??", 상태 "미발견", 인접 hidden
+- 연결선: 양쪽 발견된 경우만 표시
+- REC-UX-002 (Cornifer 측량사)와 양립 — 본 fog는 기본 정책, REC-UX-002는 zone 단위 격상 (별도 레이어)
+
+**파일 변경**:
+- `src/systems/stage/stage_discovery.gd` 신규 (~30줄, StageSystem 자식)
+- `stage_system.gd` — Discovery 자식 추가 + `is_stage_discovered` 위임. 라인 한계 압박으로 `_unhandled_input` debug jump 핫키를 `stage_debug.gd`로 이주
+- `save_manager.gd` — `discovered_stages` 직렬화
+- `world_map_graph_builder.gd` — fog 색 + 노드 mouse_filter PASS + `build_all_nodes` 통합 (ui 회수)
+- `world_map_detail_panel.gd` — fog 시 `???` 표시 + `show_for(stage_id, pos)` 메서드 (ui 회수)
+- `world_map_node_hover.gd` 신규 (~50줄)
+- `world_map_ui.gd` — `_hover_id` 멤버 + selection/hover 통합 detail 호출
+
+### Stage 1 구현 메모 (영역 polygon fallback)
+
+- 영역 데이터: `data/world_map/zone_polygon_data.gd` Resource — zone별 polygon 정점 + 기본 색
+- 1구역=따뜻한 황색, 2구역=청록 안개색, 3구역=보라/검정 거울색, 4구역=짙은 그림자색, 5구역=금/검정
+- 노드는 polygon 위에 z-index로 오버레이. 기존 `_node_container` 위에 `_zone_polygon_container` 신설
+- 노드 재배치는 사용자 결정 — 옵션 A 현 원형 유지 / 옵션 B polygon 내부에 자유 배치
+
+### Stage 2 구현 메모 (시간 셰이더)
+
+- `assets/shaders/world_map_time_tint.gdshader` 신설 — UV 기반 색조 보정 (낮=warm, 저녁=황혼, 밤=cool)
+- TimeSystem `current_hour` → 셰이더 uniform `time_phase` (0~1) 매핑
+- 영역별 각자 ShaderMaterial 인스턴스. polygon 또는 Sprite2D 모두 적용 가능
+- 메모리 [godot-shaders-fx skill](C:/Users/sldpa/.claude/projects/c---H4ndon-Forest/memory/reference_godot_shaders_fx_skill.md) 활용
+
+### Stage 3 구현 메모 (일러스트 swap)
+
+- 영역별 PNG (예: 320×180 또는 640×360, 메인 캔버스 기준)
+- 메모리 [발광 스프라이트 3레이어 규약](C:/Users/sldpa/.claude/projects/c---H4ndon-Forest/memory/project_art_three_layer_rule.md) 적용 (광원/등불 표현 시)
+- placeholder fallback: 텍스처 미존재 시 polygon 색만 사용 — 코드 분기 없이 swap
+
+### 의존/시너지
+
+- REC-UX-002 (미니맵 단계 시스템) — **별도 시스템**. 월드맵=오버뷰, 미니맵=룸 단위. 본 추천은 월드맵에 한정
+- REC-CONT-002 (Cornifer형 측량사 NPC) — 의존 없음. 본 추천은 처음부터 풀 가시화 전제 (단계적 가시화는 REC-UX-002 영역)
+- REC-MKT-002 (수묵화 톤 픽셀아트) — Stage 3 일러스트 방향 강한 시너지
+- REC-FX-006 (컷신 인프라) — 일러스트 패널 작업 흐름 공유
+
+### 결정 이력
+
+- 2026-04-26 사용자 결정 — 상시 열람 + Stage 단계적 진행 + A안(셰이더 톤 변화)부터 시작 채택. 추천 폴더 등재 + Architect 설계 진행 합의.
+
+---
+
 ## 카테고리 메모
 
-- 6개 중 5개가 노력 S/M — UI 작업은 핵심 시스템 변경 적음
+- 7개 중 5개가 노력 S/M — UI 작업은 핵심 시스템 변경 적음
 - REC-UX-005 (한글 폰트)는 이미 리서치 완료 — 즉시 적용 가능
 - REC-UX-002/006은 다른 카테고리 의존 — 통합 작업 권장
 - REC-UX-004 (접근성)는 한국 인디 시장 + 글로벌 모두에서 어필 강함
+- REC-UX-007은 메트로배니아 표준 + 본 게임 시간 모티프의 결합점 — Stage 3 일러스트 도달 시 마케팅 GIF hook 가치 큼
 - 본 카테고리는 **현재 가장 빈약한 영역** (메타/접근성/도전과제 문서 부재)

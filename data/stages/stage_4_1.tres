@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "stage_4_1"
+display_name = "어둠의 입구"
+scene_path = "res://src/world/stages/Stage4_1.tscn"
+initial_hour = 22.0
+zone_id = "zone_4"
+adjacent_stages = Array[String](["ruined_village", "stage_4_2"])
+lock_type = 4
+lock_requirement = "light_leap"
+total_enemies = 3
+total_residues = 3
+is_checkpoint = false
+radius_ring = 4
+angle_deg = 270.0
+radius_offset = 0.0

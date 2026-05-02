@@ -11,6 +11,7 @@ const StageDebugScript = preload("res://src/systems/stage/stage_debug.gd")
 const LockValidatorScript = preload("res://src/systems/stage/stage_lock_validator.gd")
 const TimePropagationScript = preload("res://src/systems/stage/time_propagation.gd")
 const SaveManagerScript = preload("res://src/systems/stage/save_manager.gd")
+const DiscoveryScript = preload("res://src/systems/stage/stage_discovery.gd")
 const STAGE_DATA_DIR := "res://data/stages/"
 const PROPAGATION_CONFIG_PATH := "res://data/stages/propagation_config.tres"
 
@@ -20,6 +21,7 @@ var _transition: CanvasLayer
 var _lock_validator: Node
 var _time_propagation: Node
 var _save_manager: Node
+var _discovery: Node
 var _current_stage_id: String = ""
 var _last_checkpoint_id: String = ""
 var _stage_hours: Dictionary = {}  # stage_id -> float (저장된 시각)
@@ -39,6 +41,7 @@ func _ready() -> void:
 	_time_propagation = _add_child_node("TimePropagation", TimePropagationScript)
 	_save_manager = _add_child_node("SaveManager", SaveManagerScript)
 	_save_manager.setup(_clear_tracker)
+	_discovery = _add_child_node("Discovery", DiscoveryScript)
 
 	_load_stage_data()
 	_connect_signals()
@@ -56,16 +59,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		_save_manager.delete_save()
 		_last_checkpoint_id = ""
 		push_warning("StageSystem: 세이브 삭제됨 (재시작 시 반영)")
-		return
-
-	# 디버그 빌드 한정 점프 핫키 — 가변 룸/카메라/회귀 테스트용.
-	# 일반 점프는 F2 StageDebug 오버레이로 통일 (stage_debug.gd).
-	if not OS.is_debug_build():
-		return
-	if event.is_action_pressed("debug_jump_start_village"):
-		EventBus.stage_transition_requested.emit("start_village", "checkpoint", {})
-	elif event.is_action_pressed("debug_jump_boss_1b"):
-		EventBus.stage_transition_requested.emit("stage_1_b", "checkpoint", {})
 
 
 func get_current_stage_id() -> String:
@@ -112,6 +105,10 @@ func has_save_file() -> bool:
 
 func get_discovered_checkpoints() -> Array:
 	return _discovered_checkpoints.duplicate()
+
+
+func is_stage_discovered(stage_id: String) -> bool:
+	return _discovery != null and _discovery.is_discovered(stage_id)
 
 
 func get_stage_hour(stage_id: String) -> float:
@@ -178,6 +175,8 @@ func load_save_data(data: Dictionary) -> void:
 	for cp_id in result["discovered_checkpoints"]:
 		if cp_id not in _discovered_checkpoints:
 			_discovered_checkpoints.append(cp_id)
+	if _discovery != null:
+		_discovery.load_save_data(result.get("discovered_stages", []))
 
 
 # --- 내부 ---
@@ -294,13 +293,12 @@ func _on_stage_entered(stage_id: String) -> void:
 			_discovered_checkpoints.append(stage_id)
 		EventBus.checkpoint_entered.emit(stage_id)
 		EventBus.full_recovery_requested.emit()
-		var save_data: Dictionary = (
-			_save_manager
-			. collect_data(
-				_last_checkpoint_id,
-				_stage_hours,
-				_discovered_checkpoints,
-			)
+		var discovered_stages: Array = _discovery.get_save_data() if _discovery else []
+		var save_data: Dictionary = _save_manager.collect_data(
+			_last_checkpoint_id,
+			_stage_hours,
+			_discovered_checkpoints,
+			discovered_stages,
 		)
 		_save_manager.save_game(save_data)
 

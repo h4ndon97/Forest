@@ -15,12 +15,13 @@
 - 시간 자원 회복 아이템 존재 (스킬 사용 시 flat 소비 보충용, Phase 2-1 확정)
 
 ### 카테고리 (확정)
-- **장비**: 무기 (1슬롯) + 방어구 (1슬롯)
+- **장비**: 등불 (무기 슬롯 1) + 방어구 (1슬롯)
 - **장신구**: 3슬롯
 - **소모품**: 일회성 사용 아이템
-- **등불**: 장비가 아님. 성장 시스템으로 강화.
 
-총 장착 슬롯: **무기 1 + 방어구 1 + 장신구 3 = 5슬롯**
+총 장착 슬롯: **등불 1 + 방어구 1 + 장신구 3 = 5슬롯**
+
+> **무기 = 등불 (확정, 2026-05-02)**: 주인공의 무기는 등불이다. 등불의 힘으로 빛 검을 발현해 전투한다. 왼손=손등불 (항시 휴대), 오른손=발현된 빛 검 (슬래시 시점에만 0.05s 페이드인 → 슬래시 → 0.1s 페이드아웃). 검 색상은 등불 토글 속성에 따라 변화 (light=금색 / shadow=보라 / neutral=흰색 / hybrid=다색 그라디언트).
 
 ### 등급 체계 (확정)
 - **3등급**: 일반(COMMON) / 희귀(RARE) / 유니크(UNIQUE)
@@ -31,10 +32,11 @@
 
 ## 2. 장비
 
-### 무기 (확정)
-- 검 교체 가능
-- 검마다 다른 능력치/특성
-- 보너스: 공격력(attack_bonus), 공격속도(attack_speed_mult), 콤보 데미지(combo_damage_mult)
+### 등불 (확정, 무기 슬롯)
+- 등불 교체 가능 (24종 목표 — 6 베이스 외형 × 4 속성 친화도 변형)
+- 등불마다 다른 외형/빛 색/능력치/시그니처 효과
+- 보너스: 공격력(attack_bonus), 공격속도(attack_speed_mult), 콤보 데미지(combo_damage_mult), 등불 빛 색(light_color, Phase B 추가 예정), 시그니처 효과(signature_effect, Phase 5 hook)
+- 발현 검은 등불의 빛으로 만들어지므로, 등불 교체 시 검 외형/색/이펙트도 자동 변화
 
 ### 방어구 (확정)
 - 슬롯 1개
@@ -121,7 +123,7 @@
 
 ### Resource 클래스
 - `ItemData` (base): id, display_name, description, category, rarity, icon, buy_price, sell_price
-- `WeaponData` extends ItemData: attack_bonus, attack_speed_mult, combo_damage_mult
+- `WeaponData` extends ItemData: attack_bonus, attack_speed_mult, combo_damage_mult (의미: 등불. 클래스명은 코드 호환성 유지. Phase B에서 light_color, signature_effect 필드 추가 예정)
 - `ArmorData` extends ItemData: hp_bonus, defense_bonus
 - `AccessoryData` extends ItemData: attack_bonus, hp_bonus, defense_bonus, time_max_bonus, time_recovery_bonus, special_effect_id
 - `ConsumableData` extends ItemData: consumable_type, effect_amount, max_carry
@@ -144,8 +146,8 @@
 - **세이브/로드**: SaveManager에 인벤토리 데이터 통합
 
 ### 테스트 데이터
-- `sword_basic.tres`: 낡은 검 (COMMON, ATK +5)
-- `sword_shadow.tres`: 그림자 검 (RARE, ATK +15, 속도 0.9, 콤보 1.2)
+- `sword_basic.tres`: 낡은 등불 (COMMON, ATK +5) — 파일명은 코드 호환성 위해 유지
+- `sword_shadow.tres`: 그림자 등불 (RARE, ATK +15, 속도 0.9, 콤보 1.2) — 파일명 유지
 - `leather_vest.tres`: 가죽 조끼 (COMMON, HP +20, DEF +3)
 - `ring_of_strength.tres`: 힘의 반지 (COMMON, ATK +8)
 - `hp_potion.tres`: HP 물약 (회복 30, 최대 3)

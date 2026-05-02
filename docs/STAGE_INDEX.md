@@ -94,19 +94,31 @@
 
 ---
 
-## 4구역 — 그림자 숲 ⏳ (Phase 4-C)
+## 4구역 — 그림자 숲 ⚙️ (계획 확정, 빌드 대기 — Phase 4-C)
 
-| 항목 | 값 |
-|---|---|
-| 분위기 | 빛이 거의 없음, 수정/광물 지형, 압도적 어둠 |
-| 스토리 | 그림자 왕가의 영역, 진실 드러남 |
-| 스테이지 수 | 통상 ~11 + 숨김 1 + 보스 1 = 13 |
-| 보스 페이즈 | 3 |
-| 보스 보상 능력 | `shadow_step` |
-| 추가조작 | 그림자 결정 조작 → 5구역 최종 보스실 진입 조건 |
-| 자연 경계 (4-5) | 거대 뿌리/절벽 |
+진입: (3-4 경계 `ruined_village`) → `stage_4_1` ... 출구: `stage_4_b` → (zone5 진입 거점, Phase 4-D)
 
-상세 설계: Phase 4-C 진입 시.
+| ID | 표시명(잠정) | 시간 | 잠금 | 적 / 잔류 | 기믹/환경 | 추가조작/숨김 | 스토리 비트 | 상태 |
+|---|---|---|---|---|---|---|---|---|
+| `stage_4_1` | 어둠의 입구 | 22 | ABILITY(`light_leap`) | 3 / 3 | 그림자 도입(DustOverlay α0.10, 어두운 보라톤 BG=0.10,0.08,0.12). 적: zone3 placeholder (withered_sentinel + toppled_statue + ash_lily) — *분위기 검증 후 zone4 교체* | PortalLeft→border_checkpoint(잠정) / PortalRight→4-2(미존재, Step 5) | "빛이 닿지 않는다" *(미적용)* | ✅ Step 1 |
+| `stage_4_2` | 잠긴 협곡 | 19 | NONE | 3 / 3 | 호흡 | — | — | ⏳ |
+| `stage_4_3` | 흑요석 안마당 | 23 | LIGHT | 4 / 4 | 빛탑 학습 + Lens + LightSensor(`sensor_4_4_chasm`) — 4-4 진입 게이트 활성화 | — | — | ⏳ |
+| `stage_4_4` | 깊은 광맥 | 14 | ENVIRONMENT(`light_sensor:sensor_4_4_chasm`) | 4 / 4 | 환경 잠금 본격 | — | — | ⏳ |
+| `stage_4_5` | 정화의 동굴 | 20 | PURIFY (`stage_4_3`) | 4 / 4 | 정화 재학습 | — | — | ⏳ |
+| `stage_4_6` | 갈림의 결정 | 11 | NONE | 3 / 3 | 호흡 + 분기 (4-7/4-8/4-H). zone3 베이스 3 | **4-H 숨김 힌트** (Lens → HiddenSensor → HiddenRevealer가 PortalHidden(stage_4_h) 노출) | — | ⏳ |
+| `stage_4_7` | 절벽 위 | 23 | LIGHT | 5 / 5 | 검증 1. **shadow_camp 거점 인근** | — | — | ⏳ |
+| `stage_4_8` | 잠긴 결정 광장 | 13 | NONE | 4 / 4 | **zone3 sealing_altar_opened 활용처** — flag set 시 PortalHidden(4-H) 옵션 노출 | (옵션) zone3 H 발견자 보너스 | — | ⏳ |
+| `stage_4_9` | 어둠의 회랑 | 22 | LIGHT | 5 / 5 | 검증 2 + **첫 잔영 첨병(정지 면역) 도입** | — | — | ⏳ |
+| `stage_4_10` | 결정 미로 | 11 | NONE | 4 / 4 | 검증 3 (강화 적 + 잔영 첨병) | — | — | ⏳ |
+| `stage_4_11` | 잔영의 문 | 23 | LIGHT | 6 / 6 | 보스 직전 종합 — zone4 6종 모두 | — | — | ⏳ |
+| `stage_4_h` | 그림자 결정의 자리 | 6 | 숨김 (HiddenRevealer 4-6 메인 / 4-8 옵션) | 2 / 2 | **추가조작: ShadowCrystal 1개** + 잔영 첨병×2 | 활성화 시 `world.zone4.shadow_crystal_attuned` flag set → **zone5 최종 보스실 진입 조건** | — | ⏳ |
+| `stage_4_b` | 수장의 안식처 | 17 | NONE (4-1~4-11 fully cleared) | 1(보스) / 0 | **보스: Lord Remnant (잠정명)** ⏳ (HP 1700/ATK 43/페이즈 3/약점 **`torch_lit` 신규 source**). LordRemnant.tscn + Stage4_B.tscn + Torch×2 + BossArenaTrigger | 보상: `shadow_step` + GP×11 + `abyss_charm` + `story.zone4.lord_remnant_defeated` + `stage_progress.zone5_unlocked` | "본체는 더 깊은 곳에 있다" → shadow_step 해금 (수장은 zone5 보존) | ⏳ |
+
+**3-4 경계 거점** (마을형 + 4구역 내부 간이형, 본 Phase 4-C 진입 시 신설): `ruined_village` (마을형, 진실 NPC 위치) + `shadow_camp` (간이형, 4-7 인근)
+
+**4구역 통계**: 통상 11 + 숨김 1 + 보스 1 = 13 / 적 총 ~50 / 잔류 총 ~46
+
+상세 설계: [`docs/ZONE4_CONTENT_PLAN.md`](ZONE4_CONTENT_PLAN.md).
 
 ---
 
@@ -149,7 +161,7 @@
 | 1구역 | 6 | 1 | 1 | 2 | 10 | ✅ |
 | 2구역 | 7 | 1 | 1 | 2 | 11 | ⚙️ |
 | 3구역 | 9 | 1 | 1 | 1 | 12 | ⚙️ |
-| 4구역 | 11 | 1 | 1 | 2 | 15 | ⏳ |
+| 4구역 | 11 | 1 | 1 | 2 | 15 | ⚙️ |
 | 5구역 | 13 | 1 | 1 | 1 | 16 | ⏳ |
 | **총** | **46** | **5** | **5** | **8** | **64** | — |
 
@@ -177,3 +189,8 @@
 | 2026-04-26 | **Phase 4-B Step 0** — zone3 § 11행 확장 (placeholder, 잠금 5종 모두 1번씩, ZONE3_CONTENT_PLAN.md 신설과 동기). zone3 헤더 ⏳→⚙️ + 통계 요약 갱신. 진입=2-3 경계 / 출구=3-4 경계. |
 | 2026-04-26 | **Phase 4-B Step 1** — stage_3_1 '잔해의 길' 양산. stage_2_1 패턴 답습. zone2 적 placeholder 3 + 폐허 갈색 톤. ABILITY(shadow_phase) 잠금. 헤드리스 ERROR 0. |
 | 2026-04-26 | **Phase 4-B Step 5** — zone3 9 스테이지(3-2~3-9 + 3-H) + stage_3_b 보스 아레나 + ThroneEcho.tscn + 2-3 경계 거점 2개(mire_village 마을형 / mire_outpost 간이형). zone2 stage_2_b PortalRight target=`mire_village` 갱신. 신규 37 + Edit 4. 행별 상태 ⏳→✅ 일괄 갱신은 Step 7 마이그레이션에서. 헤드리스 ERROR 0. |
+| 2026-04-26 | **Phase 4-C Step 0** — zone4 § 13행 확장 (placeholder, 잠금 5종 모두 1번씩, ZONE4_CONTENT_PLAN.md 신설). zone4 헤더 ⏳→⚙️ + 통계 요약 갱신. 진입=3-4 경계 `ruined_village` + `shadow_camp` / 출구=4-5 경계. 보스=수장의 잔재 (Lord Remnant 잠정명) / 정지 면역 엘리트 채택 / 등불 트리거 인프라 신설. |
+| 2026-04-26 | **Phase 4-C Step 1** — stage_4_1 '어둠의 입구' 양산. stage_3_1 패턴 답습. zone3 적 placeholder 3 + 그림자 어두운 보라톤. ABILITY(light_leap) 잠금. 헤드리스 ERROR 0. |
+| 2026-04-26 | **Phase 4-C Step 2** — zone4 적 6종 + EnemyStatsData time_immune flag (REC-MECH-010 IMPLEMENTED). 신규 attack_behavior 모듈 미작성 — flag가 더 깔끔. echo_vanguard 시간 정지 중에도 active. |
+| 2026-04-26 | **Phase 4-C Step 3** — Lord Remnant 보스(HP 1700/페이즈 3) + abyss_charm + 등불 트리거 인프라 단순화(Torch ~40줄 + Lens emit 패턴 답습, boss_weak_point 변경 0 / EventBus 확장 0). 신규 11파일. Loaded 9 items. |
+| 2026-04-26 | **Phase 4-C Step 4** — 그림자 결정 SealingPedestal 답습(보라 결정 톤) + stage_4_h.tres + zone3 sealing_altar 구독(4-8 옵션) + LIGHT_SENSOR(4-6 메인). 신규 7. 헤드리스 ERROR 0. |

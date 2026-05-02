@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EchoData" format=3 uid="uid://bdlmjxsci7bmw"]
+
+[ext_resource type="Script" path="res://data/echo/echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+echo_id = "zone3_forgotten_villager"
+subject_type = &"residue"
+subject_label = "스러진 사람들의 자리"
+lines = Array[String](["여기서 누군가는 손을 뻗었다.", "여기서 누군가는 그 손을 잡지 못했다.", "그 사이의 시간만이 지금도 흐르지 않는다."])
+present_mode = 0
+cutscene_path = ""
+shard_reward = 2
+vfx_palette = 1
+emit_event = &""

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AccessoryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/items/accessory_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "abyss_charm"
+display_name = "심연의 부적"
+description = "수장의 잔재가 깃든 부적. 그림자가 신체를 지킨다."
+category = 2
+rarity = 1
+buy_price = 0
+sell_price = 100
+attack_bonus = 0.0
+hp_bonus = 0.0
+defense_bonus = 5.0
+time_max_bonus = 0.0
+time_recovery_bonus = 0.0
+special_effect_id = ""

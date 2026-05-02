@@ -17,6 +17,7 @@ var skill_1_pressed: bool = false
 var skill_2_pressed: bool = false
 var skill_3_pressed: bool = false
 var skill_4_pressed: bool = false
+var echo_nail_pressed: bool = false
 
 
 func update() -> void:
@@ -34,3 +35,4 @@ func update() -> void:
 	skill_2_pressed = Input.is_action_just_pressed("skill_2")
 	skill_3_pressed = Input.is_action_just_pressed("skill_3")
 	skill_4_pressed = Input.is_action_just_pressed("skill_4")
+	echo_nail_pressed = Input.is_action_just_pressed("echo_nail")

@@ -27,6 +27,7 @@ const ResidualLightScript = preload("res://src/systems/effects/effects_residual_
 const LightBeamScript = preload("res://src/systems/effects/effects_light_beam.gd")
 const HpCrackScript = preload("res://src/systems/effects/effects_hp_crack.gd")
 const FinishCutinScript = preload("res://src/systems/effects/effects_finish_cutin.gd")
+const SlashArcScript = preload("res://src/systems/effects/effects_slash_arc.gd")
 const TimelineManagerScript = preload("res://src/systems/effects/effects_timeline_manager.gd")
 const DebugScript = preload("res://src/systems/effects/effects_debug.gd")
 const HIT_FLASH_SHADER: Shader = preload("res://assets/shaders/effects/hit_flash.gdshader")
@@ -58,6 +59,7 @@ var _residual_light: EffectsResidualLight
 var _light_beam: EffectsLightBeam
 var _hp_crack: EffectsHpCrack
 var _finish_cutin: EffectsFinishCutin
+var _slash_arc: EffectsSlashArc
 var _timeline_manager: EffectsTimelineManager
 
 
@@ -83,6 +85,7 @@ func _ready() -> void:
 	_light_beam = LightBeamScript.new(self, _config)
 	_hp_crack = HpCrackScript.new(self, _config)
 	_finish_cutin = FinishCutinScript.new(self, _config)
+	_slash_arc = SlashArcScript.new(self)
 	_timeline_manager = TimelineManagerScript.new(self)
 	# Phase 4-0 #1 Step 6 + #3: 고아 시그널 3종 부활 — damage_resolver가 발행하는 신호를 구독해
 	# 내부 request_* 로 포워딩. screen_shake_requested는 이미 pass 1에서 연결돼 있음.
@@ -150,6 +153,18 @@ func request_screen_flash(
 	var color_to_use: Color = color_value if color_value.a > 0.0 else _config.flash_default_color
 	var dur: float = duration if duration > 0.0 else _config.flash_default_duration
 	OverlaySystem.flash_screen(color_to_use, dur)
+
+
+# === 공개 API: 슬래시 호 VFX (Phase B 리팩토링 (가)+(A), 2026-05-02) ===
+
+
+## 콤보 매 hit 시 슬래시 호 VFX spawn. 검 자체는 캐릭터 PNG에 상시. attribute=light/shadow/neutral/hybrid.
+func request_slash_arc(
+	position: Vector2, direction: int, attribute: String, hit_number: int = 1
+) -> void:
+	if _slash_arc == null:
+		return
+	_slash_arc.spawn(position, direction, attribute, hit_number)
 
 
 # === 공개 API: 이펙트 타임라인 (Layer 3, Step 1 scaffolding) ===

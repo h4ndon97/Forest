@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnemyStatsData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/enemies/enemy_stats_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+enemy_name = "결정 잔재"
+enemy_type = "wraith"
+base_hp = 110.0
+base_attack = 15.0
+attack_range = 40.0
+attack_cooldown = 1.2
+base_speed = 50.0
+patrol_speed = 22.0
+detect_range = 150.0
+lose_range = 210.0
+min_intensity = 0.2
+max_intensity = 1.5
+collision_width = 18.0
+collision_height = 26.0
+gravity_scale = 1.0
+leaves_residue = true
+attack_behavior = "melee"
+hitbox_size = Vector2(34.0, 22.0)
+hitbox_offset = Vector2(20.0, -12.0)
+hitbox_active_duration = 0.32

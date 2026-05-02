@@ -163,6 +163,7 @@
 | REC-UX-004 | 시간 정지 자동 보조 모드 | PROPOSED | ★★ | S | TimeSystem, 옵션 메뉴 | — |
 | REC-UX-005 | 한글 픽셀아트 폰트 통합 | **IMPLEMENTED** | ★★★ | S | UI 전체 | main_theme.tres + project.godot 등록 |
 | REC-UX-006 | Tunic식 디제틱 가이드 (매뉴얼 발견형) | PROPOSED | ★★★ | S | StorySystem, UI | REC-CONT-005 |
+| REC-UX-007 | 월드맵 상시 열람 + 일러스트 맵 + 시간 반영 | **IN_PROGRESS** (Stage 0~1/3) | ★★★ | M 인프라 / L 일러스트 | WorldMapUI, OverlaySystem, TimeSystem | — |
 
 ### 2.6 사운드/음악 (REC-SND)
 

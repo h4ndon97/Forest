@@ -180,6 +180,14 @@ signal dialogue_finished(npc_id: String)
 signal cutscene_started(cutscene_id: String)
 signal cutscene_finished(cutscene_id: String)
 
+# === Echo Nail (REC-MECH-001) ===
+## EchoSystem emit. echo_revealed=잔상 매체 시작, echo_finished=종료+보상.
+## subject_type: enemy/npc/object/residue (StringName) — NARR/통계 분기에 활용.
+signal echo_revealed(echo_id: String, subject_type: StringName)
+signal echo_finished(echo_id: String, shard_gain: int)
+## Memory Shard 잔고 변화. GrowthSystem emit. # subscriber: Phase 5 UI / NARR/META 합류 시 사용처
+signal memory_shard_changed(total: int)
+
 # === 타이틀/게임 진입 (Phase 3-6) ===
 signal game_start_requested(is_new_game: bool)
 

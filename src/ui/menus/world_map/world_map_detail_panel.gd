@@ -36,9 +36,42 @@ func refresh(stage_id: String) -> void:
 		_clear_content()
 		return
 	visible = true
+	if not StageSystem.is_stage_discovered(stage_id):
+		_render_fog()
+		return
 	_title_label.text = data.display_name
 	_zone_label.text = _format_zone(data.zone_id)
 	_rebuild_info(stage_id, data)
+
+
+## 미발견 스테이지 — 모든 정보를 ??? 처리 (REC-UX-007 Stage 0.5 fog).
+func _render_fog() -> void:
+	_title_label.text = "???"
+	_zone_label.text = "— ??? —"
+	_clear_info()
+	_add_info("시각: --:--", INFO_COLOR)
+	_add_info("상태: 미발견", LOCK_COLOR)
+
+
+## 특정 스테이지를 위해 패널을 표시 + 위치 자동 정렬한다.
+## position_hint = 노드의 화면 좌표 (640x360 기준).
+func show_for(stage_id: String, position_hint: Vector2) -> void:
+	if stage_id.is_empty():
+		visible = false
+		return
+	refresh(stage_id)
+	var x: float = position_hint.x + 20.0
+	if x + size.x > 636.0:
+		x = position_hint.x - 20.0 - size.x
+	position = Vector2(
+		clamp(x, 4.0, 636.0 - size.x),
+		clamp(position_hint.y - size.y / 2.0, 4.0, 356.0 - size.y)
+	)
+	visible = true
+
+
+func hide_panel() -> void:
+	visible = false
 
 
 ## 선택 없음 상태(패널 비워 표시).

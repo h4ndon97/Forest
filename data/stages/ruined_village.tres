@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/stages/stage_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stage_id = "ruined_village"
+display_name = "3-4 경계 폐허"
+scene_path = "res://src/world/checkpoints/RuinedVillage.tscn"
+initial_hour = 17.0
+zone_id = "zone_3"
+adjacent_stages = Array[String](["stage_3_b", "stage_4_1"])
+lock_type = 0
+lock_requirement = ""
+total_enemies = 0
+total_residues = 0
+is_checkpoint = true
+radius_ring = 3
+angle_deg = 0.0
+radius_offset = 0.0

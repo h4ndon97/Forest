@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EchoData" format=3 uid="uid://csupm3gm0g205"]
+
+[ext_resource type="Script" path="res://data/echo/echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+echo_id = "zone3_silent_archer"
+subject_type = &"enemy"
+subject_label = "정지된 궁수"
+lines = Array[String](["벗어나려던 손짓이 시간 안에 굳어 있다.", "활을 끌어당기던 그 마음만, 화살보다 먼저 떠난 것 같다."])
+present_mode = 0
+cutscene_path = ""
+shard_reward = 1
+vfx_palette = 0
+emit_event = &""

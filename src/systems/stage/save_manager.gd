@@ -19,12 +19,14 @@ func collect_data(
 	last_checkpoint_id: String,
 	stage_hours: Dictionary,
 	discovered_checkpoints: Array,
+	discovered_stages: Array = [],
 ) -> Dictionary:
 	var data := {
 		"last_checkpoint_id": last_checkpoint_id,
 		"stage_hours": stage_hours.duplicate(),
 		"clear_tracker": _clear_tracker.get_save_data(),
 		"discovered_checkpoints": discovered_checkpoints.duplicate(),
+		"discovered_stages": discovered_stages.duplicate(),
 	}
 	if TimeSystem and TimeSystem.has_method("get_resource_data"):
 		data["time_resource"] = TimeSystem.get_resource_data()
@@ -51,6 +53,7 @@ func apply_data(data: Dictionary) -> Dictionary:
 	if not tracker_data.is_empty():
 		_clear_tracker.load_save_data(tracker_data)
 	result["discovered_checkpoints"] = data.get("discovered_checkpoints", [])
+	result["discovered_stages"] = data.get("discovered_stages", [])
 	var growth_data: Dictionary = data.get("growth", {})
 	if not growth_data.is_empty() and GrowthSystem and GrowthSystem.has_method("load_save_data"):
 		GrowthSystem.load_save_data(growth_data)

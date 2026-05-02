@@ -44,10 +44,22 @@ enum LockType { NONE, LIGHT, PURIFY, ENVIRONMENT, ABILITY }
 ## 카메라는 (0, 0) ~ room_size 사이로 제한된다.
 @export var room_size: Vector2 = Vector2(640, 360)
 
-@export_group("월드맵 위치 (극좌표)")
-## 동심 링 인덱스. 1=외곽(zone_1), 5=심부(zone_5). 0=월드맵 미표시(test_*).
+@export_group("월드맵 위치 (직사각형 톱뷰)")
+## 월드맵 위치 (normalized 0~1 기준, 화면 640x360 비율). Vector2(-1, -1)=미설정 → 극좌표 fallback.
+## REC-UX-007 Stage 1+ 직사각형 톱뷰 채택. 기존 극좌표 필드는 자동 변환 fallback용으로 유지.
+## Phase B(2026-05-02)부터 영역(territory)형 전환 — 본 점 좌표는 폴리곤 라벨 위치/연결선 기준점으로 사용.
+@export var world_map_pos: Vector2 = Vector2(-1.0, -1.0)
+
+@export_group("월드맵 영역 (폴리곤)")
+## 월드맵 stage 영역 폴리곤 (normalized 0~1, 시계방향 권장).
+## 빈 배열이면 WorldMapPolygonFallback이 zone 사각형 + stage 인덱스 기반 자동 분할 적용.
+## REC-UX-007 Stage 1.5+ 영역형 미니맵 채택(2026-05-02 확정).
+@export var world_map_polygon: PackedVector2Array = PackedVector2Array()
+
+@export_group("월드맵 위치 (극좌표 deprecated)")
+## 동심 링 인덱스. world_map_pos 미설정 시 자동 변환 fallback. 0=월드맵 미표시(test_*).
 @export var radius_ring: int = 0
-## 시계 각도 (도). 0°=12시, 시계방향 증가. 0~360.
+## 시계 각도 (도). 0°=12시, 시계방향 증가. 0~360. world_map_pos 미설정 시 fallback.
 @export var angle_deg: float = 0.0
-## 링 반경 오프셋 (픽셀). 음수=안쪽으로 끌어당김(숨겨진 leaf), 양수=바깥쪽.
+## 링 반경 오프셋 (픽셀). world_map_pos 미설정 시 fallback.
 @export var radius_offset: float = 0.0

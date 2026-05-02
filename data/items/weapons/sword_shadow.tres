@@ -5,8 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = "sword_shadow"
-display_name = "그림자 검"
-description = "그림자의 힘이 깃든 검. 강력한 일격을 가한다."
+display_name = "그림자 등불"
+description = "그림자의 힘이 깃든 등불. 발현된 검은 강력한 일격을 가한다."
+flavor_text = "어둠을 담아도 꺼지지 않는 등불 — 그림자조차 빛이 될 수 있음을 안다."
 category = 0
 rarity = 1
 buy_price = 50

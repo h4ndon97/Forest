@@ -11,75 +11,75 @@ anchors_preset = 0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 280.0
-offset_bottom = 40.0
+offset_bottom = 48.0
 
 [node name="Cluster" type="HBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 0
+theme_override_constants/separation = -1
 alignment = 0
 
-[node name="ComboOrb" type="ColorRect" parent="MarginContainer/Cluster"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-color = Color(0.54, 0.54, 0.56, 0.9)
-
-[node name="ComboDots" type="HBoxContainer" parent="MarginContainer/Cluster"]
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_constants/separation = 3
-
-[node name="Combo1" type="ColorRect" parent="MarginContainer/Cluster/ComboDots"]
-custom_minimum_size = Vector2(8, 8)
-layout_mode = 2
-color = Color(0.29, 0.29, 0.31, 1)
-
-[node name="Combo2" type="ColorRect" parent="MarginContainer/Cluster/ComboDots"]
-custom_minimum_size = Vector2(8, 8)
-layout_mode = 2
-color = Color(0.29, 0.29, 0.31, 1)
-
-[node name="Combo3" type="ColorRect" parent="MarginContainer/Cluster/ComboDots"]
-custom_minimum_size = Vector2(8, 8)
-layout_mode = 2
-color = Color(0.29, 0.29, 0.31, 1)
-
-[node name="Combo4" type="ColorRect" parent="MarginContainer/Cluster/ComboDots"]
-custom_minimum_size = Vector2(8, 8)
-layout_mode = 2
-color = Color(0.29, 0.29, 0.31, 1)
-
-[node name="Spacer1" type="Control" parent="MarginContainer/Cluster"]
-custom_minimum_size = Vector2(8, 0)
+[node name="TorchCorePanel" type="Control" parent="MarginContainer/Cluster"]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 
-[node name="HpPips" type="HBoxContainer" parent="MarginContainer/Cluster"]
+[node name="TorchFrame" type="TextureRect" parent="MarginContainer/Cluster/TorchCorePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+expand_mode = 2
+stretch_mode = 5
+
+[node name="HpClusterWrapper" type="Control" parent="MarginContainer/Cluster"]
+custom_minimum_size = Vector2(128, 32)
 layout_mode = 2
+
+[node name="HpFrame" type="NinePatchRect" parent="MarginContainer/Cluster/HpClusterWrapper"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+patch_margin_left = 16
+patch_margin_right = 16
+axis_stretch_horizontal = 1
+
+[node name="HpPips" type="HBoxContainer" parent="MarginContainer/Cluster/HpClusterWrapper"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = -16.0
+offset_bottom = -8.0
 theme_override_constants/separation = 2
 
-[node name="Pip1" type="ColorRect" parent="MarginContainer/Cluster/HpPips"]
+[node name="Pip1" type="ColorRect" parent="MarginContainer/Cluster/HpClusterWrapper/HpPips"]
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-color = Color(0.949, 0.8, 0.4, 1)
+color = Color(1, 1, 1, 1)
 
-[node name="Pip2" type="ColorRect" parent="MarginContainer/Cluster/HpPips"]
+[node name="Pip2" type="ColorRect" parent="MarginContainer/Cluster/HpClusterWrapper/HpPips"]
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-color = Color(0.949, 0.8, 0.4, 1)
+color = Color(1, 1, 1, 1)
 
-[node name="Pip3" type="ColorRect" parent="MarginContainer/Cluster/HpPips"]
+[node name="Pip3" type="ColorRect" parent="MarginContainer/Cluster/HpClusterWrapper/HpPips"]
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-color = Color(0.949, 0.8, 0.4, 1)
+color = Color(1, 1, 1, 1)
 
-[node name="Pip4" type="ColorRect" parent="MarginContainer/Cluster/HpPips"]
+[node name="Pip4" type="ColorRect" parent="MarginContainer/Cluster/HpClusterWrapper/HpPips"]
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-color = Color(0.949, 0.8, 0.4, 1)
+color = Color(1, 1, 1, 1)
 
-[node name="Pip5" type="ColorRect" parent="MarginContainer/Cluster/HpPips"]
+[node name="Pip5" type="ColorRect" parent="MarginContainer/Cluster/HpClusterWrapper/HpPips"]
 custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
-color = Color(0.949, 0.8, 0.4, 1)
+color = Color(1, 1, 1, 1)
 
 [node name="Spacer2" type="Control" parent="MarginContainer/Cluster"]
 custom_minimum_size = Vector2(16, 0)
