@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://src/entities/player/player_light_dash.gd" id="13"]
 [ext_resource type="Script" path="res://src/entities/player/player_camera_shake.gd" id="14"]
 [ext_resource type="PackedScene" path="res://src/world/ambient/AmbientParticles.tscn" id="15"]
+[ext_resource type="Script" path="res://src/entities/player/player_outline.gd" id="16"]
 
 [sub_resource type="AtlasTexture" id="idle_0"]
 atlas = ExtResource("2")
@@ -206,6 +207,9 @@ script = ExtResource("5")
 
 [node name="AnimationController" type="Node" parent="."]
 script = ExtResource("6")
+
+[node name="PlayerOutline" type="Node" parent="."]
+script = ExtResource("16")
 
 [node name="CoyoteTimer" type="Timer" parent="."]
 one_shot = true

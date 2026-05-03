@@ -10,9 +10,13 @@ const ZoneLayoutScript = preload("res://src/ui/menus/world_map/world_map_zone_la
 const DetailPanelScript = preload("res://src/ui/menus/world_map/world_map_detail_panel.gd")
 const InputRouterScript = preload("res://src/ui/menus/world_map/world_map_input_router.gd")
 const NodeHoverScript = preload("res://src/ui/menus/world_map/world_map_node_hover.gd")
-const PolygonRendererScript = preload(
+const ZonePolygonRendererScript = preload(
 	"res://src/ui/menus/world_map/world_map_zone_polygon_renderer.gd"
 )
+const StagePolygonRendererScript = preload(
+	"res://src/ui/menus/world_map/world_map_stage_polygon_renderer.gd"
+)
+const PathRendererScript = preload("res://src/ui/menus/world_map/world_map_path_renderer.gd")
 const SELECTED_COLOR := Color(1.0, 1.0, 1.0)
 
 # 열기 모드 — 거점 포털 진입 시 FAST_TRAVEL, M키 상시 열람 시 VIEW_ONLY.
@@ -24,8 +28,11 @@ var _builder: Node
 var _zone_layout: Node
 var _input_router: Node
 var _node_hover: Node
-var _polygon_renderer: Node
-var _polygon_container: Control
+var _zone_polygon_renderer: Node
+var _stage_polygon_renderer: Node
+var _path_renderer: Node
+var _zone_polygon_container: Control
+var _stage_polygon_container: Control
 var _bg: ColorRect
 var _hint_label: Label
 var _node_container: Control
@@ -68,10 +75,20 @@ func _ready() -> void:
 	_node_hover.set_script(NodeHoverScript)
 	add_child(_node_hover)
 
-	_polygon_renderer = Node.new()
-	_polygon_renderer.name = "PolygonRenderer"
-	_polygon_renderer.set_script(PolygonRendererScript)
-	add_child(_polygon_renderer)
+	_zone_polygon_renderer = Node.new()
+	_zone_polygon_renderer.name = "ZonePolygonRenderer"
+	_zone_polygon_renderer.set_script(ZonePolygonRendererScript)
+	add_child(_zone_polygon_renderer)
+
+	_stage_polygon_renderer = Node.new()
+	_stage_polygon_renderer.name = "StagePolygonRenderer"
+	_stage_polygon_renderer.set_script(StagePolygonRendererScript)
+	add_child(_stage_polygon_renderer)
+
+	_path_renderer = Node.new()
+	_path_renderer.name = "PathRenderer"
+	_path_renderer.set_script(PathRendererScript)
+	add_child(_path_renderer)
 
 	_build_ui_frame()
 	EventBus.world_map_opened.connect(_on_open)
@@ -134,7 +151,8 @@ func _build_ui_frame() -> void:
 	_hint_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	add_child(_hint_label)
 
-	_polygon_container = _make_container("ZonePolygons")
+	_zone_polygon_container = _make_container("ZonePolygons")
+	_stage_polygon_container = _make_container("StagePolygons")
 	_line_container = _make_container("Lines")
 	_zone_container = _make_container("ZoneLabels")
 	_node_container = _make_container("Nodes")
@@ -155,7 +173,12 @@ func _make_container(container_name: String) -> Control:
 
 func _rebuild_graph() -> void:
 	var containers: Array = [
-		_polygon_container, _node_container, _line_container, _spider_container, _zone_container
+		_zone_polygon_container,
+		_stage_polygon_container,
+		_node_container,
+		_line_container,
+		_spider_container,
+		_zone_container,
 	]
 	for c in containers:
 		for child in c.get_children():
@@ -166,8 +189,11 @@ func _rebuild_graph() -> void:
 	_selectable_ids.clear()
 	_hover_id = ""
 
-	_polygon_renderer.build(_polygon_container)
-	var result: Dictionary = _builder.build_all(_node_container, _line_container)
+	# REC-UX-007 Stage 1.5 (2026-05-02): zone polygon → stage polygon → path → dot 순.
+	_zone_polygon_renderer.build(_zone_polygon_container)
+	_stage_polygon_renderer.build(_stage_polygon_container, _builder)
+	var result: Dictionary = _builder.build_all(_node_container)
+	_path_renderer.build(_line_container, _builder)
 	_stage_nodes = result["stage_nodes"]
 	_stage_positions = result["stage_positions"]
 	_node_hover.attach(_stage_nodes)
@@ -276,8 +302,11 @@ func close_world_map() -> void:
 
 
 func _on_time_signal(_hour: float) -> void:
-	if _visible and _builder:
-		_builder.refresh_all_node_bg_colors(_stage_nodes)
+	if not _visible or not _builder:
+		return
+	_builder.refresh_all_node_bg_colors(_stage_nodes)
+	if _stage_polygon_renderer:
+		_stage_polygon_renderer.refresh_colors(_stage_polygon_container, _builder)
 
 
 # --- 땅거미 아이콘 갱신 (graph_builder 위임) ---

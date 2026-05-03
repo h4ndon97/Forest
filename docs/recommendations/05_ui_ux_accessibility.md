@@ -263,7 +263,8 @@ Tunic Manual:
 |---|---|---|---|
 | 0 | 상시 열람 라우팅. 새 입력 액션 + portal 외 트리거. 전투 중 정책 결정 | S | 어디서든 M 키로 월드맵 |
 | **0.5** | **마우스 호버 detail panel + 미발견 스테이지 fog (`???`)** | M | 메트로배니아 표준 발견 보상감 |
-| 1 | 영역 polygon + zone별 색 분리 fallback. 노드 재배치/유지 결정 | M | 일러스트 부재 시 시각 빈약 회피 |
+| 1 | zone 영역 polygon + zone별 색 분리 fallback. 노드 재배치/유지 결정 | M | 일러스트 부재 시 시각 빈약 회피 |
+| **1.5** | **stage 단위 영역 polygon + 라벨 + 점선 path** ((가)+(A) 결정, 2026-05-02) | M | stage 식별 가능, 도시 영역 톤 |
 | 2 | 영역 마스크 + 시간 셰이더 톤 변화 (낮=따뜻 / 저녁=황혼 / 밤=차가움) | M | 일러스트 없이도 시간 모티프 표현 |
 | 3 | 영역 일러스트 텍스처 swap + ShaderMaterial 통합 | L (아트 협업) | 비주얼 완성. 코드 거의 무수정 |
 
@@ -308,6 +309,43 @@ Tunic Manual:
 - 노드는 polygon 위에 z-index로 오버레이. 기존 `_node_container` 위에 `_zone_polygon_container` 신설
 - 노드 재배치는 사용자 결정 — 옵션 A 현 원형 유지 / 옵션 B polygon 내부에 자유 배치
 
+### Stage 1.5 구현 메모 (stage 영역 polygon + 라벨 + 점선 path) — 2026-05-02 (가)+(A) 결정
+
+**컨셉**: Hollow Knight 톤 — 노드 그래프 폐기, 각 stage가 영역 폴리곤으로 표시. 전체 일러스트 + 마스크 컨셉이 목표지만 fallback(zone 톤 + 윤곽선)으로 시각 빈약 회피.
+
+**(가)+(A) 결정 사항**:
+- 시각 단위: 한 stage = 한 polygon (~50개)
+- fallback: zone당 일러스트 1장 + 셰이더 시간대 톤 시프트 (Stage 2 통합)
+- 점선 path: `StageData.adjacent_stages` 기반 dash, 빛 발광 라인 (속성 컬러 펄스는 후속)
+- 미발견 영역: 윤곽선 + 어두운 안개 (Hollow Knight 패턴, 기존 fog_bg 재활용)
+
+**파일 변경**:
+- `data/stages/stage_data.gd` — `world_map_polygon: PackedVector2Array` 필드 추가 (normalized 0~1)
+- `src/ui/menus/world_map/world_map_polygon_fallback.gd` 신규 (~75줄, RefCounted, `class_name WorldMapPolygonFallback`)
+  - `generate(zone_index, stage_index, stage_count)` — zone 사각형 가로 띠 분할 (placeholder)
+  - `generate_box_around(center, half_size)` — dot 위치 기반 균일 box
+  - `zone_index_from_id(zone_id)` / `resolve(stage_data, idx, count)` 헬퍼
+- `src/ui/menus/world_map/world_map_stage_polygon_renderer.gd` 신규 (~110줄)
+  - `world_map_polygon` 우선, 없으면 `graph_builder.compute_node_position` 기반 box fallback
+  - 색은 `graph_builder.compute_node_bg_color` 재사용 (시간대/시간 정지/fog/클리어 자동)
+  - 윤곽선은 `get_border_color` 재사용 (잠금/현재/거점/클리어)
+  - 라벨: 거점=`display_name`, 일반 stage="1-1"·"2-H" 형식. 미발견은 흐림(α 0.5)
+  - `ZONE_BOX_HALF_SIZES` 매핑 — zone 안쪽일수록 box 축소 (1=0.040×0.025, 4=0.012×0.012)
+- `src/ui/menus/world_map/world_map_path_renderer.gd` 신규 (~50줄)
+  - `adjacent_stages` 기반 dash 4 + gap 4 점선
+  - 따뜻한 빛 색 (#D9BF73, α 0.7) — Phase E에서 속성 펄스 + 화살표 head 추가 예정
+  - 양방향 중복 회피 (`stage_id < adj_id` 만)
+- `src/ui/menus/world_map/world_map_graph_builder.gd` — `build_all` 시그니처 정리 (line 책임 path_renderer 이관)
+- `src/ui/menus/world_map/world_map_ui.gd` — 신규 renderer 통합 (zone polygon → stage polygon → path → dot 순)
+- `src/ui/menus/world_map/world_map_detail_panel.gd` — `z_index = 10` 추가 (라벨 위에 표시)
+
+**z_index 정리**: zone(0) → stage 채움(1) → stage 윤곽(2) → path(3) → 라벨(4) → dot(자동) → detail panel(10)
+
+**한계 (Stage 2/3에서 해소)**:
+- 자동 분할 fallback이 zone3/4/5에서 box 조정 필요 — Phase F 도구로 정밀 polygon 입력
+- 점선 단일 색 (속성 펄스 + 화살표 head 미적용)
+- 일러스트 없음 (fallback 단색만)
+
 ### Stage 2 구현 메모 (시간 셰이더)
 
 - `assets/shaders/world_map_time_tint.gdshader` 신설 — UV 기반 색조 보정 (낮=warm, 저녁=황혼, 밤=cool)
@@ -331,6 +369,7 @@ Tunic Manual:
 ### 결정 이력
 
 - 2026-04-26 사용자 결정 — 상시 열람 + Stage 단계적 진행 + A안(셰이더 톤 변화)부터 시작 채택. 추천 폴더 등재 + Architect 설계 진행 합의.
+- 2026-05-02 사용자 결정 — Stage 1.5 신설. Q1.1=stage=폴리곤 / Q1.2=Hollow Knight 톤 + fallback / Q1.3=점선 path / Q1.4=영역별 시간대 / Q1.5=인게임 미니맵 단순화 유지. (가)+(A) 결정으로 캐릭터 PNG에 검 통합 + slash arc VFX. Phase B(데이터 인프라) + Phase C(시각 통합) 완료. Phase D(문서) 본 절. Phase E(일러스트/펄스/화살표) + F(폴리곤 입력 도구) 보류.
 
 ---
 

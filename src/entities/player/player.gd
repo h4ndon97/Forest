@@ -23,6 +23,7 @@ var _follow_up: Node
 @onready var input_handler: Node = $InputHandler
 @onready var movement: Node = $MovementComponent
 @onready var animation_controller: Node = $AnimationController
+@onready var player_outline: Node = $PlayerOutline
 @onready var combo: Node = $Combo
 @onready var health: Node = $Health
 @onready var skill: Node = $Skill
@@ -42,6 +43,7 @@ func _ready() -> void:
 
 	movement.setup(stats, combat_config.attack_movement_factor, state_machine)
 	animation_controller.setup(animated_sprite)
+	player_outline.setup(animated_sprite)
 	state_machine.setup(
 		coyote_timer,
 		dash_duration_timer,

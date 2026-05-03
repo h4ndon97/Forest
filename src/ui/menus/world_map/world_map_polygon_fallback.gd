@@ -57,3 +57,20 @@ static func resolve(
 		return stage_data.world_map_polygon
 	var zone_index: int = zone_index_from_id(stage_data.zone_id)
 	return generate(zone_index, stage_index, stage_count)
+
+
+## center 주변 균일 크기 사각형 polygon 생성. zone 띠 위 dot 위치 기반 fallback에 사용.
+## center / half_size 모두 normalized 0~1.
+static func generate_box_around(
+	center: Vector2, half_size: Vector2 = Vector2(0.035, 0.025)
+) -> PackedVector2Array:
+	var hx: float = half_size.x
+	var hy: float = half_size.y
+	return PackedVector2Array(
+		[
+			Vector2(center.x - hx, center.y - hy),
+			Vector2(center.x + hx, center.y - hy),
+			Vector2(center.x + hx, center.y + hy),
+			Vector2(center.x - hx, center.y + hy),
+		]
+	)

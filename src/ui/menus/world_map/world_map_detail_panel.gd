@@ -22,6 +22,7 @@ func _ready() -> void:
 	custom_minimum_size = PANEL_SIZE
 	size = PANEL_SIZE
 	visible = false
+	z_index = 10  # stage 라벨/dot/path 모두 위에 표시 (REC-UX-007 Stage 1.5 정합).
 	_apply_style()
 	_build_children()
 

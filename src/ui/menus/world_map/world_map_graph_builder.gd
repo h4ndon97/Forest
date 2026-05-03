@@ -243,15 +243,14 @@ func refresh_spider_icons(container: Control, stage_positions: Dictionary) -> Di
 	return spider_icons
 
 
-## 모든 표시 가능 스테이지의 노드 + 연결선을 한번에 생성한다.
-## 미발견 스테이지 사이의 연결선은 표시하지 않는다(fog).
+## 모든 표시 가능 스테이지의 노드를 생성한다(연결선은 path_renderer가 별도 담당).
 ## 결과: {"stage_nodes": Dict, "stage_positions": Dict, "zone_populated": Dict}
-func build_all(node_container: Control, line_container: Control) -> Dictionary:
+## REC-UX-007 Stage 1.5 (2026-05-02): line 책임 분리 — path_renderer로 이관.
+func build_all(node_container: Control) -> Dictionary:
 	var stage_nodes: Dictionary = {}
 	var stage_positions: Dictionary = {}
 	var zone_populated: Dictionary = {}
 	var stopped: bool = is_time_stopped()
-	var visible_ids: Array = []
 
 	for stage_id in StageSystem.get_all_stage_ids():
 		var data: StageData = StageSystem.get_stage_data(stage_id)
@@ -259,25 +258,11 @@ func build_all(node_container: Control, line_container: Control) -> Dictionary:
 			continue
 		var pos: Vector2 = compute_node_position(data)
 		stage_positions[stage_id] = pos
-		visible_ids.append(stage_id)
 		if not data.zone_id.is_empty():
 			zone_populated[data.zone_id] = true
 		var dot: PanelContainer = create_stage_node(stage_id, pos, stopped, node_container)
 		if dot:
 			stage_nodes[stage_id] = dot
-
-	for stage_id in visible_ids:
-		var data: StageData = StageSystem.get_stage_data(stage_id)
-		var src_known: bool = StageSystem.is_stage_discovered(stage_id)
-		for adj_id in data.adjacent_stages:
-			if stage_id >= adj_id or not stage_positions.has(adj_id):
-				continue
-			if not src_known or not StageSystem.is_stage_discovered(adj_id):
-				continue
-			var adj_data: StageData = StageSystem.get_stage_data(adj_id)
-			var line: Line2D = create_connection(data, adj_data)
-			if line:
-				line_container.add_child(line)
 
 	return {
 		"stage_nodes": stage_nodes,

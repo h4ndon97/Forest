@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-05-02 (REC-UX-007 Stage 1.5 — 영역형 시각 통합 (가)+(A))
+
+- `[edit]` REC-UX-007 — Stage 1.5 신설. stage 단위 영역 polygon + 라벨 + 점선 path. 노드 그래프 폐기, Hollow Knight 톤 (zone 일러스트 + stage 마스크 컨셉, fallback=zone 톤+윤곽선).
+- `[impl]` Phase B 인프라 — `StageData.world_map_polygon` 필드 + `WorldMapPolygonFallback` 헬퍼. 커밋 e147af8.
+- `[impl]` Phase C 시각 — `world_map_stage_polygon_renderer` + `world_map_path_renderer` 신설. `world_map_graph_builder.build_all` 시그니처 정리(line 책임 path_renderer 이관). `world_map_ui` 통합 (zone polygon → stage polygon → path → dot 순). `world_map_detail_panel` z_index=10. zone별 `ZONE_BOX_HALF_SIZES` 매핑 (zone1=0.040×0.025 → zone4=0.012×0.012). 색은 graph_builder.compute_node_bg_color 재사용으로 시간대/시간 정지/fog/클리어 자동.
+- `[impl]` Phase D 본 절 추가.
+- `[defer]` Phase E (zone당 일러스트 5장 + 점선 속성 펄스 + 화살표 head) — 사용자 다른 우선 작업 후로 보류.
+- `[defer]` Phase F (폴리곤 입력 도구 + 32+ stage polygon 정밀 좌표) — 동일 보류.
+- `[verify]` gdlint 6 파일 clean + Godot 헤드리스 ERROR 0 / WARNING 0.
+
 ## 2026-04-25
 
 - `[meta]` 폴더 신설 + README 인덱스 + CHANGELOG 골격 작성
